@@ -341,6 +341,35 @@ function showToast(msg) {
 }
 
 // ==================== АВТОРИЗАЦИЯ И РАЗГРАНИЧЕНИЕ ПРАВ ====================
+async function loadFromGoogleDrive() {
+  if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  showToast(currentLang === "oz" ? "Google Drive dan ma’lumotlar yuklanmoqda..." : "Загрузка базы из Google Drive...");
+  try {
+    const url = `${APPS_SCRIPT_URL}?userId=${encodeURIComponent(currentUser.id)}&role=${encodeURIComponent(currentUser.role)}`;
+    const res = await fetch(url);
+    const json = await res.json();
+
+    if (json.status === "ok" && json.data) {
+      const savedUsers = appState.users;
+      appState = {
+        users: (currentUser.role === "admin" && Array.isArray(json.data.users)) ? json.data.users : savedUsers,
+        students: json.data.students || [],
+        tgPosts: json.data.tgPosts || [],
+        monitoring: json.data.monitoring || [],
+        parentMeetings: json.data.parentMeetings || [],
+        schedule: json.data.schedule || [],
+        calendarEvents: json.data.calendarEvents || [],
+        blogPosts: json.data.blogPosts || []
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      renderAllViews();
+      showToast(currentLang === "oz" ? "Baza Google Drive dan sinxronlandi" : "База синхронизирована с Google Drive");
+    }
+  } catch (err) {
+    showToast(currentLang === "oz" ? "Lokal keshdan foydalanilmoqda" : "Работаем с локальной копией данных");
+  }
+}
+
 function handleLogin(e) {
   e.preventDefault();
   const login = document.getElementById("loginUsername").value.trim();
@@ -372,6 +401,7 @@ function handleLogin(e) {
   updateHeaderAndGreeting();
   loadProfileForm();
   switchTab("dashboard");
+  loadFromGoogleDrive();
 }
 
 function logout() {
