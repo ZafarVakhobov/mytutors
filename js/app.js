@@ -1314,6 +1314,7 @@ function runHemisImport() {
 }
 
 // ==================== 3. TELEGRAM И ОТЧЕТЫ GOOGLE DOCS ====================
+const TELEGRAM_WORKER_URL = "https://mytutors-parser.lanigirodesigner.workers.dev";
 let reportSelectedTag = "all";
 
 function renderTelegramSection() {
@@ -1389,15 +1390,35 @@ function setTgTagFilter(tag) {
   renderTelegramSection();
 }
 
-function parseTelegramPost() {
+async function parseTelegramPost() {
   const url = document.getElementById("tgUrlInput").value.trim();
-  const date = document.getElementById("tgDateInput").value || new Date().toISOString().slice(0, 10);
-  let text = document.getElementById("tgTextInput").value.trim();
+  const dateInput = document.getElementById("tgDateInput");
+  const textInput = document.getElementById("tgTextInput");
+  let postDate = dateInput.value || new Date().toISOString().slice(0, 10);
+  let text = textInput.value.trim();
+  let images = [];
 
   if (!url) {
     showToast("Введите ссылку на публикацию в Telegram");
     return;
   }
+
+  showToast(currentLang === "oz" ? "Telegram post yuklanmoqda..." : "Загрузка поста из Telegram...");
+
+  try {
+    const endpoint = `${TELEGRAM_WORKER_URL.replace(/\/+$/, "")}/tg?url=${encodeURIComponent(url)}`;
+    const res = await fetch(endpoint);
+    const data = await res.json();
+
+    if (data && data.ok) {
+      if (!text && data.text) text = data.text;
+      if (data.date) postDate = data.date;
+      if (Array.isArray(data.images)) images = data.images;
+    }
+  } catch (err) {
+    console.warn("Ошибка парсинга через Cloudflare Worker:", err);
+  }
+
   if (!text) {
     text = `Публикация из канала @studlifeuniv (${url}). Проведено воспитательно-просветительское мероприятие со студентами университета.`;
   }
@@ -1406,17 +1427,17 @@ function parseTelegramPost() {
     id: `post_${Date.now()}`,
     authorId: currentUser.id,
     url,
-    date,
+    date: postDate,
     text,
     tags: [...selectedNewPostTags],
-    images: []
+    images
   });
 
   saveState();
   document.getElementById("tgUrlInput").value = "";
-  document.getElementById("tgTextInput").value = "";
+  textInput.value = "";
   renderTelegramSection();
-  showToast("Пост добавлен и отсортирован по дате");
+  showToast(currentLang === "oz" ? "Post qöşildi va sana böyiça saralandi" : "Пост добавлен и отсортирован по дате");
 }
 
 function deleteTgPost(id, btnEl) {
