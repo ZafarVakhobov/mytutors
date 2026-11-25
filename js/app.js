@@ -125,6 +125,7 @@ const I18N = {
 };
 
 const STORAGE_KEY = "mytutors_uz_state_v3";
+const SESSION_USER_KEY = "mytutors_uz_session_user_v1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTLIm6lvnKEE2Ol1JlylHM3QCuhJu_-7Cz0eB_8xBhsFdOhBUQmQ8FrZR4b2hPUq4y/exec";
 
 function syncToGoogleDrive() {
@@ -405,7 +406,9 @@ async function handleLogin(e) {
     return;
   }
 
+  errEl.classList.add("hidden");
   currentUser = found;
+  localStorage.setItem(SESSION_USER_KEY, found.id);
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("appShell").classList.remove("hidden");
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
@@ -425,9 +428,37 @@ async function handleLogin(e) {
 
 function logout() {
   currentUser = null;
+  localStorage.removeItem(SESSION_USER_KEY);
   document.getElementById("appShell").classList.add("hidden");
   document.getElementById("authScreen").classList.remove("hidden");
   document.getElementById("loginPassword").value = "";
+}
+
+function restoreSession() {
+  const savedId = localStorage.getItem(SESSION_USER_KEY);
+  if (!savedId || !Array.isArray(appState.users)) return;
+
+  const found = appState.users.find(u => u.id === savedId);
+  if (!found) return;
+
+  currentUser = found;
+  document.getElementById("authScreen").classList.add("hidden");
+  document.getElementById("appShell").classList.remove("hidden");
+  document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
+
+  dashFilters = {
+    tutor: currentUser.role === "tutor" ? currentUser.id : "all",
+    course: "all",
+    group: "all",
+    gender: "all"
+  };
+
+  updateHeaderAndGreeting();
+  loadProfileForm();
+  switchTab("dashboard");
+  if (typeof loadFromGoogleDrive === "function") {
+    loadFromGoogleDrive();
+  }
 }
 
 function updateHeaderAndGreeting() {
@@ -2318,4 +2349,11 @@ function deleteUserAccount(userId, btnEl) {
 
 function closeModal(id) {
   document.getElementById(id).classList.add("hidden");
+}
+
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", restoreSession);
+} else {
+  restoreSession();
 }
