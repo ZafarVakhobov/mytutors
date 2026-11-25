@@ -62,7 +62,7 @@ const I18N = {
     btn_new_user: "Открыть новый профиль"
   },
   oz: {
-    auth_title: "Iş maydoniga kiriş",
+    auth_title: "Kabinetga kiriş",
     auth_desc: "HEMIS va Google Drive bilan sinxronlaşgan yagona tyutorlar platformasi.",
     login_label: "PROFIL LOGINI",
     pass_label: "PAROL",
@@ -125,6 +125,20 @@ const I18N = {
 };
 
 const STORAGE_KEY = "mytutors_uz_state_v3";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2E83VY0WwuA_vnH0a88--OsbveKP5al6TVZcLdwGDf2URMUaUKIhoBUlJ7sb1wDX-/exec";
+
+function syncToGoogleDrive() {
+  if (!currentUser || !APPS_SCRIPT_URL.includes("/exec")) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "saveUserData",
+      userId: currentUser.id,
+      data: appState
+    })
+  }).catch(() => {});
+}
 
 // ==================== ПРЕДУСТАНОВЛЕННЫЕ 16 ПРОФИЛЕЙ (БЕЗ СЛУЧАЙНЫХ СТУДЕНТОВ) ====================
 const DEFAULT_USERS = [
@@ -221,6 +235,21 @@ function loadState() {
 
 function saveState() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+
+  function syncToGoogleDrive() {
+    if (!currentUser || !APPS_SCRIPT_URL.includes("/exec")) return;
+    fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "saveUserData",
+        userId: currentUser.id,
+        data: appState
+      })
+    }).catch(() => {});
+  }
+
+  syncToGoogleDrive();
 }
 
 // ==================== УНИВЕРСАЛЬНОЕ ПОДТВЕРЖДЕНИЕ ПЕРЕД УДАЛЕНИЕМ ====================
