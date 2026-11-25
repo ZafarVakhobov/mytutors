@@ -125,7 +125,7 @@ const I18N = {
 };
 
 const STORAGE_KEY = "mytutors_uz_state_v3";
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2E83VY0WwuA_vnH0a88--OsbveKP5al6TVZcLdwGDf2URMUaUKIhoBUlJ7sb1wDX-/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTLIm6lvnKEE2Ol1JlylHM3QCuhJu_-7Cz0eB_8xBhsFdOhBUQmQ8FrZR4b2hPUq4y/exec";
 
 function syncToGoogleDrive() {
   if (!currentUser || !APPS_SCRIPT_URL.includes("/exec")) return;
