@@ -370,11 +370,33 @@ async function loadFromGoogleDrive() {
   }
 }
 
-function handleLogin(e) {
+async function handleLogin(e) {
   e.preventDefault();
   const login = document.getElementById("loginUsername").value.trim();
   const pass = document.getElementById("loginPassword").value.trim();
   const errEl = document.getElementById("loginError");
+  const submitBtn = e.target.querySelector("button[type='submit']");
+
+  errEl.classList.add("hidden");
+  if (submitBtn) submitBtn.disabled = true;
+
+  try {
+    if (typeof APPS_SCRIPT_URL !== "undefined" && APPS_SCRIPT_URL.includes("/exec")) {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getUsers&t=${Date.now()}`, {
+        method: "GET",
+        redirect: "follow"
+      });
+      const json = await res.json();
+      if (json.status === "ok" && Array.isArray(json.users) && json.users.length) {
+        appState.users = json.users;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      }
+    }
+  } catch (err) {
+    console.warn("Используем локальный список пользователей:", err);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
 
   const found = appState.users.find(u => u.login === login && u.pass === pass);
   if (!found) {
@@ -383,12 +405,9 @@ function handleLogin(e) {
     return;
   }
 
-  errEl.classList.add("hidden");
   currentUser = found;
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("appShell").classList.remove("hidden");
-
-  // Кнопка управления пользователями видна только админу
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
 
   dashFilters = {
@@ -2034,6 +2053,18 @@ function deleteBlogPost(id, btnEl) {
 // ==================== 7. АДМИНИСТРИРОВАНИЕ ПРОФИЛЕЙ И ПАРОЛЕЙ ====================
 let newUserRole = "tutor";
 
+function syncUsersToGoogleDrive() {
+  if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "saveUsers",
+      users: appState.users
+    })
+  }).catch(() => {});
+}
+
 function renderUsersAdminTable() {
   const table = document.getElementById("usersAdminTable");
   table.innerHTML = `
@@ -2081,6 +2112,7 @@ function updateUserPassword(userId) {
   if (!u || !newPass) return;
   u.pass = newPass;
   saveState();
+  syncUsersToGoogleDrive();
   showToast(`Новый пароль для ${u.name} сохранен`);
 }
 
@@ -2127,6 +2159,7 @@ function createNewUser() {
   });
 
   saveState();
+  syncUsersToGoogleDrive();
   closeModal("newUserModal");
   renderUsersAdminTable();
   showToast(`Кабинет для ${name} успешно открыт`);
@@ -2136,6 +2169,7 @@ function deleteUserAccount(userId, btnEl) {
   askConfirmDelete(btnEl, () => {
     appState.users = appState.users.filter(u => u.id !== userId);
     saveState();
+    syncUsersToGoogleDrive();
     renderUsersAdminTable();
     showToast("Профиль удален");
   });
