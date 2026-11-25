@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MyTutors — Рабочее пространство тюторов | mytutors.uz</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Фиксированная панель языка и темы в нижнем левом углу -->
+  <div class="floating-controls" id="floatingControls">
+    <div class="lang-switch" id="langSwitch">
+      <div class="lang-slider" id="langSlider"></div>
+      <button type="button" class="lang-btn active" data-lang="ru" onclick="setLanguage('ru')">RU</button>
+      <button type="button" class="lang-btn" data-lang="oz" onclick="setLanguage('oz')">ÖZ</button>
+    </div>
+    <button type="button" class="icon-circle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
+      <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/></svg>
+      <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></svg>
+    </button>
+  </div>
+
+  <!-- Всплывающее окно подтверждения удаления -->
+  <div class="confirm-popover hidden" id="confirmPopover">
+    <div class="confirm-text" id="confirmPopoverText">Вы точно хотите удалить?</div>
+    <div class="confirm-actions">
+      <button type="button" class="btn-danger-sm" id="confirmYesBtn">Да</button>
+      <button type="button" class="btn-ghost-sm" id="confirmNoBtn">Нет</button>
+    </div>
+  </div>
+
+  <!-- ЭКРАН АВТОРИЗАЦИИ -->
+  <section class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6"/><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4"/></svg>
+        </div>
+        <div>
+          <div class="brand-name">MyTutors</div>
+          <div class="brand-sub">mytutors.uz • Silk Road Univ</div>
+        </div>
+      </div>
+
+      <h1 class="auth-title" data-i18n="auth_title">Вход в рабочее пространство</h1>
+      <p class="auth-desc" data-i18n="auth_desc">Единая платформа тюторов с синхронизацией HEMIS и Google Drive.</p>
+
+      <form id="loginForm" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label" data-i18n="login_label">ЛОГИН ПРОФИЛЯ</label>
+          <div class="input-with-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
+            <input type="text" id="loginUsername" class="form-input" placeholder="admin / tutor1" required autocomplete="username" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="pass_label">ПАРОЛЬ</label>
+          <div class="input-with-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13a2 2 0 0 1 2 -2h10a2 2 0 0 1 2 2v6a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-6z"/><path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0"/><path d="M8 11v-4a4 4 0 1 1 8 0v4"/></svg>
+            <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" required autocomplete="current-password" />
+          </div>
+        </div>
+
+        <div id="loginError" class="login-error hidden"></div>
+
+        <button type="submit" class="btn-primary-full">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M21 12h-13l3 -3"/><path d="M11 15l-3 -3"/></svg>
+          <span data-i18n="login_btn">Войти в кабинет</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span>© 2026 - Design by LANIGIRO (Zafar Vakhobov)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
+  <div class="app-shell hidden" id="appShell">
+    <!-- Однострочная верхняя панель -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-brand" onclick="switchTab('dashboard')">
+          <div class="brand-logo sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9l-10 -4l-10 4l10 4l10 -4v6"/><path d="M6 10.6v5.4a6 3 0 0 0 12 0v-5.4"/></svg>
+          </div>
+          <div class="brand-text-wrap">
+            <div class="brand-name sm">MyTutors</div>
+            <div class="brand-sub sm">mytutors.uz</div>
+          </div>
+        </div>
+
+        <nav class="top-nav" id="topNav">
+          <div class="nav-pill-slider" id="navPillSlider"></div>
+          <button type="button" class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6h-6z"/><path d="M14 4h6v6h-6z"/><path d="M4 14h6v6h-6z"/><path d="M14 14h6v6h-6z"/></svg>
+            <span data-i18n="nav_dashboard">Обзор</span>
+          </button>
+          <button type="button" class="nav-item" data-tab="students" onclick="switchTab('students')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
+            <span data-i18n="nav_students">Студенты и HEMIS</span>
+          </button>
+          <button type="button" class="nav-item" data-tab="telegram" onclick="switchTab('telegram')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4"/></svg>
+            <span data-i18n="nav_telegram">Telegram и Отчеты</span>
+          </button>
+          <button type="button" class="nav-item" data-tab="diaries" onclick="switchTab('diaries')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h11a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-11a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1m3 0v18"/><path d="M13 8l2 0"/><path d="M13 12l2 0"/></svg>
+            <span data-i18n="nav_diaries">Дневники</span>
+          </button>
+          <button type="button" class="nav-item" data-tab="profile" onclick="switchTab('profile')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z"/><path d="M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 8l2 0"/><path d="M15 12l2 0"/><path d="M7 16l10 0"/></svg>
+            <span data-i18n="nav_profile">Профиль и CV</span>
+          </button>
+          <button type="button" class="nav-item" data-tab="calendar" onclick="switchTab('calendar')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M11 15h1"/><path d="M12 15v3"/></svg>
+            <span data-i18n="nav_calendar">Календарь и Блог</span>
+          </button>
+          <button type="button" class="nav-item hidden" id="navUsersBtn" data-tab="users" onclick="switchTab('users')">
+            <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h3.5"/><path d="M22 22l-5 -5"/><path d="M17 22l5 -5"/></svg>
+            <span data-i18n="nav_users">Пользователи</span>
+          </button>
+        </nav>
+
+        <div class="topbar-right">
+          <!-- Компактная кнопка Google Drive с индикатором и тултипом -->
+          <div class="drive-badge-wrap" id="driveBadgeWrap">
+            <span class="status-dot"></span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10l-6 10l-3 -5l6 -10z"/><path d="M9 15h12l-3 5h-12"/><path d="M15 15l-6 -10h6l6 10z"/></svg>
+            <div class="custom-tooltip" id="driveTooltip">Google Drive: MyTutors_Root_Master</div>
+          </div>
+
+          <div class="user-pill">
+            <div class="user-avatar" id="headerUserAvatar">ЗВ</div>
+            <div class="user-meta">
+              <div class="user-name" id="headerUserName">Зафар Вахобов</div>
+              <div class="user-role" id="headerUserRole">Администратор</div>
+            </div>
+          </div>
+
+          <button type="button" class="icon-circle-btn" onclick="logout()" title="Выйти">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ОСНОВНОЙ КОНТЕЙНЕР -->
+    <main class="main-container">
+      <!-- ==================== 1. ОБЗОР (DASHBOARD) ==================== -->
+      <section class="tab-view active" id="view-dashboard">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" id="welcomeGreeting">Добро пожаловать, Зафар Вахобов</h2>
+            <p class="page-subtitle" data-i18n="dash_sub">Сводная аналитика воспитательной и тюторской деятельности</p>
+          </div>
+          <div class="filter-bar" id="dashboardFilters">
+            <div class="custom-select" id="filterTutorWrap"></div>
+            <div class="custom-select" id="filterCourseWrap"></div>
+            <div class="custom-select" id="filterGroupWrap"></div>
+            <div class="custom-select" id="filterGenderWrap"></div>
+          </div>
+        </div>
+
+        <!-- 4 кликабельные KPI карточки -->
+        <div class="kpi-grid">
+          <div class="kpi-card emerald" onclick="switchTab('students')">
+            <div class="kpi-top">
+              <span class="kpi-label" data-i18n="kpi_students">ВСЕГО СТУДЕНТОВ</span>
+              <div class="kpi-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kpiTotalStudents">0</div>
+            <div class="kpi-bottom">
+              <span id="kpiDormCount">Общежитие: 0</span>
+              <span id="kpiOwnHouseCount">Свой дом: 0</span>
+            </div>
+          </div>
+
+          <div class="kpi-card blue" onclick="switchTab('telegram')">
+            <div class="kpi-top">
+              <span class="kpi-label" data-i18n="kpi_posts">ПОСТЫ В TELEGRAM</span>
+              <div class="kpi-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kpiTotalPosts">0</div>
+            <div class="kpi-bottom">
+              <span>Канал: studlifeuniv</span>
+              <span data-i18n="kpi_gdoc_ready">Готово к Google Doc</span>
+            </div>
+          </div>
+
+          <div class="kpi-card purple" onclick="switchTab('students', 'volunteers')">
+            <div class="kpi-top">
+              <span class="kpi-label" data-i18n="kpi_volunteers">ВОЛОНТЕРЫ</span>
+              <div class="kpi-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kpiTotalVolunteers">0</div>
+            <div class="kpi-bottom">
+              <span id="kpiVolDirs">0 направлений</span>
+              <span>Эко / Приемная / Медиа</span>
+            </div>
+          </div>
+
+          <div class="kpi-card orange" onclick="switchTab('diaries')">
+            <div class="kpi-top">
+              <span class="kpi-label" data-i18n="kpi_monitoring">МОНИТОРИНГ / СОЦРЕЕСТР</span>
+              <div class="kpi-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a12 12 0 0 0 8.5 3a12 12 0 0 1 -8.5 15a12 12 0 0 1 -8.5 -15a12 12 0 0 0 8.5 -3"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+              </div>
+            </div>
+            <div class="kpi-value" id="kpiMonSocValue">0 / 0</div>
+            <div class="kpi-bottom">
+              <span id="kpiOnControl">На контроле: 0</span>
+              <span id="kpiSocCats">Соц. категории: 0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Графики -->
+        <div class="charts-grid">
+          <div class="bento-card">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title" data-i18n="chart_activity_title">Активность постов и мероприятий</h3>
+                <p class="card-sub" data-i18n="chart_activity_sub">Динамика публикаций и воспитательной работы по месяцам</p>
+              </div>
+              <div class="export-btns">
+                <button type="button" class="btn-export" onclick="exportChart('activity', 'svg')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg>
+                  SVG
+                </button>
+                <button type="button" class="btn-export" onclick="exportChart('activity', 'png')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>
+                  PNG 2K
+                </button>
+              </div>
+            </div>
+            <div id="activityChart"></div>
+          </div>
+
+          <div class="bento-card">
+            <div class="card-head">
+              <div>
+                <h3 class="card-title" data-i18n="chart_dist_title">Распределение студентов</h3>
+                <div class="pill-tabs-sm" id="distModeTabs">
+                  <button type="button" class="pill-sm active" data-mode="housing" onclick="setDistMode('housing')" data-i18n="dist_housing">По жилью</button>
+                  <button type="button" class="pill-sm" data-mode="social" onclick="setDistMode('social')" data-i18n="dist_social">По соцреестру</button>
+                  <button type="button" class="pill-sm" data-mode="gender" onclick="setDistMode('gender')" data-i18n="dist_gender">По полу (М/Ж)</button>
+                  <div class="custom-select compact" id="distGroupSelectWrap"></div>
+                </div>
+              </div>
+              <div class="export-btns">
+                <button type="button" class="btn-export" onclick="exportChart('dist', 'svg')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg>
+                  SVG
+                </button>
+                <button type="button" class="btn-export" onclick="exportChart('dist', 'png')">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>
+                  PNG 2K
+                </button>
+              </div>
+            </div>
+            <div id="distributionChart"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 2. СТУДЕНТЫ И HEMIS ==================== -->
+      <section class="tab-view" id="view-students">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" data-i18n="students_title">Студенты и HEMIS</h2>
+            <p class="page-subtitle" id="hemisSyncStatus">Синхронизация с tyutor.hemis.uz: готова к импорту</p>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn-blue" onclick="openHemisImportModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4.6 4.4 0 0 1 0 -9a5 4.5 0 0 1 11 2h1a3.5 3.5 0 0 1 0 7h-1"/><path d="M9 15l3 -3l3 3"/><path d="M12 12v9"/></svg>
+              <span data-i18n="btn_sync_hemis">Синхронизировать с tyutor.hemis.uz</span>
+            </button>
+            <button type="button" class="btn-dark" onclick="openStudentModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M16 19h6"/><path d="M19 16v6"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/></svg>
+              <span data-i18n="btn_add_student">Добавить студента</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Подвкладки раздела Студенты -->
+        <div class="subtabs-row">
+          <div class="subtabs-pills" id="studentSubtabs">
+            <button type="button" class="subtab-btn active" data-sub="all" onclick="setStudentSubtab('all')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
+              <span data-i18n="sub_all_students">Все студенты</span>
+            </button>
+            <button type="button" class="subtab-btn" data-sub="housing" onclick="setStudentSubtab('housing')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/><path d="M9 21v-6a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v6"/></svg>
+              <span data-i18n="sub_housing">Жилье</span>
+            </button>
+            <button type="button" class="subtab-btn" data-sub="social" onclick="setStudentSubtab('social')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v14a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-14z"/><path d="M7 10h10"/><path d="M7 14h6"/></svg>
+              <span data-i18n="sub_social">Социальный реестр</span>
+            </button>
+            <button type="button" class="subtab-btn" data-sub="volunteers" onclick="setStudentSubtab('volunteers')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572"/></svg>
+              <span data-i18n="sub_volunteers">Волонтеры</span>
+            </button>
+            <button type="button" class="subtab-btn" data-sub="schedule" onclick="setStudentSubtab('schedule')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/></svg>
+              <span data-i18n="sub_schedule">Расписание (HEMIS)</span>
+            </button>
+          </div>
+
+          <!-- Поле поиска комнаты справа при активной вкладке Жилье -> Общежитие -->
+          <div class="room-search-box hidden" id="dormRoomSearchBox">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+            <input type="text" id="dormRoomSearchInput" placeholder="Поиск комнаты № (напр. 401)" oninput="renderStudentsSection()" />
+          </div>
+        </div>
+
+        <div id="studentsContentArea"></div>
+      </section>
+
+      <!-- ==================== 3. TELEGRAM И ОТЧЕТЫ ==================== -->
+      <section class="tab-view" id="view-telegram">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" data-i18n="tg_title">Telegram-архив и Генератор отчетов</h2>
+            <p class="page-subtitle" data-i18n="tg_sub">Импорт постов из t.me/studlifeuniv с сортировкой по датам и выгрузкой в Google Docs</p>
+          </div>
+        </div>
+
+        <div class="tg-layout">
+          <!-- Левая колонка: форма и лента постов -->
+          <div class="tg-main">
+            <div class="bento-card mb-20">
+              <h3 class="card-title mb-12" data-i18n="tg_add_post">Добавить пост по ссылке</h3>
+              <div class="tg-input-row">
+                <input type="url" id="tgUrlInput" class="form-input" placeholder="https://t.me/studlifeuniv/12028" />
+                <input type="date" id="tgDateInput" class="form-input w-auto" />
+                <button type="button" class="btn-orange" onclick="parseTelegramPost()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4"/></svg>
+                  <span data-i18n="btn_load_post">Загрузить пост</span>
+                </button>
+              </div>
+              <textarea id="tgTextInput" class="form-textarea mt-10" rows="2" placeholder="Текст поста (подтянется автоматически через Cloudflare Worker или вставьте вручную для предпросмотра)..."></textarea>
+              <div class="tg-tags-select mt-10" id="tgNewPostTags"></div>
+            </div>
+
+            <!-- Фильтр по тегам -->
+            <div class="filter-pills-row mb-16" id="tgFilterTagsRow"></div>
+
+            <!-- Список постов -->
+            <div class="posts-list" id="tgPostsList"></div>
+          </div>
+
+          <!-- Правая колонка: конструктор отчета в Google Docs -->
+          <aside class="tg-sidebar">
+            <div class="bento-card sticky-card">
+              <h3 class="card-title mb-8" data-i18n="report_builder">Конструктор отчета (Google Doc)</h3>
+              <p class="card-sub mb-16" data-i18n="report_sub">Отбор публикаций строго в рамках выбранного периода и категорий</p>
+
+              <div class="form-group">
+                <label class="form-label" data-i18n="period_from">ПЕРИОД С</label>
+                <input type="date" id="reportDateFrom" class="form-input" value="2026-09-01" onchange="updateReportPreview()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="period_to">ПЕРИОД ПО</label>
+                <input type="date" id="reportDateTo" class="form-input" value="2026-12-31" onchange="updateReportPreview()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="report_tag_filter">КАТЕГОРИЯ ТЕГОВ</label>
+                <div class="custom-select" id="reportTagSelectWrap"></div>
+              </div>
+
+              <div class="report-summary-box" id="reportSummaryBox">
+                Найдено публикаций: <strong>0</strong>
+              </div>
+
+              <button type="button" class="btn-blue w-full mt-12" onclick="exportToGoogleDoc()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 9l1 0"/><path d="M9 13l6 0"/><path d="M9 17l6 0"/></svg>
+                <span data-i18n="btn_send_gdoc">Перенести в Google Doc</span>
+              </button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ==================== 4. ДНЕВНИКИ ==================== -->
+      <section class="tab-view" id="view-diaries">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" data-i18n="diaries_title">Дневники мониторинга и работы с родителями</h2>
+            <p class="page-subtitle" data-i18n="diaries_sub">Индивидуальная воспитательная работа, фиксация результатов и архив наблюдений</p>
+          </div>
+          <div class="subtabs-pills">
+            <button type="button" class="subtab-btn active" id="diaryTabMonitoring" onclick="setDiarySubtab('monitoring')" data-i18n="tab_monitoring">Мониторинг студентов</button>
+            <button type="button" class="subtab-btn" id="diaryTabParents" onclick="setDiarySubtab('parents')" data-i18n="tab_parents">Работа с родителями</button>
+          </div>
+        </div>
+
+        <div id="diariesContentArea"></div>
+      </section>
+
+      <!-- ==================== 5. ПРОФИЛЬ И CV ==================== -->
+      <section class="tab-view" id="view-profile">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" data-i18n="profile_title">Личный профиль и Авто-CV</h2>
+            <p class="page-subtitle" data-i18n="profile_sub">Данные синхронизируются с Google Drive и автоматически формируют резюме</p>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn-dark" onclick="window.print()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 17h2a2 2 0 0 0 2 -2v-4a2 2 0 0 0 -2 -2h-14a2 2 0 0 0 -2 2v4a2 2 0 0 0 2 2h2"/><path d="M17 9v-4a2 2 0 0 0 -2 -2h-6a2 2 0 0 0 -2 2v4"/><path d="M7 13m0 2a2 2 0 0 1 2 -2h6a2 2 0 0 1 2 2v4a2 2 0 0 1 -2 2h-6a2 2 0 0 1 -2 -2z"/></svg>
+              <span data-i18n="btn_print_cv">Печать / PDF CV</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-grid">
+          <div class="bento-card">
+            <h3 class="card-title mb-16" data-i18n="profile_form_title">Анкета сотрудника / тютора</h3>
+            <div class="photo-upload-row mb-16">
+              <div class="profile-photo-preview" id="profilePhotoPreview">ЗВ</div>
+              <div>
+                <label class="btn-export cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 9l5 -5l5 5"/><path d="M12 4l0 12"/></svg>
+                  <span data-i18n="upload_photo">Загрузить фото</span>
+                  <input type="file" accept="image/*" class="hidden" onchange="handleProfilePhotoUpload(event)" />
+                </label>
+                <div class="card-sub mt-6">JPG / PNG • Сохраняется в папку Google Drive</div>
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label">Ф.И.О.</label>
+                <input type="text" id="profFullName" class="form-input" oninput="syncProfileCV()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Должность</label>
+                <input type="text" id="profPosition" class="form-input" oninput="syncProfileCV()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Факультет / Отдел</label>
+                <input type="text" id="profDepartment" class="form-input" oninput="syncProfileCV()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Телефон</label>
+                <input type="text" id="profPhone" class="form-input" oninput="syncProfileCV()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="profEmail" class="form-input" oninput="syncProfileCV()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Образование / Степень</label>
+                <input type="text" id="profEducation" class="form-input" oninput="syncProfileCV()" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Опыт работы и достижения</label>
+              <textarea id="profBio" class="form-textarea" rows="3" oninput="syncProfileCV()"></textarea>
+            </div>
+          </div>
+
+          <!-- Превью CV -->
+          <div class="bento-card cv-sheet" id="cvPreviewSheet"></div>
+        </div>
+      </section>
+
+      <!-- ==================== 6. КАЛЕНДАРЬ И БЛОГ ==================== -->
+      <section class="tab-view" id="view-calendar">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" data-i18n="cal_title">Календарь событий и Личный дневник</h2>
+            <p class="page-subtitle" data-i18n="cal_sub">Планирование мероприятий, напоминания и свободные заметки тютора</p>
+          </div>
+        </div>
+
+        <div class="cal-blog-grid">
+          <!-- Календарь -->
+          <div class="bento-card">
+            <div class="cal-header">
+              <h3 class="card-title" id="calMonthTitle">Ноябрь 2026</h3>
+              <div class="cal-nav-btns">
+                <button type="button" class="icon-circle-btn sm" onclick="changeCalMonth(-1)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6l6 6"/></svg>
+                </button>
+                <button type="button" class="icon-circle-btn sm" onclick="changeCalMonth(1)">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6l-6 6"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="cal-weekdays" id="calWeekdays"></div>
+            <div class="cal-days-grid" id="calDaysGrid"></div>
+
+            <!-- Список событий выбранного дня с кнопкой добавления справа -->
+            <div class="day-events-panel">
+              <div class="day-events-head">
+                <span class="day-events-title" id="selectedDayLabel">ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ (0)</span>
+                <button type="button" class="btn-orange sm" onclick="openEventModal()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                  <span data-i18n="btn_add_event">Добавить событие</span>
+                </button>
+              </div>
+              <div id="selectedDayEventsList" class="day-events-list"></div>
+            </div>
+          </div>
+
+          <!-- Свободный дневник / Мини-блог / To-Do -->
+          <div class="bento-card">
+            <h3 class="card-title mb-12" data-i18n="blog_title">Личный мини-блог и To-Do</h3>
+            <div class="form-group">
+              <input type="text" id="blogPostTitle" class="form-input mb-8" placeholder="Заголовок заметки или идеи..." />
+              <textarea id="blogPostBody" class="form-textarea" rows="3" placeholder="Запишите мысли, план работы со студентами или задачи..."></textarea>
+              <button type="button" class="btn-dark mt-10" onclick="addBlogPost()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                <span data-i18n="btn_save_note">Сохранить запись</span>
+              </button>
+            </div>
+            <div id="blogPostsList" class="blog-list mt-16"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 7. УПРАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯМИ (ТОЛЬКО АДМИН) ==================== -->
+      <section class="tab-view" id="view-users">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title" data-i18n="users_title">Управление профилями и паролями</h2>
+            <p class="page-subtitle" data-i18n="users_sub">Создание новых кабинетов, привязка папок Google Drive и сброс паролей</p>
+          </div>
+          <button type="button" class="btn-orange" onclick="openNewUserModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M16 19h6"/><path d="M19 16v6"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4"/></svg>
+            <span data-i18n="btn_new_user">Открыть новый профиль</span>
+          </button>
+        </div>
+
+        <div class="bento-card">
+          <div class="table-responsive">
+            <table class="data-table" id="usersAdminTable"></table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: КАРТОЧКА СТУДЕНТА -->
+  <div class="modal-backdrop hidden" id="studentModal">
+    <div class="modal-box lg">
+      <div class="modal-head">
+        <h3 class="modal-title" id="studentModalTitle">Карточка студента</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('studentModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editStudentId" />
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Ф.И.О. студента *</label>
+            <input type="text" id="stFullName" class="form-input" placeholder="Иванов Иван Иванович" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Группа *</label>
+            <input type="text" id="stGroup" class="form-input" placeholder="TR-101" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Курс</label>
+            <div class="custom-select" id="stCourseSelectWrap"></div>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label class="form-label">Пол</label>
+            <div class="custom-select" id="stGenderSelectWrap"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Телефон студента</label>
+            <input type="text" id="stPhone" class="form-input" placeholder="+998 90 000 00 00" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Закрепленный тютор</label>
+            <div class="custom-select" id="stTutorSelectWrap"></div>
+          </div>
+        </div>
+
+        <!-- Динамический блок жилья -->
+        <div class="sub-panel">
+          <div class="sub-panel-title">ДАННЫЕ О ПРОЖИВАНИИ</div>
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">Тип жилья</label>
+              <div class="custom-select" id="stHousingTypeWrap"></div>
+            </div>
+            <div id="housingDynamicFields"></div>
+          </div>
+          <div id="housingExtraFullRow"></div>
+          <div id="modalRoommatesPreview" class="roommates-box hidden"></div>
+        </div>
+
+        <!-- Расширенный блок: Данные о родителях и родственниках -->
+        <div class="sub-panel mt-14">
+          <div class="sub-panel-head">
+            <div class="sub-panel-title">ДАННЫЕ О РОДИТЕЛЯХ И РОДСТВЕННИКАХ</div>
+            <button type="button" class="btn-export sm" onclick="addFamilyMemberRow()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+              <span>Добавить</span>
+            </button>
+          </div>
+          <div id="familyMembersContainer" class="family-rows"></div>
+        </div>
+
+        <!-- Социальные категории и Волонтерство -->
+        <div class="form-grid-2 mt-14">
+          <div class="form-group">
+            <label class="form-label">Социальные категории</label>
+            <div class="checkbox-chips" id="stSocialChips"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Волонтерское направление</label>
+            <div class="custom-select" id="stVolunteerWrap"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('studentModal')">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveStudent()">Сохранить изменения</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ПОСТАВИТЬ НА МОНИТОРИНГ -->
+  <div class="modal-backdrop hidden" id="monitoringModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title">Поставить студента на мониторинг</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('monitoringModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Студент</label>
+          <div class="custom-select" id="monStudentSelectWrap"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Категория мониторинга</label>
+          <div class="custom-select" id="monCategorySelectWrap"></div>
+        </div>
+        <div class="form-group hidden" id="monCustomCatWrap">
+          <label class="form-label">Укажите категорию вручную</label>
+          <input type="text" id="monCustomCategoryInput" class="form-input" placeholder="Например: Систематические опоздания..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Первичная запись в дневнике</label>
+          <textarea id="monInitialNote" class="form-textarea" rows="3" placeholder="Опишите ситуацию и проведенную беседу..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('monitoringModal')">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveMonitoringRecord()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ИМПОРТ ИЗ HEMIS -->
+  <div class="modal-backdrop hidden" id="hemisModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title">Синхронизация с tyutor.hemis.uz</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('hemisModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="card-sub mb-12">Вставьте список студентов из выгрузки HEMIS (каждый с новой строки в формате: <code>Ф.И.О. | Группа | Курс | Пол (М/Ж) | Телефон</code>) или подключите токен API HEMIS.</p>
+        <div class="form-group">
+          <label class="form-label">API Токен / Ссылка профиля tyutor.hemis.uz</label>
+          <input type="text" id="hemisUrlInput" class="form-input" placeholder="https://tyutor.hemis.uz/tutor/students" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Пакетный импорт списка студентов</label>
+          <textarea id="hemisBulkText" class="form-textarea" rows="5" placeholder="Азизбек Тошпулатов | TR-101 | 1 | М | +998 90 411 22 01&#10;Нилуфар Бобоева | MH-202 | 2 | Ж | +998 90 911 77 07"></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('hemisModal')">Отмена</button>
+        <button type="button" class="btn-blue" onclick="runHemisImport()">Импортировать в базу</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: СОБЫТИЕ КАЛЕНДАРЯ -->
+  <div class="modal-backdrop hidden" id="eventModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title">Новое событие календаря</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('eventModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Название события</label>
+          <input type="text" id="evTitle" class="form-input" placeholder="Кураторский час в группе TR-101" />
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Время</label>
+            <input type="time" id="evTime" class="form-input" value="14:00" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Цветовая метка</label>
+            <div class="custom-select" id="evColorSelectWrap"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Описание / Место проведения</label>
+          <textarea id="evDesc" class="form-textarea" rows="2" placeholder="Аудитория 204, главный корпус..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('eventModal')">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveCalendarEvent()">Сохранить событие</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: НОВЫЙ ПОЛЬЗОВАТЕЛЬ (АДМИН) -->
+  <div class="modal-backdrop hidden" id="newUserModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title">Открыть новый профиль</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('newUserModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Ф.И.О. сотрудника</label>
+          <input type="text" id="nuName" class="form-input" placeholder="А. Каримов" />
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Логин</label>
+            <input type="text" id="nuLogin" class="form-input" placeholder="tutor13" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Пароль</label>
+            <input type="text" id="nuPass" class="form-input" placeholder="t132026" />
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label">Роль</label>
+            <div class="custom-select" id="nuRoleWrap"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Закрепленные группы</label>
+            <input type="text" id="nuGroups" class="form-input" placeholder="TR-401, TR-402" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('newUserModal')">Отмена</button>
+        <button type="button" class="btn-orange" onclick="createNewUser()">Создать кабинет</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЛАЙТБОКС ДЛЯ ИЗОБРАЖЕНИЙ TELEGRAM -->
+  <div class="lightbox-backdrop hidden" id="lightboxModal" onclick="closeModal('lightboxModal')">
+    <img id="lightboxImg" src="" alt="Preview" onclick="event.stopPropagation()" />
+  </div>
+
+  <!-- УВЕДОМЛЕНИЕ TOAST -->
+  <div class="toast-msg hidden" id="toastMsg"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
