@@ -1451,13 +1451,53 @@ function updateReportPreview() {
   `;
 }
 
-function exportToGoogleDoc() {
+async function exportToGoogleDoc() {
   const matched = getFilteredReportPosts();
   if (!matched.length) {
-    showToast("За выбранный период нет публикаций для отчета");
+    showToast(currentLang === "oz" ? "Tanlangan davrda hisobot uşun postlar yöq" : "За выбранный период нет публикаций для отчета");
     return;
   }
-  showToast(`Отчет (${matched.length} публ.) отправлен в Google Doc профиля ${currentUser.name}`);
+
+  const from = document.getElementById("reportDateFrom").value || "—";
+  const to = document.getElementById("reportDateTo").value || "—";
+  const periodStr = `${from} — ${to}`;
+
+  const reportText = matched.map((p, idx) => {
+    const tagsStr = Array.isArray(p.tags) && p.tags.length ? ` [${p.tags.join(", ")}]` : "";
+    return `${idx + 1}. (${p.date})${tagsStr}\n${p.text}\nСсылка: ${p.url}`;
+  }).join("\n\n");
+
+  if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) {
+    showToast("Не задан APPS_SCRIPT_URL в js/app.js");
+    return;
+  }
+
+  showToast(currentLang === "oz" ? "Google Doc ga yuborilmoqda..." : "Отправка отчета в Google Doc...");
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "appendReportToDoc",
+        userId: currentUser.id,
+        tutorName: currentUser.name,
+        period: periodStr,
+        reportText
+      })
+    });
+    const text = await res.text();
+    const json = JSON.parse(text);
+
+    if (json.status === "ok") {
+      showToast(currentLang === "oz" ? "Hisobot Google Doc ga qöşildi" : "Отчет добавлен в Google Doc тютора");
+    } else {
+      showToast("Ошибка Google Doc: " + (json.message || "неизвестная ошибка"));
+    }
+  } catch (err) {
+    console.error("Ошибка экспорта в Google Doc:", err);
+    showToast("Не удалось отправить отчет в Google Doc");
+  }
 }
 
 function openLightbox(src) {
