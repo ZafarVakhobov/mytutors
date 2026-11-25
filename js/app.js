@@ -2052,6 +2052,7 @@ function deleteBlogPost(id, btnEl) {
 
 // ==================== 7. АДМИНИСТРИРОВАНИЕ ПРОФИЛЕЙ И ПАРОЛЕЙ ====================
 let newUserRole = "tutor";
+let editingUserId = null;
 
 function syncUsersToGoogleDrive() {
   if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
@@ -2063,6 +2064,142 @@ function syncUsersToGoogleDrive() {
       users: appState.users
     })
   }).catch(() => {});
+}
+
+function ensureEditUserModal() {
+  if (document.getElementById("editUserModal")) return;
+
+  const modalHtml = `
+    <div id="editUserModal" class="modal-backdrop hidden" style="position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;">
+      <div class="modal-card" style="background:var(--card-bg, #ffffff); color:var(--text-main, #0f172a); border-radius:16px; width:100%; max-width:480px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.25);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
+          <h3 style="margin:0; font-size:18px; font-weight:700;">Редактирование профиля</h3>
+          <button type="button" onclick="closeEditUserModal()" aria-label="Закрыть" style="background:transparent; border:none; cursor:pointer; color:inherit; padding:4px; display:inline-flex; align-items:center; justify-content:center;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Ф.И.О. сотрудника</label>
+            <input type="text" id="euName" class="form-input" style="width:100%;" placeholder="Например: Ш. Зайнидинова" />
+          </div>
+
+          <div>
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Роль в системе</label>
+            <select id="euRole" class="form-input" style="width:100%;">
+              <option value="tutor">Тютор</option>
+              <option value="management">Руководство / Отдел</option>
+              <option value="admin">Главный администратор</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Закрепленные группы</label>
+            <input type="text" id="euGroups" class="form-input" style="width:100%;" placeholder="Например: TR-101, TR-102 или Все группы" />
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Логин</label>
+              <input type="text" id="euLogin" class="form-input" style="width:100%;" placeholder="tutor1" />
+            </div>
+            <div>
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Пароль</label>
+              <input type="text" id="euPass" class="form-input" style="width:100%;" placeholder="Пароль" />
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
+          <button type="button" class="btn-export" onclick="closeEditUserModal()" style="background:transparent; border:1px solid var(--border-color, #cbd5e1); color:inherit;">Отмена</button>
+          <button type="button" class="btn-export" onclick="saveEditedUser()" style="display:inline-flex; align-items:center; gap:6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
+            <span>Сохранить изменения</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.insertAdjacentHTML("beforeend", modalHtml);
+}
+
+function openEditUserModal(userId) {
+  const u = appState.users.find(x => x.id === userId);
+  if (!u) return;
+
+  ensureEditUserModal();
+  editingUserId = userId;
+
+  document.getElementById("euName").value = u.name || "";
+  document.getElementById("euRole").value = u.role || "tutor";
+  document.getElementById("euGroups").value = u.groups || "";
+  document.getElementById("euLogin").value = u.login || "";
+  document.getElementById("euPass").value = u.pass || "";
+
+  const modal = document.getElementById("editUserModal");
+  modal.classList.remove("hidden");
+  modal.style.display = "flex";
+}
+
+function closeEditUserModal() {
+  editingUserId = null;
+  const modal = document.getElementById("editUserModal");
+  if (modal) {
+    modal.classList.add("hidden");
+    modal.style.display = "none";
+  }
+}
+
+function saveEditedUser() {
+  if (!editingUserId) return;
+  const u = appState.users.find(x => x.id === editingUserId);
+  if (!u) return;
+
+  const name = document.getElementById("euName").value.trim();
+  const role = document.getElementById("euRole").value;
+  const groups = document.getElementById("euGroups").value.trim() || "Не назначены";
+  const login = document.getElementById("euLogin").value.trim();
+  const pass = document.getElementById("euPass").value.trim();
+
+  if (!name || !login || !pass) {
+    showToast("Заполните Ф.И.О., логин и пароль");
+    return;
+  }
+
+  const duplicateLogin = appState.users.some(item => item.id !== u.id && item.login === login);
+  if (duplicateLogin) {
+    showToast("Такой логин уже используется другим профилем");
+    return;
+  }
+
+  const roleTitles = {
+    tutor: "Тютор",
+    management: "Руководство / Отдел",
+    admin: "Главный администратор"
+  };
+
+  u.name = name;
+  u.role = role;
+  u.roleTitle = roleTitles[role] || u.roleTitle || "Тютор";
+  u.groups = groups;
+  u.login = login;
+  u.pass = pass;
+
+  if (currentUser && currentUser.id === u.id) {
+    currentUser = u;
+    document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
+    if (typeof updateHeaderAndGreeting === "function") {
+      updateHeaderAndGreeting();
+    }
+  }
+
+  saveState();
+  syncUsersToGoogleDrive();
+  closeEditUserModal();
+  renderUsersAdminTable();
+  showToast(`Профиль «${u.name}» обновлен и сохранен`);
 }
 
 function renderUsersAdminTable() {
@@ -2093,10 +2230,14 @@ function renderUsersAdminTable() {
             </div>
           </td>
           <td><span class="st-meta">${u.driveFolder}</span></td>
-          <td style="text-align:right;">
+          <td style="text-align:right; white-space:nowrap;">
+            <button type="button" class="btn-export sm" onclick="openEditUserModal('${u.id}')" title="Редактировать профиль" style="display:inline-flex; align-items:center; gap:4px; margin-right:6px;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>
+              <span>Изменить</span>
+            </button>
             ${u.id !== "admin" ? `
               <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteUserAccount('${u.id}', this)" title="Удалить профиль">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
               </button>
             ` : ""}
           </td>
