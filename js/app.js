@@ -1390,6 +1390,15 @@ function setTgTagFilter(tag) {
   renderTelegramSection();
 }
 
+function isRealPostPhoto(url) {
+  if (typeof url !== "string" || !url.startsWith("http")) return false;
+  const lower = url.toLowerCase();
+  if (lower.includes("/emoji/") || lower.includes("telegram.org/img/emoji") || lower.includes("t.me/i/")) {
+    return false;
+  }
+  return true;
+}
+
 async function parseTelegramPost() {
   const url = document.getElementById("tgUrlInput").value.trim();
   const dateInput = document.getElementById("tgDateInput");
@@ -1407,13 +1416,15 @@ async function parseTelegramPost() {
 
   try {
     const endpoint = `${TELEGRAM_WORKER_URL.replace(/\/+$/, "")}/tg?url=${encodeURIComponent(url)}`;
-    const res = await fetch(endpoint);
+    const res = await fetch(endpoint, { method: "GET", redirect: "follow" });
     const data = await res.json();
 
     if (data && data.ok) {
       if (!text && data.text) text = data.text;
       if (data.date) postDate = data.date;
-      if (Array.isArray(data.images)) images = data.images;
+      if (Array.isArray(data.images)) {
+        images = data.images.filter(isRealPostPhoto);
+      }
     }
   } catch (err) {
     console.warn("Ошибка парсинга через Cloudflare Worker:", err);
