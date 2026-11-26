@@ -284,6 +284,11 @@ body.dark .lang-slider { background: var(--accent); }
   transition: border-color 0.2s, box-shadow 0.2s;
 }
 
+.form-textarea {
+  resize: vertical;
+  min-height: 200px;
+}
+
 .form-input:focus, .form-textarea:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 3px rgba(255, 107, 61, 0.14);
@@ -1321,7 +1326,7 @@ body.dark .subtab-btn.active {
 }
 
 @media (max-width: 720px) {
-  .kpi-grid, .cards-grid-3, .diary-grid, .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
+  .kpi-grid, .cards-grid-3, .diary-grid, .form-grid-2, .form-grid-3, .emp-schedule-grid { grid-template-columns: 1fr; }
   .family-row { grid-template-columns: 1fr; }
 }
 
@@ -1496,4 +1501,44 @@ body.dark .subtab-btn.active {
 .badge-pill.unemployed {
   background: rgba(107, 114, 128, 0.12);
   color: var(--text-muted);
+}
+
+
+/* ==================== УЛУЧШЕННЫЕ ОТСТУПЫ И ПРОПОРЦИИ ПОЛЕЙ ==================== */
+#blogNoteFormWrap .form-input,
+#blogNoteFormWrap .form-textarea {
+  margin-bottom: 14px;
+}
+
+#blogNoteFormWrap .btn-dark {
+  margin-top: 8px;
+}
+
+.todo-input-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.emp-schedule-grid {
+  grid-template-columns: minmax(120px, 0.72fr) minmax(120px, 0.72fr) minmax(180px, 1.56fr);
+  gap: 12px;
+  align-items: end;
+}
+
+.emp-schedule-grid .form-group {
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.emp-schedule-grid .form-input[type="time"] {
+  padding: 10px 10px;
+  font-size: 13px;
+}
+
+@media (max-width: 720px) {
+  .emp-schedule-grid {
+    grid-template-columns: 1fr;
+  }
 }
