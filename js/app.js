@@ -33,6 +33,7 @@ const I18N = {
     dist_employment: "По работе",
     dist_study_form: "По форме обучения",
     dist_volunteers: "По волонтерству",
+    dist_region: "По регионам",
     students_title: "Студенты и HEMIS",
     btn_sync_hemis: "Синхронизировать с tyutor.hemis.uz",
     btn_add_student: "Добавить студента",
@@ -92,6 +93,11 @@ const I18N = {
     lbl_st_phone: "Телефон студента",
     lbl_st_tutor: "Закрепленный тютор",
     lbl_st_study_form: "Форма обучения",
+    lbl_st_passport: "Серия и № паспорта",
+    lbl_st_pinfl: "ПИНФЛ (JŞŞIR)",
+    lbl_st_hemis_id: "HEMIS ID",
+    sec_origin: "ДАННЫЕ О ПРОИСХОЖДЕНИИ",
+    lbl_st_region: "Регион / Область",
     sec_housing: "ДАННЫЕ О ПРОЖИВАНИИ",
     lbl_housing_type: "Тип жилья",
     sec_employment: "РАБОТА И ТРУДОУСТРОЙСТВО",
@@ -172,6 +178,7 @@ const I18N = {
     dist_employment: "Iş bilan bandlik",
     dist_study_form: "Ta’lim şakli böyiça",
     dist_volunteers: "Volontyorlik böyiça",
+    dist_region: "Hududlar böyiça",
     students_title: "Talabalar va HEMIS",
     btn_sync_hemis: "tyutor.hemis.uz bilan sinxronlaş",
     btn_add_student: "Talaba qöşiş",
@@ -231,6 +238,11 @@ const I18N = {
     lbl_st_phone: "Talaba telefoni",
     lbl_st_tutor: "Biriktirilgan tyutor",
     lbl_st_study_form: "Ta’lim şakli",
+    lbl_st_passport: "Pasport seriyasi va raqami",
+    lbl_st_pinfl: "JŞŞIR (PINFL)",
+    lbl_st_hemis_id: "HEMIS ID",
+    sec_origin: "KELIB ÇIQIŞI (HUDUD)",
+    lbl_st_region: "Viloyat / Şahar",
     sec_housing: "TURAR JOY MA’LUMOTLARI",
     lbl_housing_type: "Turar joy turi",
     sec_employment: "IŞ VA BANDLIK MA’LUMOTLARI",
@@ -325,7 +337,27 @@ const SOCIAL_CATEGORIES = [
 const STUDY_FORMS = [
   { value: "full_grant", ru: "Полный грант", oz: "Töliq grant" },
   { value: "half_grant", ru: "50% грант", oz: "50% grant" },
+  { value: "privileged_grant", ru: "Льготный грант", oz: "Imtiyozli grant" },
   { value: "contract", ru: "Контрактная основа", oz: "Tölov-kontrakt" }
+];
+
+
+const UZ_REGIONS = [
+  "Qoraqalpoğiston Respublikasi",
+  "Andijon viloyati",
+  "Buxoro viloyati",
+  "Farğona viloyati",
+  "Jizzax viloyati",
+  "Namangan viloyati",
+  "Navoiy viloyati",
+  "Qaşqadaryo viloyati",
+  "Samarqand viloyati",
+  "Samarqand şahri",
+  "Sirdaryo viloyati",
+  "Surxondaryo viloyati",
+  "Toşkent viloyati",
+  "Toşkent şahri",
+  "Xorazm viloyati"
 ];
 
 const VOLUNTEER_DIRECTIONS = [
@@ -1175,9 +1207,10 @@ function renderCharts() {
     series = [
       students.filter(s => s.studyForm === "full_grant").length,
       students.filter(s => s.studyForm === "half_grant").length,
+      students.filter(s => s.studyForm === "privileged_grant").length,
       students.filter(s => !s.studyForm || s.studyForm === "contract").length
     ];
-    colors = ["#10b981", "#2563eb", "#ff6b3d"];
+    colors = ["#10b981", "#2563eb", "#7c3aed", "#ff6b3d"];
   } else if (distChartMode === "volunteers") {
     const allDirs = getAllVolunteerDirections();
     labels = allDirs.map(d => d.label);
@@ -1188,6 +1221,20 @@ function renderCharts() {
       return students.filter(s => getStudentVolunteers(s).includes(d.value)).length;
     });
     colors = ["#94a3b8", "#10b981", "#2563eb", "#7c3aed", "#ff6b3d", "#f59e0b", "#ec4899", "#06b6d4"];
+  } else if (distChartMode === "region") {
+    const activeRegions = UZ_REGIONS.filter(r => students.some(s => s.region === r));
+    const unspecifiedCount = students.filter(s => !s.region).length;
+    labels = [...activeRegions];
+    series = activeRegions.map(r => students.filter(s => s.region === r).length);
+    if (unspecifiedCount > 0 || !labels.length) {
+      labels.push(t("Не указан", "Kiritilmagan"));
+      series.push(unspecifiedCount);
+    }
+    colors = [
+      "#2563eb", "#10b981", "#ff6b3d", "#7c3aed", "#f59e0b",
+      "#06b6d4", "#ec4899", "#84cc16", "#6366f1", "#14b8a6",
+      "#f97316", "#a855f7", "#0ea5e9", "#eab308", "#ef4444", "#94a3b8"
+    ];
   }
 
   if (distChartInstance) distChartInstance.destroy();
@@ -1728,6 +1775,7 @@ let modalStudentState = {
   gender: "М",
   tutorId: "",
   studyForm: "contract",
+  region: "",
   housingType: "dorm",
   volunteers: [],
   selectedSocial: [],
@@ -1781,6 +1829,12 @@ function openStudentModal(studentId = null) {
     : t("Новый студент", "Yangi talaba");
   document.getElementById("stFullName").value = st ? st.name : "";
   document.getElementById("stPhone").value = st ? st.phone : "";
+  const passEl = document.getElementById("stPassport");
+  if (passEl) passEl.value = st && st.passport ? st.passport : "";
+  const pinflEl = document.getElementById("stPinfl");
+  if (pinflEl) pinflEl.value = st && st.pinfl ? st.pinfl : "";
+  const hemisEl = document.getElementById("stHemisId");
+  if (hemisEl) hemisEl.value = st && st.hemisId ? st.hemisId : "";
 
   const defaultTutorId = st ? st.tutorId : (isTutorOnly() ? currentUser.id : "tutor1");
 
@@ -1790,6 +1844,7 @@ function openStudentModal(studentId = null) {
     gender: st ? st.gender : "М",
     tutorId: defaultTutorId,
     studyForm: st && st.studyForm ? st.studyForm : "contract",
+    region: st && st.region ? st.region : "",
     housingType: st ? st.housingType : "dorm",
     volunteers: st ? getStudentVolunteers(st) : [],
     employed: st && st.employed ? "yes" : "no"
@@ -1836,6 +1891,15 @@ function openStudentModal(studentId = null) {
   renderCustomSelect("stStudyFormWrap", studyFormOpts, modalStudentState.studyForm, onStudyFormChange);
 
   renderHousingTypeSelector(st);
+
+  const regionOpts = [{ value: "", label: t("Выберите регион...", "Hududni tanlang...") }]
+    .concat(UZ_REGIONS.map(r => ({ value: r, label: r })));
+  const onRegionChange = (v) => {
+    modalStudentState.region = v;
+    renderCustomSelect("stRegionSelectWrap", regionOpts, v, onRegionChange);
+  };
+  renderCustomSelect("stRegionSelectWrap", regionOpts, modalStudentState.region, onRegionChange);
+
   renderEmploymentSelector(st);
 
   // Родители и родственники
@@ -2038,6 +2102,10 @@ function saveStudent() {
     course: modalStudentState.course,
     gender: modalStudentState.gender,
     studyForm: modalStudentState.studyForm || "contract",
+    passport: document.getElementById("stPassport") ? document.getElementById("stPassport").value.trim() : "",
+    pinfl: document.getElementById("stPinfl") ? document.getElementById("stPinfl").value.trim() : "",
+    hemisId: document.getElementById("stHemisId") ? document.getElementById("stHemisId").value.trim() : "",
+    region: modalStudentState.region || "",
     phone: document.getElementById("stPhone").value.trim(),
     tutorId: modalStudentState.tutorId,
     housingType: modalStudentState.housingType,
@@ -3978,8 +4046,25 @@ function renderStudentSocialArea() {
 }
 
 // ==================== АВТОКОНВЕРТАЦИЯ НОВОГО УЗБЕКСКОГО ЛАТИНСКОГО АЛФАВИТА ====================
+function formatPassportInput(el) {
+  if (!el) return;
+  const raw = String(el.value || "").toUpperCase();
+  let letters = "";
+  let digits = "";
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (letters.length < 2) {
+      if (/[A-Z]/.test(ch)) letters += ch;
+    } else {
+      if (/[0-9]/.test(ch) && digits.length < 7) digits += ch;
+    }
+  }
+  el.value = digits.length > 0 ? `${letters} ${digits}` : letters;
+}
+
 const UZ_CONVERTER_EXCLUDED_IDS = new Set([
   "stGroup", "euGroups", "nuGroups",
+  "stPassport", "stPinfl", "stHemisId",
   "stEmpOrg",
   "loginUsername", "loginPassword",
   "euLogin", "euPass", "nuLogin", "nuPass",
