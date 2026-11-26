@@ -31,6 +31,7 @@ const I18N = {
     dist_social: "По соцреестру",
     dist_gender: "По полу (М/Ж)",
     dist_employment: "По работе",
+    dist_study_form: "По форме обучения",
     students_title: "Студенты и HEMIS",
     btn_sync_hemis: "Синхронизировать с tyutor.hemis.uz",
     btn_add_student: "Добавить студента",
@@ -89,6 +90,7 @@ const I18N = {
     lbl_st_gender: "Пол",
     lbl_st_phone: "Телефон студента",
     lbl_st_tutor: "Закрепленный тютор",
+    lbl_st_study_form: "Форма обучения",
     sec_housing: "ДАННЫЕ О ПРОЖИВАНИИ",
     lbl_housing_type: "Тип жилья",
     sec_employment: "РАБОТА И ТРУДОУСТРОЙСТВО",
@@ -165,6 +167,7 @@ const I18N = {
     dist_social: "Ijtimoiy reestr",
     dist_gender: "Jinsi böyiça (E/A)",
     dist_employment: "Iş bilan bandlik",
+    dist_study_form: "Ta’lim şakli böyiça",
     students_title: "Talabalar va HEMIS",
     btn_sync_hemis: "tyutor.hemis.uz bilan sinxronlaş",
     btn_add_student: "Talaba qöşiş",
@@ -223,6 +226,7 @@ const I18N = {
     lbl_st_gender: "Jinsi",
     lbl_st_phone: "Talaba telefoni",
     lbl_st_tutor: "Biriktirilgan tyutor",
+    lbl_st_study_form: "Ta’lim şakli",
     sec_housing: "TURAR JOY MA’LUMOTLARI",
     lbl_housing_type: "Turar joy turi",
     sec_employment: "IŞ VA BANDLIK MA’LUMOTLARI",
@@ -309,6 +313,13 @@ const SOCIAL_CATEGORIES = [
   { value: "Железная тетрадь", ru: "Железная тетрадь", oz: "Temir daftar" },
   { value: "Женская тетрадь", ru: "Женская тетрадь", oz: "Ayollar daftari" },
   { value: "Малообеспеченные", ru: "Малообеспеченные", oz: "Kam ta’minlangan" }
+];
+
+
+const STUDY_FORMS = [
+  { value: "full_grant", ru: "Полный грант", oz: "Töliq grant" },
+  { value: "half_grant", ru: "50% грант", oz: "50% grant" },
+  { value: "contract", ru: "Контрактная основа", oz: "Tölov-kontrakt" }
 ];
 
 const VOLUNTEER_DIRECTIONS = [
@@ -959,15 +970,7 @@ function renderDashboard() {
     renderDashboard();
   });
 
-  // Выпадающий список групп для круговой диаграммы
-  const distGroupOpts = [{ value: "all", label: t("По группам", "Guruhlar böyiça") }]
-    .concat(uniqueGroups.map(g => ({ value: g, label: g })));
-  renderCustomSelect("distGroupSelectWrap", distGroupOpts, distSelectedGroup, (val) => {
-    distSelectedGroup = val;
-    distChartMode = val === "all" ? "group_all" : "group_single";
-    document.querySelectorAll("#distModeTabs .pill-sm").forEach(b => b.classList.remove("active"));
-    renderCharts();
-  });
+
 
   // KPI подсчеты на реальных данных
   const filtered = getVisibleStudents();
@@ -1045,7 +1048,7 @@ function renderCharts() {
 
   if (activityChartInstance) activityChartInstance.destroy();
   activityChartInstance = new ApexCharts(document.querySelector("#activityChart"), {
-    chart: { type: "bar", height: 270, toolbar: { show: false }, background: "transparent", fontFamily: "Inter, sans-serif" },
+    chart: { type: "bar", height: 270, toolbar: { show: false }, background: "transparent", fontFamily: "Onest, sans-serif" },
     series: [
       { name: t("Посты Telegram", "Telegram postlari"), data: postsPerMonth },
       { name: t("Встречи и беседы", "Uçraşuv va suhbatlar"), data: talksPerMonth }
@@ -1062,15 +1065,12 @@ function renderCharts() {
 
   // 2. Диаграмма распределения студентов
   let students = getVisibleStudents();
-  if (distChartMode === "group_single" && distSelectedGroup !== "all") {
-    students = students.filter(s => s.group === distSelectedGroup);
-  }
 
   let labels = [];
   let series = [];
   let colors = ["#2563eb", "#ff6b3d", "#7c3aed", "#10b981", "#f59e0b"];
 
-  if (distChartMode === "housing" || distChartMode === "group_single") {
+  if (distChartMode === "housing") {
     labels = currentLang === "oz"
       ? ["Yotoqxona", "Ijara xonadon", "Qarindoşinikida", "Öz uyi"]
       : ["Общежитие", "Съемная кв.", "У родственников", "Свой дом"];
@@ -1083,13 +1083,6 @@ function renderCharts() {
   } else if (distChartMode === "social") {
     labels = SOCIAL_CATEGORIES.map(c => currentLang === "oz" ? c.oz : c.ru);
     series = SOCIAL_CATEGORIES.map(cat => students.filter(s => (s.social || []).includes(cat.value)).length);
-  } else if (distChartMode === "gender") {
-    labels = currentLang === "oz" ? ["Erkaklar (E)", "Ayollar (A)"] : ["Мужчины (М)", "Женщины (Ж)"];
-    series = [
-      students.filter(s => s.gender === "М").length,
-      students.filter(s => s.gender === "Ж").length
-    ];
-    colors = ["#2563eb", "#ff6b3d"];
   } else if (distChartMode === "employment") {
     labels = currentLang === "oz"
       ? ["Iş bilan band (Trudoustroen)", "Işlamaydi (Band emas)"]
@@ -1099,15 +1092,19 @@ function renderCharts() {
       students.filter(s => !s.employed).length
     ];
     colors = ["#10b981", "#94a3b8"];
-  } else if (distChartMode === "group_all") {
-    const groups = [...new Set(students.map(s => s.group).filter(Boolean))];
-    labels = groups.length ? groups : [t("Нет групп", "Guruhlar yöq")];
-    series = groups.length ? groups.map(g => students.filter(s => s.group === g).length) : [0];
+  } else if (distChartMode === "studyForm") {
+    labels = STUDY_FORMS.map(f => currentLang === "oz" ? f.oz : f.ru);
+    series = [
+      students.filter(s => s.studyForm === "full_grant").length,
+      students.filter(s => s.studyForm === "half_grant").length,
+      students.filter(s => !s.studyForm || s.studyForm === "contract").length
+    ];
+    colors = ["#10b981", "#2563eb", "#ff6b3d"];
   }
 
   if (distChartInstance) distChartInstance.destroy();
   distChartInstance = new ApexCharts(document.querySelector("#distributionChart"), {
-    chart: { type: "donut", height: 270, background: "transparent", fontFamily: "Inter, sans-serif" },
+    chart: { type: "donut", height: 270, background: "transparent", fontFamily: "Onest, sans-serif" },
     series: series,
     labels: labels,
     colors: colors,
@@ -1538,13 +1535,54 @@ function formatHousingBadge(s) {
 
 // ==================== МОДАЛКА КАРТОЧКИ СТУДЕНТА ====================
 let modalStudentState = {
+  group: "",
   course: "1",
   gender: "М",
   tutorId: "",
+  studyForm: "contract",
   housingType: "dorm",
   volunteer: "Не состоит",
   employed: "no"
 };
+
+function getGroupsForTutor(tutorId) {
+  const tutor = appState.users.find(u => u.id === tutorId);
+  if (!tutor || !tutor.groups) return [];
+  const raw = String(tutor.groups).trim();
+  if (!raw || raw === "Все группы" || raw === "Не назначены" || raw === "Biriktirilmagan") {
+    // Если у профиля указано «Все группы», собираем все группы всех тюторов
+    const all = [];
+    appState.users.filter(u => u.role === "tutor").forEach(u => {
+      String(u.groups || "").split(",").map(g => g.trim()).filter(Boolean).forEach(g => {
+        if (g !== "Все группы" && g !== "Не назначены" && g !== "Biriktirilmagan" && !all.includes(g)) {
+          all.push(g);
+        }
+      });
+    });
+    return all;
+  }
+  return raw.split(",").map(g => g.trim()).filter(Boolean);
+}
+
+function renderStudentGroupSelect(tutorId, preferredGroup = "") {
+  const groups = getGroupsForTutor(tutorId);
+  if (preferredGroup && !groups.includes(preferredGroup)) {
+    groups.unshift(preferredGroup);
+  }
+  const groupOpts = groups.length
+    ? groups.map(g => ({ value: g, label: g }))
+    : [{ value: "", label: t("Группы не назначены", "Guruhlar biriktirilmagan") }];
+
+  modalStudentState.group = (preferredGroup && groups.includes(preferredGroup))
+    ? preferredGroup
+    : (groups[0] || "");
+
+  const onGroupChange = (v) => {
+    modalStudentState.group = v;
+    renderCustomSelect("stGroupSelectWrap", groupOpts, v, onGroupChange);
+  };
+  renderCustomSelect("stGroupSelectWrap", groupOpts, modalStudentState.group, onGroupChange);
+}
 
 function openStudentModal(studentId = null) {
   const st = studentId ? appState.students.find(s => s.id === studentId) : null;
@@ -1553,17 +1591,22 @@ function openStudentModal(studentId = null) {
     ? t("Редактирование карточки студента", "Talaba kartasini tahrirlaş")
     : t("Новый студент", "Yangi talaba");
   document.getElementById("stFullName").value = st ? st.name : "";
-  document.getElementById("stGroup").value = st ? st.group : "";
   document.getElementById("stPhone").value = st ? st.phone : "";
 
+  const defaultTutorId = st ? st.tutorId : (currentUser.role === "tutor" ? currentUser.id : "tutor1");
+
   modalStudentState = {
+    group: st ? (st.group || "") : "",
     course: st ? String(st.course) : "1",
     gender: st ? st.gender : "М",
-    tutorId: st ? st.tutorId : (currentUser.role === "tutor" ? currentUser.id : "tutor1"),
+    tutorId: defaultTutorId,
+    studyForm: st && st.studyForm ? st.studyForm : "contract",
     housingType: st ? st.housingType : "dorm",
     volunteer: st ? (st.volunteer || "Не состоит") : "Не состоит",
     employed: st && st.employed ? "yes" : "no"
   };
+
+  renderStudentGroupSelect(modalStudentState.tutorId, modalStudentState.group);
 
   const courseOptions = [
     { value: "1", label: `1 ${t("курс", "kurs")}` },
@@ -1592,8 +1635,16 @@ function openStudentModal(studentId = null) {
   const onTutorChange = (v) => {
     modalStudentState.tutorId = v;
     renderCustomSelect("stTutorSelectWrap", tutorOpts, v, onTutorChange);
+    renderStudentGroupSelect(v, "");
   };
   renderCustomSelect("stTutorSelectWrap", tutorOpts, modalStudentState.tutorId, onTutorChange);
+
+  const studyFormOpts = STUDY_FORMS.map(f => ({ value: f.value, label: currentLang === "oz" ? f.oz : f.ru }));
+  const onStudyFormChange = (v) => {
+    modalStudentState.studyForm = v;
+    renderCustomSelect("stStudyFormWrap", studyFormOpts, v, onStudyFormChange);
+  };
+  renderCustomSelect("stStudyFormWrap", studyFormOpts, modalStudentState.studyForm, onStudyFormChange);
 
   renderHousingTypeSelector(st);
   renderEmploymentSelector(st);
@@ -1783,7 +1834,7 @@ function removeFamilyMemberRow(idx, btnEl) {
 
 function saveStudent() {
   const name = document.getElementById("stFullName").value.trim();
-  const group = document.getElementById("stGroup").value.trim();
+  const group = (modalStudentState.group || "").trim();
   if (!name || !group) {
     showToast(t("Укажите Ф.И.О. и группу студента", "Talabaning F.I.Ş. va guruhini kiriting"));
     return;
@@ -1800,6 +1851,7 @@ function saveStudent() {
     group,
     course: modalStudentState.course,
     gender: modalStudentState.gender,
+    studyForm: modalStudentState.studyForm || "contract",
     phone: document.getElementById("stPhone").value.trim(),
     tutorId: modalStudentState.tutorId,
     housingType: modalStudentState.housingType,
@@ -1879,6 +1931,7 @@ function runHemisImport() {
         gender: isFemale ? "Ж" : "М",
         phone: parts[4] || "",
         tutorId: targetTutorId,
+        studyForm: "contract",
         housingType: "own",
         room: "", address: "", landlord: "", relativeHost: "",
         employed: false, empOrg: "", empPosition: "", empAddress: "",
