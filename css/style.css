@@ -1815,3 +1815,8 @@ body.dark ::-webkit-scrollbar-thumb:hover {
     width: 100%;
   }
 }
+
+#reportTagSelectWrap .cs-menu {
+  max-height: none;
+  overflow: visible;
+}
