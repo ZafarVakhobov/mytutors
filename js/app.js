@@ -5,9 +5,9 @@ const I18N = {
     auth_desc: "Единая платформа тюторов с синхронизацией HEMIS и Google Drive.",
     login_label: "ЛОГИН ПРОФИЛЯ",
     pass_label: "ПАРОЛЬ",
-    login_btn: "Войти в кабинет",
+    login_btn: "Войти",
     nav_dashboard: "Обзор",
-    nav_students: "Студенты и HEMIS",
+    nav_students: "Студенты",
     nav_telegram: "Telegram и Отчеты",
     nav_diaries: "Дневники",
     nav_profile: "Профиль и CV",
@@ -78,7 +78,7 @@ const I18N = {
     mode_todo: "Список дел (To-Do)",
     ph_note_title: "Заголовок заметки или идеи...",
     ph_note_body: "Запишите мысли, план работы со студентами или задачи...",
-    ph_todo_task: "Новая задача (например: Проверить общежитие №2)...",
+    ph_todo_task: "Новая задача (например: Проверить общежитие)...",
     btn_add_todo: "Добавить",
     btn_save_note: "Сохранить запись",
     users_title: "Управление профилями и паролями",
@@ -134,16 +134,18 @@ const I18N = {
     lbl_nu_pass: "Пароль",
     lbl_nu_role: "Роль",
     lbl_nu_groups: "Закрепленные группы",
-    btn_create_cabinet: "Создать кабинет"
+    btn_create_cabinet: "Создать кабинет",
+    lbl_partial_admin: "Частичные права администратора",
+    desc_partial_admin: "Полный доступ к управлению и удалению данных»"
   },
   oz: {
-    auth_title: "İşçi maydonga kiriş",
+    auth_title: "Kabinetga kiriş",
     auth_desc: "HEMIS va Google Drive bilan sinxronlaşgan yagona tyutorlar platformasi.",
     login_label: "PROFIL LOGINI",
     pass_label: "PAROL",
-    login_btn: "Kabinetga kiriş",
+    login_btn: "Kiriş",
     nav_dashboard: "Umumiy köriniş",
-    nav_students: "Talabalar va HEMIS",
+    nav_students: "Talabalar",
     nav_telegram: "Telegram va Hisobotlar",
     nav_diaries: "Kundaliklar",
     nav_profile: "Profil va CV",
@@ -214,7 +216,7 @@ const I18N = {
     mode_todo: "Işlar röyxati (To-Do)",
     ph_note_title: "Qayd yoki ğoya sarlavhasi...",
     ph_note_body: "Fikrlar, talabalar bilan işlaş rejasi yoki vazifalarni yozing...",
-    ph_todo_task: "Yangi vazifa (masalan: 2-yotoqxonani tekşiriş)...",
+    ph_todo_task: "Yangi vazifa (masalan: Yotoqxonani tekşiriş)...",
     btn_add_todo: "Qöşiş",
     btn_save_note: "Qaydni saqlaş",
     users_title: "Profillar va parollarni boşqariş",
@@ -270,7 +272,9 @@ const I18N = {
     lbl_nu_pass: "Parol",
     lbl_nu_role: "Rol",
     lbl_nu_groups: "Biriktirilgan guruhlar",
-    btn_create_cabinet: "Kabinet oçiş"
+    btn_create_cabinet: "Kabinet oçiş",
+    lbl_partial_admin: "Qisman administrator huquqlari",
+    desc_partial_admin: "Ma’lumotlarni boşqariş va öçirişga töliq ruxsat"
   }
 };
 
@@ -358,16 +362,42 @@ function getLabelFromDict(dictArr, val) {
   return currentLang === "oz" ? found.oz : found.ru;
 }
 
+const USER_ROLES = [
+  { value: "tutor", ru: "Тютор", oz: "Tyutor" },
+  { value: "management", ru: "Руководство / Отдел", oz: "Rahbariyat / Bölim" },
+  { value: "psychologist", ru: "Психолог", oz: "Psixolog" },
+  { value: "inspector", ru: "Инспектор", oz: "Inspektor" },
+  { value: "womens_council", ru: "Женский совет", oz: "Xotin-qizlar kengaşi" },
+  { value: "admin", ru: "Главный администратор", oz: "Boş administrator" }
+];
+
 function localizeRoleTitle(role, fallbackTitle) {
-  if (currentLang === "oz") {
-    if (role === "admin") return "Boş administrator";
-    if (role === "management") return "Rahbariyat / Bölim";
-    if (role === "tutor") return "Tyutor";
-  } else {
-    if (role === "admin") return "Главный администратор";
-    if (role === "tutor") return "Тютор";
+  const found = USER_ROLES.find(r => r.value === role);
+  if (found) {
+    return currentLang === "oz" ? found.oz : found.ru;
   }
   return fallbackTitle || (role === "tutor" ? t("Тютор", "Tyutor") : "");
+}
+
+function isFullAdmin(user = currentUser) {
+  return !!(user && user.role === "admin");
+}
+
+function hasAdminPrivileges(user = currentUser) {
+  return !!(user && (user.role === "admin" || user.partialAdmin === true));
+}
+
+function isTutorOnly(user = currentUser) {
+  return !!(user && user.role === "tutor" && !user.partialAdmin);
+}
+
+function canDeleteData(ownerId) {
+  if (!currentUser) return false;
+  if (hasAdminPrivileges(currentUser)) return true;
+  if (isTutorOnly()) {
+    return ownerId === currentUser.id;
+  }
+  return false;
 }
 
 // ==================== СОСТОЯНИЕ И СИНХРОНИЗАЦИЯ БЕЗ ДУБЛИКАТОВ ====================
@@ -443,7 +473,7 @@ function loadState() {
 // а админ — полный снимок (или свои записи + реестр пользователей), чтобы удаленные записи не воскресали!
 function buildPayloadForCurrentUser() {
   if (!currentUser) return appState;
-  if (currentUser.role === "tutor") {
+  if (isTutorOnly()) {
     return {
       students: appState.students.filter(s => s.tutorId === currentUser.id),
       tgPosts: appState.tgPosts.filter(p => p.authorId === currentUser.id),
@@ -662,7 +692,8 @@ async function loadFromGoogleDrive() {
   if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
   showToast(t("Загрузка базы из Google Drive...", "Google Drive dan ma’lumotlar yuklanmoqda..."));
   try {
-    const url = `${APPS_SCRIPT_URL}?userId=${encodeURIComponent(currentUser.id)}&role=${encodeURIComponent(currentUser.role)}&t=${Date.now()}`;
+    const reqRole = hasAdminPrivileges() ? "admin" : currentUser.role;
+    const url = `${APPS_SCRIPT_URL}?userId=${encodeURIComponent(currentUser.id)}&role=${encodeURIComponent(reqRole)}&t=${Date.now()}`;
     const res = await fetch(url, { method: "GET", redirect: "follow" });
     const json = await res.json();
 
@@ -671,7 +702,7 @@ async function loadFromGoogleDrive() {
       const incoming = json.data;
 
       // Если заходит тютор — загружаем строго его актуальные данные, перезаписывая устаревший кэш
-      if (currentUser.role === "tutor") {
+      if (isTutorOnly()) {
         appState = sanitizeAppState({
           users: savedUsers,
           students: (incoming.students || []).filter(s => s.tutorId === currentUser.id),
@@ -766,7 +797,7 @@ async function handleLogin(e) {
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
 
   dashFilters = {
-    tutor: currentUser.role === "tutor" ? currentUser.id : "all",
+    tutor: isTutorOnly() ? currentUser.id : "all",
     course: "all",
     group: "all",
     gender: "all"
@@ -804,7 +835,7 @@ function restoreSession() {
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
 
   dashFilters = {
-    tutor: currentUser.role === "tutor" ? currentUser.id : "all",
+    tutor: isTutorOnly() ? currentUser.id : "all",
     course: "all",
     group: "all",
     gender: "all"
@@ -837,7 +868,7 @@ function updateHeaderAndGreeting() {
 
 function getVisibleStudents() {
   let list = appState.students;
-  if (currentUser.role === "tutor") {
+  if (isTutorOnly()) {
     list = list.filter(s => s.tutorId === currentUser.id);
   } else if (dashFilters.tutor !== "all") {
     list = list.filter(s => s.tutorId === dashFilters.tutor);
@@ -849,7 +880,7 @@ function getVisibleStudents() {
 }
 
 function getRoleScopedStudents() {
-  if (currentUser.role === "tutor") {
+  if (isTutorOnly()) {
     return appState.students.filter(s => s.tutorId === currentUser.id);
   }
   return appState.students;
@@ -939,7 +970,7 @@ function renderDashboard() {
   const filterTutorWrap = document.getElementById("filterTutorWrap");
   const scopedStudents = getRoleScopedStudents();
 
-  if (currentUser.role === "tutor") {
+  if (isTutorOnly()) {
     filterTutorWrap.classList.add("hidden");
   } else {
     filterTutorWrap.classList.remove("hidden");
@@ -954,7 +985,7 @@ function renderDashboard() {
   // Умный фильтр курсов: у тютора отображается только курс его студентов (или реальные курсы его студентов),
   // а у админа и руководства — полноценное меню со всеми курсами (1–4)
   let courseOpts = [];
-  if (currentUser.role === "tutor") {
+  if (isTutorOnly()) {
     const tutorCourses = [...new Set(scopedStudents.map(s => String(s.course)).filter(Boolean))].sort();
     if (tutorCourses.length === 1) {
       dashFilters.course = tutorCourses[0];
@@ -1009,7 +1040,7 @@ function renderDashboard() {
   const dormCount = filtered.filter(s => s.housingType === "dorm").length;
   const employedCount = filtered.filter(s => s.employed === true).length;
 
-  const posts = currentUser.role === "tutor"
+  const posts = isTutorOnly()
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
     : (dashFilters.tutor !== "all" ? appState.tgPosts.filter(p => p.authorId === dashFilters.tutor) : appState.tgPosts);
 
@@ -1018,7 +1049,7 @@ function renderDashboard() {
 
   const activeMon = appState.monitoring.filter(m => {
     if (m.status !== "active") return false;
-    if (currentUser.role === "tutor" && m.tutorId !== currentUser.id) return false;
+    if (isTutorOnly() && m.tutorId !== currentUser.id) return false;
     if (dashFilters.tutor !== "all" && m.tutorId !== dashFilters.tutor) return false;
     return true;
   });
@@ -1057,17 +1088,17 @@ function renderCharts() {
     ? ["Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy"]
     : ["Июн", "Июл", "Авг", "Сен", "Окт", "Ноя"];
 
-  const visiblePosts = currentUser.role === "tutor"
+  const visiblePosts = isTutorOnly()
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
     : (dashFilters.tutor !== "all" ? appState.tgPosts.filter(p => p.authorId === dashFilters.tutor) : appState.tgPosts);
 
   const postsPerMonth = months.map(m => visiblePosts.filter(p => (p.date || "").startsWith(m)).length);
 
-  const visibleMon = currentUser.role === "tutor"
+  const visibleMon = isTutorOnly()
     ? appState.monitoring.filter(m => m.tutorId === currentUser.id)
     : (dashFilters.tutor !== "all" ? appState.monitoring.filter(m => m.tutorId === dashFilters.tutor) : appState.monitoring);
 
-  const visibleParents = currentUser.role === "tutor"
+  const visibleParents = isTutorOnly()
     ? appState.parentMeetings.filter(m => m.tutorId === currentUser.id)
     : (dashFilters.tutor !== "all" ? appState.parentMeetings.filter(m => m.tutorId === dashFilters.tutor) : appState.parentMeetings);
 
@@ -1283,9 +1314,9 @@ function renderStudentsSection() {
                     <td>${s.phone || "—"}</td>
                     <td style="text-align:right; white-space:nowrap;">
                       <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
-                      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
+                      ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-                      </button>
+                      </button>` : ""}
                     </td>
                   </tr>
                 `;
@@ -1326,7 +1357,7 @@ function renderStudentsSection() {
     `;
 
     if (!list.length) {
-      const emptyMsg = (activeHousingFilter === "dorm" && roomQuery && currentUser.role === "tutor")
+      const emptyMsg = (activeHousingFilter === "dorm" && roomQuery && isTutorOnly())
         ? t("Ваши студенты в данной комнате не проживают", "Sizning talabalaringiz uşbu xonada yaşamaydi")
         : t("По выбранному фильтру записей не найдено.", "Tanlangan filtr böyiça yozuvlar topilmadi.");
       area.innerHTML = `${filterButtons}<div class="empty-state">${emptyMsg}</div>`;
@@ -1626,7 +1657,7 @@ function openStudentModal(studentId = null) {
   document.getElementById("stFullName").value = st ? st.name : "";
   document.getElementById("stPhone").value = st ? st.phone : "";
 
-  const defaultTutorId = st ? st.tutorId : (currentUser.role === "tutor" ? currentUser.id : "tutor1");
+  const defaultTutorId = st ? st.tutorId : (isTutorOnly() ? currentUser.id : "tutor1");
 
   modalStudentState = {
     group: st ? (st.group || "") : "",
@@ -1834,9 +1865,9 @@ function renderFamilyMembersRows() {
       <input type="text" class="form-input" placeholder="${t("Ф.И.О.", "F.I.Ş.")}" value="${mem.name || ''}" onchange="tempFamilyMembers[${idx}].name = this.value" />
       <input type="text" class="form-input" placeholder="${t("Телефон", "Telefon")}" value="${mem.phone || ''}" onchange="tempFamilyMembers[${idx}].phone = this.value" />
       <input type="text" class="form-input" placeholder="${t("Место работы", "Iş joyi")}" value="${mem.work || ''}" onchange="tempFamilyMembers[${idx}].work = this.value" />
-      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="removeFamilyMemberRow(${idx}, this)" title="${t("Удалить", "Öçiriş")}">
+      ${canDeleteData(modalStudentState.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="removeFamilyMemberRow(${idx}, this)" title="${t("Удалить", "Öçiriş")}">
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
-      </button>
+      </button>` : "<div></div>"}
     </div>
   `).join("");
 
@@ -1855,6 +1886,7 @@ function addFamilyMemberRow() {
 }
 
 function removeFamilyMemberRow(idx, btnEl) {
+  if (!canDeleteData(modalStudentState.tutorId)) return;
   askConfirmDelete(btnEl, () => {
     tempFamilyMembers.splice(idx, 1);
     renderFamilyMembersRows();
@@ -1921,6 +1953,11 @@ function saveStudent() {
 }
 
 function deleteStudent(id, btnEl) {
+  const checkTarget = appState.students.find(s => s.id === id);
+  if (!checkTarget || !canDeleteData(checkTarget.tutorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     const target = appState.students.find(s => s.id === id);
     const ownerTutorId = target ? target.tutorId : null;
@@ -1945,7 +1982,7 @@ function runHemisImport() {
   }
   const lines = bulk.split("\n").filter(Boolean);
   let added = 0;
-  const targetTutorId = currentUser.role === "tutor" ? currentUser.id : "tutor1";
+  const targetTutorId = isTutorOnly() ? currentUser.id : "tutor1";
 
   lines.forEach((line, i) => {
     const parts = line.split("|").map(p => p.trim());
@@ -2275,7 +2312,7 @@ function renderTelegramSection() {
 
   renderReportTagSelect();
 
-  let posts = currentUser.role === "tutor"
+  let posts = isTutorOnly()
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
     : appState.tgPosts;
 
@@ -2301,9 +2338,9 @@ function renderTelegramSection() {
               <a href="${p.url}" target="_blank" style="color:var(--blue); font-weight:700; text-decoration:none;">${p.url}</a>
               <span class="st-meta"> • ${p.date}</span>
             </div>
-            <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTgPost('${p.id}', this)" title="${t("Удалить пост", "Postni öçiriş")}">
+            ${canDeleteData(p.authorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTgPost('${p.id}', this)" title="${t("Удалить пост", "Postni öçiriş")}">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-            </button>
+            </button>` : ""}
           </div>
           <p style="font-size:14px; white-space:pre-line;">${p.text}</p>
           <div class="checkbox-chips mt-10">
@@ -2403,6 +2440,11 @@ async function parseTelegramPost() {
 }
 
 function deleteTgPost(id, btnEl) {
+  const checkTarget = appState.tgPosts.find(p => p.id === id);
+  if (!checkTarget || !canDeleteData(checkTarget.authorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     const target = appState.tgPosts.find(p => p.id === id);
     const ownerAuthorId = target ? target.authorId : null;
@@ -2417,7 +2459,7 @@ function deleteTgPost(id, btnEl) {
 function getFilteredReportPosts() {
   const from = document.getElementById("reportDateFrom").value;
   const to = document.getElementById("reportDateTo").value;
-  let posts = currentUser.role === "tutor"
+  let posts = isTutorOnly()
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
     : appState.tgPosts;
 
@@ -2502,7 +2544,7 @@ function setDiarySubtab(sub) {
 function renderDiariesSection() {
   const area = document.getElementById("diariesContentArea");
   if (activeDiarySubtab === "monitoring") {
-    let list = currentUser.role === "tutor"
+    let list = isTutorOnly()
       ? appState.monitoring.filter(m => m.tutorId === currentUser.id)
       : appState.monitoring;
 
@@ -2531,9 +2573,9 @@ function renderDiariesSection() {
                   </div>
                   <div style="display:flex; align-items:center; gap:8px;">
                     <span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, rec.category)}</span>
-                    <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteMonitoringRecord('${rec.id}', this)" title="${t("Удалить карточку", "Kartani öçiriş")}">
+                    ${canDeleteData(rec.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteMonitoringRecord('${rec.id}', this)" title="${t("Удалить карточку", "Kartani öçiriş")}">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-                    </button>
+                    </button>` : ""}
                   </div>
                 </div>
 
@@ -2570,7 +2612,7 @@ function renderDiariesSection() {
   }
 
   // Вкладка: Работа с родителями
-  const meetings = currentUser.role === "tutor"
+  const meetings = isTutorOnly()
     ? appState.parentMeetings.filter(m => m.tutorId === currentUser.id)
     : appState.parentMeetings;
 
@@ -2596,9 +2638,9 @@ function renderDiariesSection() {
                 <div class="st-name">${m.studentName}</div>
                 <div class="st-meta">${m.date} • ${m.who}</div>
               </div>
-              <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
+              ${canDeleteData(m.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-              </button>
+              </button>` : ""}
             </div>
             <p style="font-size:13px;">${m.notes}</p>
           </div>
@@ -2739,6 +2781,11 @@ function reopenMonitoringRecord(recId) {
 }
 
 function deleteMonitoringRecord(id, btnEl) {
+  const checkTarget = appState.monitoring.find(m => m.id === id);
+  if (!checkTarget || !canDeleteData(checkTarget.tutorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     const target = appState.monitoring.find(m => m.id === id);
     const ownerTutorId = target ? target.tutorId : null;
@@ -2774,6 +2821,11 @@ function addParentMeeting() {
 }
 
 function deleteParentMeeting(id, btnEl) {
+  const checkTarget = appState.parentMeetings.find(m => m.id === id);
+  if (!checkTarget || !canDeleteData(checkTarget.tutorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     const target = appState.parentMeetings.find(m => m.id === id);
     const ownerTutorId = target ? target.tutorId : null;
@@ -2913,9 +2965,9 @@ function renderTodoList() {
         <input type="checkbox" ${td.done ? "checked" : ""} onchange="toggleTodoItem('${td.id}')" />
         <span class="todo-text">${td.text}</span>
       </label>
-      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTodoItem('${td.id}', this)" title="${t("Удалить задачу", "Vazifani öçiriş")}">
+      ${canDeleteData(td.userId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTodoItem('${td.id}', this)" title="${t("Удалить задачу", "Vazifani öçiriş")}">
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-      </button>
+      </button>` : ""}
     </div>
   `).join("");
 }
@@ -2949,6 +3001,11 @@ function toggleTodoItem(todoId) {
 }
 
 function deleteTodoItem(todoId, btnEl) {
+  const checkItem = appState.todos.find(td => td.id === todoId);
+  if (!checkItem || !canDeleteData(checkItem.userId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     appState.todos = appState.todos.filter(td => td.id !== todoId);
     saveState();
@@ -3003,9 +3060,9 @@ function renderCalendarAndBlog() {
             <div style="font-weight:700; font-size:13px;"><span style="color:${ev.color}">●</span> ${ev.time} — ${ev.title}</div>
             <div class="st-meta">${ev.desc || ""}</div>
           </div>
-          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteCalendarEvent('${ev.id}', this)" title="${t("Удалить событие", "Tadbirni öçiriş")}">
+          ${canDeleteData(ev.userId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteCalendarEvent('${ev.id}', this)" title="${t("Удалить событие", "Tadbirni öçiriş")}">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-          </button>
+          </button>` : ""}
         </div>
       `).join("")
     : `<div class="st-meta">${t("На выбранную дату событий пока не запланировано.", "Tanlangan sanaga tadbirlar hozirça rejalashtirilmagan.")}</div>`;
@@ -3022,9 +3079,9 @@ function renderCalendarAndBlog() {
             <div class="st-meta mb-8">${b.date}</div>
             <div style="font-size:13px;">${b.body}</div>
           </div>
-          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteBlogPost('${b.id}', this)" title="${t("Удалить запись", "Qaydni öçiriş")}">
+          ${canDeleteData(b.userId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteBlogPost('${b.id}', this)" title="${t("Удалить запись", "Qaydni öçiriş")}">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-          </button>
+          </button>` : ""}
         </div>
       `).join("")
     : `<div class="st-meta">${t("Личный дневник пока пуст.", "Şaxsiy kundalik hozirça böş.")}</div>`;
@@ -3081,6 +3138,11 @@ function saveCalendarEvent() {
 }
 
 function deleteCalendarEvent(id, btnEl) {
+  const checkEv = appState.calendarEvents.find(ev => ev.id === id);
+  if (!checkEv || !canDeleteData(checkEv.userId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     appState.calendarEvents = appState.calendarEvents.filter(ev => ev.id !== id);
     saveState();
@@ -3108,6 +3170,11 @@ function addBlogPost() {
 }
 
 function deleteBlogPost(id, btnEl) {
+  const checkPost = appState.blogPosts.find(b => b.id === id);
+  if (!checkPost || !canDeleteData(checkPost.userId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     appState.blogPosts = appState.blogPosts.filter(b => b.id !== id);
     saveState();
@@ -3119,6 +3186,7 @@ function deleteBlogPost(id, btnEl) {
 // ==================== 7. АДМИНИСТРИРОВАНИЕ ПРОФИЛЕЙ И ПАРОЛЕЙ ====================
 let newUserRole = "tutor";
 let editingUserId = null;
+let editingUserRole = "tutor";
 
 function syncUsersToGoogleDrive() {
   if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
@@ -3132,57 +3200,83 @@ function syncUsersToGoogleDrive() {
   }).catch(() => {});
 }
 
+function getUserRoleOptions() {
+  return USER_ROLES.map(r => ({
+    value: r.value,
+    label: currentLang === "oz" ? r.oz : r.ru
+  }));
+}
+
+function updateNewUserRoleVisibility() {
+  const groupsGroup = document.getElementById("nuGroupsGroup");
+  const partialWrap = document.getElementById("nuPartialAdminWrap");
+  if (groupsGroup) groupsGroup.classList.toggle("hidden", newUserRole !== "tutor");
+  if (partialWrap) partialWrap.classList.toggle("hidden", newUserRole === "admin");
+}
+
+function updateEditUserRoleVisibility() {
+  const groupsGroup = document.getElementById("euGroupsGroup");
+  const partialWrap = document.getElementById("euPartialAdminWrap");
+  if (groupsGroup) groupsGroup.classList.toggle("hidden", editingUserRole !== "tutor");
+  if (partialWrap) partialWrap.classList.toggle("hidden", editingUserRole === "admin");
+}
+
 function ensureEditUserModal() {
-  if (document.getElementById("editUserModal")) return;
+  const existing = document.getElementById("editUserModal");
+  if (existing) existing.remove();
 
   const modalHtml = `
-    <div id="editUserModal" class="modal-backdrop hidden" style="position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;">
-      <div class="modal-card" style="background:var(--surface, #ffffff); color:var(--text, #0f172a); border-radius:16px; width:100%; max-width:480px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.25);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
-          <h3 style="margin:0; font-size:18px; font-weight:700;">${t("Редактирование профиля", "Profilni tahrirlaş")}</h3>
-          <button type="button" onclick="closeEditUserModal()" aria-label="Закрыть" style="background:transparent; border:none; cursor:pointer; color:inherit; padding:4px; display:inline-flex; align-items:center; justify-content:center;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+    <div id="editUserModal" class="modal-backdrop hidden">
+      <div class="modal-box">
+        <div class="modal-head">
+          <h3 class="modal-title">${t("Редактирование профиля", "Profilni tahrirlaş")}</h3>
+          <button type="button" class="icon-circle-btn sm" onclick="closeEditUserModal()" aria-label="${t("Закрыть", "Yopiş")}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
           </button>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:12px;">
-          <div>
-            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Ф.И.О. сотрудника", "Xodimning F.I.Ş.")}</label>
-            <input type="text" id="euName" class="form-input" style="width:100%;" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">${t("Ф.И.О. сотрудника", "Xodimning F.I.Ş.")}</label>
+            <input type="text" id="euName" class="form-input" />
           </div>
 
-          <div>
-            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Роль в системе", "Tizimdagi roli")}</label>
-            <select id="euRole" class="form-input" style="width:100%;">
-              <option value="tutor">${t("Тютор", "Tyutor")}</option>
-              <option value="management">${t("Руководство / Отдел", "Rahbariyat / Bölim")}</option>
-              <option value="admin">${t("Главный администратор", "Boş administrator")}</option>
-            </select>
-          </div>
-
-          <div>
-            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Закрепленные группы", "Biriktirilgan guruhlar")}</label>
-            <input type="text" id="euGroups" class="form-input" style="width:100%;" />
-          </div>
-
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-            <div>
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Логин", "Login")}</label>
-              <input type="text" id="euLogin" class="form-input" style="width:100%;" />
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">${t("Логин", "Login")}</label>
+              <input type="text" id="euLogin" class="form-input" />
             </div>
-            <div>
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Пароль", "Parol")}</label>
-              <input type="text" id="euPass" class="form-input" style="width:100%;" />
+            <div class="form-group">
+              <label class="form-label">${t("Пароль", "Parol")}</label>
+              <input type="text" id="euPass" class="form-input" />
             </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label class="form-label">${t("Роль в системе", "Tizimdagi roli")}</label>
+              <div class="custom-select drop-up" id="euRoleWrap"></div>
+            </div>
+            <div class="form-group" id="euGroupsGroup">
+              <label class="form-label">${t("Закрепленные группы", "Biriktirilgan guruhlar")}</label>
+              <input type="text" id="euGroups" class="form-input" placeholder="TR-401, TR-402" />
+            </div>
+          </div>
+
+          <div class="form-group mt-6" id="euPartialAdminWrap">
+            <label class="perm-checkbox-card">
+              <input type="checkbox" id="euPartialAdmin" />
+              <div>
+                <div class="perm-title">${t("Частичные права администратора", "Qisman administrator huquqlari")}</div>
+                <div class="perm-desc">${t("Полный доступ к управлению и удалению данных, но без вкладки «Пользователи»", "Ma’lumotlarni boşqariş va öçirişga töliq ruxsat, lekin «Foydalanuvçilar» bölimisiz")}</div>
+              </div>
+            </label>
           </div>
         </div>
 
-        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
-          <button type="button" class="btn-export" onclick="closeEditUserModal()" style="background:transparent; border:1px solid var(--border, #cbd5e1); color:inherit;">${t("Отмена", "Bekor qiliş")}</button>
-          <button type="button" class="btn-export" onclick="saveEditedUser()" style="display:inline-flex; align-items:center; gap:6px;">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
-            <span>${t("Сохранить изменения", "Özgarishlarni saqlaş")}</span>
-          </button>
+        <div class="modal-foot">
+          <button type="button" class="btn-ghost" onclick="closeEditUserModal()">${t("Отмена", "Bekor qiliş")}</button>
+          <button type="button" class="btn-orange" onclick="saveEditedUser()">${t("Сохранить изменения", "Özgarishlarni saqlaş")}</button>
         </div>
       </div>
     </div>
@@ -3192,42 +3286,51 @@ function ensureEditUserModal() {
 }
 
 function openEditUserModal(userId) {
+  if (!isFullAdmin()) return;
   const u = appState.users.find(x => x.id === userId);
   if (!u) return;
 
   ensureEditUserModal();
   editingUserId = userId;
+  editingUserRole = u.role || "tutor";
 
   document.getElementById("euName").value = u.name || "";
-  document.getElementById("euRole").value = u.role || "tutor";
-  document.getElementById("euGroups").value = u.groups || "";
+  document.getElementById("euGroups").value = (u.role === "tutor" && u.groups !== "Все группы") ? (u.groups || "") : "";
   document.getElementById("euLogin").value = u.login || "";
   document.getElementById("euPass").value = u.pass || "";
+  document.getElementById("euPartialAdmin").checked = !!u.partialAdmin;
 
-  const modal = document.getElementById("editUserModal");
-  modal.classList.remove("hidden");
-  modal.style.display = "flex";
+  const roleOpts = getUserRoleOptions();
+  const onEditRoleChange = (v) => {
+    editingUserRole = v;
+    renderCustomSelect("euRoleWrap", roleOpts, v, onEditRoleChange);
+    updateEditUserRoleVisibility();
+  };
+  renderCustomSelect("euRoleWrap", roleOpts, editingUserRole, onEditRoleChange);
+  updateEditUserRoleVisibility();
+
+  document.getElementById("editUserModal").classList.remove("hidden");
 }
 
 function closeEditUserModal() {
   editingUserId = null;
   const modal = document.getElementById("editUserModal");
-  if (modal) {
-    modal.classList.add("hidden");
-    modal.style.display = "none";
-  }
+  if (modal) modal.classList.add("hidden");
 }
 
 function saveEditedUser() {
-  if (!editingUserId) return;
+  if (!isFullAdmin() || !editingUserId) return;
   const u = appState.users.find(x => x.id === editingUserId);
   if (!u) return;
 
   const name = document.getElementById("euName").value.trim();
-  const role = document.getElementById("euRole").value;
-  const groups = document.getElementById("euGroups").value.trim() || t("Не назначены", "Biriktirilmagan");
+  const role = editingUserRole;
+  const groups = role === "tutor"
+    ? (document.getElementById("euGroups").value.trim() || t("Не назначены", "Biriktirilmagan"))
+    : "Все группы";
   const login = document.getElementById("euLogin").value.trim();
   const pass = document.getElementById("euPass").value.trim();
+  const partialAdmin = role !== "admin" && !!document.getElementById("euPartialAdmin")?.checked;
 
   if (!name || !login || !pass) {
     showToast(t("Заполните Ф.И.О., логин и пароль", "F.I.Ş., login va parolni töldiring"));
@@ -3240,22 +3343,18 @@ function saveEditedUser() {
     return;
   }
 
-  const roleTitles = {
-    tutor: "Тютор",
-    management: "Руководство / Отдел",
-    admin: "Главный администратор"
-  };
-
+  const foundRole = USER_ROLES.find(r => r.value === role);
   u.name = name;
   u.role = role;
-  u.roleTitle = roleTitles[role] || u.roleTitle || "Тютор";
+  u.roleTitle = foundRole ? foundRole.ru : (u.roleTitle || "Тютор");
   u.groups = groups;
   u.login = login;
   u.pass = pass;
+  u.partialAdmin = partialAdmin;
 
   if (currentUser && currentUser.id === u.id) {
     currentUser = u;
-    document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
+    document.getElementById("navUsersBtn").classList.toggle("hidden", !isFullAdmin());
     updateHeaderAndGreeting();
   }
 
@@ -3284,8 +3383,11 @@ function renderUsersAdminTable() {
       ${appState.users.map(u => `
         <tr>
           <td><strong>${u.name}</strong></td>
-          <td>${localizeRoleTitle(u.role, u.roleTitle)}</td>
-          <td>${u.groups}</td>
+          <td>
+            <span>${localizeRoleTitle(u.role, u.roleTitle)}</span>
+            ${u.partialAdmin && u.role !== "admin" ? `<span class="badge-pill partial-admin">${t("Част. админ", "Qisman admin")}</span>` : ""}
+          </td>
+          <td>${u.role === "tutor" ? (u.groups || "—") : `<span class="st-meta">—</span>`}</td>
           <td><code>${u.login}</code></td>
           <td>
             <div style="display:flex; gap:6px; align-items:center;">
@@ -3299,7 +3401,7 @@ function renderUsersAdminTable() {
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>
               <span>${t("Изменить", "Tahrirlaş")}</span>
             </button>
-            ${u.id !== "admin" ? `
+            ${u.id !== "admin" && isFullAdmin() ? `
               <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteUserAccount('${u.id}', this)" title="${t("Удалить профиль", "Profilni öçiriş")}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
               </button>
@@ -3312,6 +3414,7 @@ function renderUsersAdminTable() {
 }
 
 function updateUserPassword(userId) {
+  if (!isFullAdmin()) return;
   const u = appState.users.find(x => x.id === userId);
   const newPass = document.getElementById(`passField_${userId}`).value.trim();
   if (!u || !newPass) return;
@@ -3322,24 +3425,35 @@ function updateUserPassword(userId) {
 }
 
 function openNewUserModal() {
-  const roleOpts = [
-    { value: "tutor", label: t("Тютор", "Tyutor") },
-    { value: "management", label: t("Руководство / Отдел", "Rahbariyat / Bölim") },
-    { value: "admin", label: t("Администратор", "Administrator") }
-  ];
+  if (!isFullAdmin()) return;
+  newUserRole = "tutor";
+  document.getElementById("nuName").value = "";
+  document.getElementById("nuLogin").value = "";
+  document.getElementById("nuPass").value = "";
+  document.getElementById("nuGroups").value = "";
+  const paCheck = document.getElementById("nuPartialAdmin");
+  if (paCheck) paCheck.checked = false;
+
+  const roleOpts = getUserRoleOptions();
   const onRoleChange = (v) => {
     newUserRole = v;
     renderCustomSelect("nuRoleWrap", roleOpts, v, onRoleChange);
+    updateNewUserRoleVisibility();
   };
   renderCustomSelect("nuRoleWrap", roleOpts, newUserRole, onRoleChange);
+  updateNewUserRoleVisibility();
   document.getElementById("newUserModal").classList.remove("hidden");
 }
 
 function createNewUser() {
+  if (!isFullAdmin()) return;
   const name = document.getElementById("nuName").value.trim();
   const login = document.getElementById("nuLogin").value.trim();
   const pass = document.getElementById("nuPass").value.trim();
-  const groups = document.getElementById("nuGroups").value.trim() || t("Не назначены", "Biriktirilmagan");
+  const groups = newUserRole === "tutor"
+    ? (document.getElementById("nuGroups").value.trim() || t("Не назначены", "Biriktirilmagan"))
+    : "Все группы";
+  const partialAdmin = newUserRole !== "admin" && !!document.getElementById("nuPartialAdmin")?.checked;
 
   if (!name || !login || !pass) {
     showToast(t("Заполните Ф.И.О., логин и пароль", "F.I.Ş., login va parolni töldiring"));
@@ -3350,14 +3464,15 @@ function createNewUser() {
     return;
   }
 
-  const roleTitles = { tutor: "Тютор", management: "Руководство", admin: "Администратор" };
+  const foundRole = USER_ROLES.find(r => r.value === newUserRole);
   appState.users.push({
     id: `user_${Date.now()}`,
     login,
     pass,
     name,
     role: newUserRole,
-    roleTitle: roleTitles[newUserRole],
+    roleTitle: foundRole ? foundRole.ru : "Тютор",
+    partialAdmin,
     dept: "Университет туризма",
     groups,
     driveFolder: `MyTutors_Private_${login}`,
@@ -3372,6 +3487,10 @@ function createNewUser() {
 }
 
 function deleteUserAccount(userId, btnEl) {
+  if (!isFullAdmin()) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
   askConfirmDelete(btnEl, () => {
     appState.users = appState.users.filter(u => u.id !== userId);
     saveState();
