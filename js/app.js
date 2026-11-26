@@ -366,37 +366,93 @@ let _cachedCountries = null;
 // Загружаем точный международный справочник стран (ISO-3166) без опечаток
 function getWorldCountriesList() {
   if (_cachedCountries) return _cachedCountries;
-  const isoCodes = [
-    "AF","AL","DZ","AD","AO","AR","AM","AU","AT","AZ","BH","BD","BY","BE","BO","BA","BR","BG",
-    "KH","CM","CA","CL","CN","CO","CR","HR","CU","CY","CZ","DK","DO","EC","EG","EE","ET","FI",
-    "FR","GE","DE","GH","GR","GT","HN","HU","IS","IN","ID","IR","IQ","IE","IL","IT","JP","JO",
-    "KZ","KE","KW","KG","LA","LV","LB","LY","LT","LU","MY","MV","MT","MX","MD","MC","MN","ME",
-    "MA","MM","NP","NL","NZ","NG","KP","MK","NO","OM","PK","PS","PA","PY","PE","PH","PL","PT",
-    "QA","RO","RU","SA","SN","RS","SG","SK","SI","ZA","KR","ES","LK","SD","SE","CH","SY","TW",
-    "TJ","TZ","TH","TN","TR","TM","UA","AE","GB","US","UY","VE","VN","YE","ZM","ZW"
+  const list = [
+    ["Afğoniston", "афганистан afghanistan"],
+    ["AQŞ", "сша америка usa united states"],
+    ["Armaniston", "армения armenia"],
+    ["Avstraliya", "австралия australia"],
+    ["Avstriya", "австрия austria"],
+    ["Bahrayn", "бахрейн bahrain"],
+    ["Bangladeş", "бангладеш bangladesh"],
+    ["Belarus", "беларусь белоруссия belarus"],
+    ["Belgiya", "бельгия belgium"],
+    ["Birlaşgan Arab Amirliklari (BAA)", "оаэ эмираты uae dubai"],
+    ["Bolgariya", "болгария bulgaria"],
+    ["Braziliya", "бразилия brazil"],
+    ["Buyuk Britaniya", "великобритания англия uk britain"],
+    ["Çexiya", "чехия czech"],
+    ["Daniya", "дания denmark"],
+    ["Eron", "иран iran"],
+    ["Estoniya", "эстония estonia"],
+    ["Filippin", "филиппины philippines"],
+    ["Finlandiya", "финляндия finland"],
+    ["Fransiya", "франция france"],
+    ["Germaniya", "германия germany"],
+    ["Gretsiya", "греция greece"],
+    ["Gruziya", "грузия georgia"],
+    ["Hindiston", "индия india"],
+    ["Indoneziya", "индонезия indonesia"],
+    ["Iordaniya", "иордания jordan"],
+    ["Iroq", "ирак iraq"],
+    ["Irlandiya", "ирландия ireland"],
+    ["Ispaniya", "испания spain"],
+    ["Isroil", "израиль israel"],
+    ["Italiya", "италия italy"],
+    ["Janubiy Koreya", "южная корея south korea"],
+    ["Kanada", "канада canada"],
+    ["Kipr", "кипр cyprus"],
+    ["Kuba", "куба cuba"],
+    ["Kuvayt", "кувейт kuwait"],
+    ["Latviya", "латвия latvia"],
+    ["Litva", "литва lithuania"],
+    ["Livan", "ливан lebanon"],
+    ["Malayziya", "малайзия malaysia"],
+    ["Marokaş", "марокко morocco"],
+    ["Meksika", "мексика mexico"],
+    ["Misr", "египет egypt"],
+    ["Moldova", "молдова moldova"],
+    ["Möğuliston", "монголия mongolia"],
+    ["Nepal", "непал nepal"],
+    ["Niderlandiya", "нидерланды голландия netherlands"],
+    ["Norvegiya", "норвегия norway"],
+    ["Ozarbayjon", "азербайджан azerbaijan"],
+    ["Pokiston", "пакистан pakistan"],
+    ["Polşa", "польша poland"],
+    ["Portugaliya", "португалия portugal"],
+    ["Qatar", "катар qatar"],
+    ["Qirğiziston", "кыргызстан киргизия kyrgyzstan"],
+    ["Qozoğiston", "казахстан kazakhstan"],
+    ["Rossiya", "россия russia"],
+    ["Ruminiya", "румыния romania"],
+    ["Saudiya Arabistoni", "саудовская аравия saudi arabia"],
+    ["Serbiya", "сербия serbia"],
+    ["Singapur", "сингапур singapore"],
+    ["Slovakiya", "словакия slovakia"],
+    ["Sloveniya", "словения slovenia"],
+    ["Suriya", "сирия syria"],
+    ["Şimoliy Koreya", "северная корея north korea"],
+    ["Şvetsariya", "швейцария switzerland"],
+    ["Şvetsiya", "швеция sweden"],
+    ["Tailand", "таиланд thailand"],
+    ["Tojikiston", "таджикистан tajikistan"],
+    ["Tunis", "тунис tunisia"],
+    ["Turkiya", "турция turkey"],
+    ["Turkmaniston", "туркменистан туркмения turkmenistan"],
+    ["Ukraina", "украина ukraine"],
+    ["Ummon", "оман oman"],
+    ["Vengriya", "венгрия hungary"],
+    ["Vyetnam", "вьетнам vietnam"],
+    ["Xitoy", "китай china"],
+    ["Xorvatiya", "хорватия croatia"],
+    ["Yaman", "йемен yemen"],
+    ["Yangi Zelandiya", "новая зеландия new zealand"],
+    ["Yaponiya", "япония japan"]
   ];
-  try {
-    const dnUz = new Intl.DisplayNames(["uz-Latn"], { type: "region" });
-    const dnRu = new Intl.DisplayNames(["ru"], { type: "region" });
-    const dnEn = new Intl.DisplayNames(["en"], { type: "region" });
-    _cachedCountries = isoCodes.map(code => {
-      const uz = convertUzbekLatinText(dnUz.of(code) || code);
-      const ru = dnRu.of(code) || uz;
-      const en = dnEn.of(code) || uz;
-      return { value: uz, label: uz, search: `${uz} ${ru} ${en}`.toLowerCase() };
-    }).sort((a, b) => a.label.localeCompare(b.label));
-  } catch (e) {
-    _cachedCountries = [
-      { value: "Xitoy", label: "Xitoy", search: "xitoy китай china" },
-      { value: "Hindiston", label: "Hindiston", search: "hindiston индия india" },
-      { value: "Rossiya", label: "Rossiya", search: "rossiya россия russia" },
-      { value: "Qozoğiston", label: "Qozoğiston", search: "qozoğiston казахстан kazakhstan" },
-      { value: "Tojikiston", label: "Tojikiston", search: "tojikiston таджикистан tajikistan" },
-      { value: "Qirğiziston", label: "Qirğiziston", search: "qirğiziston кыргызстан kyrgyzstan" },
-      { value: "Turkmaniston", label: "Turkmaniston", search: "turkmaniston туркменистан turkmenistan" },
-      { value: "Turkiya", label: "Turkiya", search: "turkiya турция turkey" }
-    ];
-  }
+  _cachedCountries = list.map(([uz, kw]) => ({
+    value: uz,
+    label: uz,
+    search: `${uz} ${kw}`.toLowerCase()
+  }));
   return _cachedCountries;
 }
 
@@ -2029,8 +2085,8 @@ function openStudentModal(studentId = null) {
 
 function renderEmploymentSelector(st = null) {
   const empOpts = [
-    { value: "no", label: t("Не трудоустроен", "Işlamaydi (Band emas)") },
-    { value: "yes", label: t("Трудоустроен", "Işlaydi (Trudoustroen)") }
+    { value: "no", label: t("Не трудоустроен", "Işlamaydi") },
+    { value: "yes", label: t("Трудоустроен", "Işlaydi") }
   ];
   renderCustomSelect("stEmploymentStatusWrap", empOpts, modalStudentState.employed, (val) => {
     modalStudentState.employed = val;
