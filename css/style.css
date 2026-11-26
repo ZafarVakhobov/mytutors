@@ -1324,3 +1324,176 @@ body.dark .subtab-btn.active {
   .kpi-grid, .cards-grid-3, .diary-grid, .form-grid-2, .form-grid-3 { grid-template-columns: 1fr; }
   .family-row { grid-template-columns: 1fr; }
 }
+
+
+/* ==================== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ: ВЫПАДАЮЩЕЕ МЕНЮ ПРОФИЛЯ И TO-DO ==================== */
+.user-dropdown-wrap {
+  position: relative;
+}
+
+.user-pill {
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.user-pill:hover {
+  border-color: var(--accent);
+}
+
+.user-pill-caret {
+  color: var(--text-muted);
+  margin-left: 2px;
+  transition: transform 0.2s ease;
+}
+
+.user-dropdown-wrap.open .user-pill-caret {
+  transform: rotate(180deg);
+}
+
+.user-avatar {
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 268px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: var(--shadow-md);
+  z-index: 400;
+  animation: popIn 0.16s ease-out;
+}
+
+.ud-drive-card {
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ud-drive-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.status-dot.static {
+  position: static;
+  box-shadow: none;
+  flex-shrink: 0;
+}
+
+.ud-drive-folder {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  word-break: break-all;
+}
+
+.ud-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 8px 0;
+}
+
+.ud-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 11px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.ud-menu-item:hover {
+  background: var(--surface-alt);
+}
+
+.ud-menu-item.danger {
+  color: var(--danger);
+}
+
+.ud-menu-item.danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* To-Do список в разделе Календарь и Блог */
+.todo-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.todo-check-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  flex: 1;
+}
+
+.todo-check-label input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.todo-item-row.done .todo-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.badge-pill.work {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--emerald);
+}
+
+.badge-pill.unemployed {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--text-muted);
+}
