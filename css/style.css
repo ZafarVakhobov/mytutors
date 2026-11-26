@@ -1964,3 +1964,77 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   width: 100%;
   max-width: none;
 }
+
+
+/* ==================== КОЛЛАБОРАЦИЯ В ПОСТАХ TELEGRAM ==================== */
+.tg-collab-row {
+  margin-top: 12px;
+}
+
+#tgCollabSelectWrap .cs-menu {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+  padding: 8px;
+}
+
+.post-collab-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.collab-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+}
+
+.collab-pill.clickable {
+  cursor: pointer;
+  border-color: rgba(37, 99, 235, 0.28);
+  background: rgba(37, 99, 235, 0.09);
+  color: var(--blue);
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.collab-pill.clickable:hover,
+.collab-pill.clickable.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+}
+
+.collab-pill.custom-static {
+  cursor: default;
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
+.tg-author-filter-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, 0.08);
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  font-size: 13px;
+  color: var(--text);
+}
