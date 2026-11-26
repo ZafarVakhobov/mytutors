@@ -303,8 +303,8 @@ const DEFAULT_USERS = [
 ];
 
 const TG_TAGS = [
-  "#Ma'rifatUlashib", "#YashilMakon", "#HealthWeek", "#BeshTashabbus",
-  "#Munozara", "#YoshlarKuni", "#TalabalarHayoti", "#Ekologiya", "#Sport"
+  "#Ma’rifatUlaşib", "#YaşilMakon", "#HealthWeek", "#BeşTaşabbus",
+  "#Munozara", "#YoşlarKuni", "#TalabalarHayoti", "#Ekologiya", "#Sport"
 ];
 
 const SOCIAL_CATEGORIES = [
@@ -421,7 +421,9 @@ function sanitizeAppState(rawObj) {
     schedule: deduplicateById(base.schedule || []),
     calendarEvents: deduplicateById(base.calendarEvents || []),
     blogPosts: deduplicateById(base.blogPosts || []),
-    todos: deduplicateById(base.todos || [])
+    todos: deduplicateById(base.todos || []),
+    customTags: Array.isArray(base.customTags) ? [...new Set(base.customTags.filter(Boolean))] : [],
+    recentTags: Array.isArray(base.recentTags) ? [...new Set(base.recentTags.filter(Boolean))] : []
   };
 }
 
@@ -448,7 +450,9 @@ function buildPayloadForCurrentUser() {
       schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === currentUser.id),
       calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
       blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
-      todos: appState.todos.filter(td => td.userId === currentUser.id)
+      todos: appState.todos.filter(td => td.userId === currentUser.id),
+      customTags: appState.customTags || [],
+      recentTags: appState.recentTags || []
     };
   }
   // Для админа/руководства: сохраняем их личные записи (календарь, блог, todo, посты без привязки к тютору)
@@ -461,7 +465,9 @@ function buildPayloadForCurrentUser() {
     schedule: appState.schedule,
     calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
     blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
-    todos: appState.todos.filter(td => td.userId === currentUser.id)
+    todos: appState.todos.filter(td => td.userId === currentUser.id),
+    customTags: appState.customTags || [],
+    recentTags: appState.recentTags || []
   };
 }
 
@@ -560,6 +566,13 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest("#userDropdownWrap")) {
     closeUserDropdown();
   }
+  if (!e.target.closest(".tg-all-tags-dropdown")) {
+    document.querySelectorAll(".tg-all-tags-dropdown.open").forEach(el => el.classList.remove("open"));
+  }
+  if (!e.target.closest(".custom-tag-inline-wrap")) {
+    const ac = document.getElementById("customTagAutocomplete");
+    if (ac) ac.classList.add("hidden");
+  }
 });
 
 // ==================== ВЫПАДАЮЩЕЕ МЕНЮ ПРОФИЛЯ В ШАПКЕ ====================
@@ -657,7 +670,9 @@ async function loadFromGoogleDrive() {
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
-          todos: (incoming.todos || []).filter(td => td.userId === currentUser.id)
+          todos: (incoming.todos || []).filter(td => td.userId === currentUser.id),
+          customTags: incoming.customTags || appState.customTags || [],
+          recentTags: incoming.recentTags || appState.recentTags || []
         });
       } else {
         // Админ/руководство получает объединенный и дедуплицированный реестр по всем папкам
@@ -670,7 +685,9 @@ async function loadFromGoogleDrive() {
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
-          todos: (incoming.todos || []).filter(td => td.userId === currentUser.id)
+          todos: (incoming.todos || []).filter(td => td.userId === currentUser.id),
+          customTags: incoming.customTags || appState.customTags || [],
+          recentTags: incoming.recentTags || appState.recentTags || []
         });
       }
 
@@ -1954,24 +1971,297 @@ function runHemisImport() {
 // ==================== 3. TELEGRAM И ОТЧЕТЫ GOOGLE DOCS ====================
 const TELEGRAM_WORKER_URL = "https://mytutors-parser.lanigirodesigner.workers.dev";
 let reportSelectedTag = "all";
+let isCustomTagInputOpen = false;
+let tgAllTagsSearchQuery = "";
+let reportTagSearchQuery = "";
+
+function normalizeTagInput(raw) {
+  let cleaned = String(raw || "").trim().replace(/\s+/g, "");
+  if (!cleaned) return "";
+  if (!cleaned.startsWith("#")) cleaned = "#" + cleaned;
+  return cleaned;
+}
+
+function getAllKnownTags() {
+  const set = new Set(TG_TAGS);
+  (appState.customTags || []).forEach(tg => { if (tg) set.add(tg); });
+  (appState.tgPosts || []).forEach(p => {
+    (p.tags || []).forEach(tg => { if (tg) set.add(tg); });
+  });
+  return [...set];
+}
+
+function getTop5RecentTags() {
+  const ordered = [];
+  const addUnique = (tg) => {
+    if (tg && !ordered.includes(tg)) ordered.push(tg);
+  };
+  (appState.recentTags || []).forEach(addUnique);
+  const sortedPosts = [...(appState.tgPosts || [])].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  sortedPosts.forEach(p => (p.tags || []).forEach(addUnique));
+  TG_TAGS.forEach(addUnique);
+  return ordered.slice(0, 5);
+}
+
+function recordRecentTags(tagsArr) {
+  if (!Array.isArray(tagsArr) || !tagsArr.length) return;
+  const current = appState.recentTags || [];
+  const merged = [...tagsArr.filter(Boolean), ...current.filter(tg => !tagsArr.includes(tg))];
+  appState.recentTags = merged.slice(0, 30);
+}
+
+function openCustomTagInput() {
+  isCustomTagInputOpen = true;
+  renderNewPostTagsArea();
+  const inp = document.getElementById("customTagInput");
+  if (inp) {
+    inp.focus();
+    updateCustomTagAutocomplete();
+  }
+}
+
+function closeCustomTagInput() {
+  isCustomTagInputOpen = false;
+  renderNewPostTagsArea();
+}
+
+function addOrSelectCustomTag(rawVal) {
+  const tag = normalizeTagInput(rawVal);
+  if (!tag || tag === "#") return;
+
+  if (!TG_TAGS.includes(tag) && !(appState.customTags || []).includes(tag)) {
+    appState.customTags = [tag, ...(appState.customTags || [])];
+  }
+  if (!selectedNewPostTags.includes(tag)) {
+    selectedNewPostTags.push(tag);
+  }
+  recordRecentTags([tag]);
+  saveState();
+  isCustomTagInputOpen = false;
+  renderTelegramSection();
+}
+
+function updateCustomTagAutocomplete() {
+  const inp = document.getElementById("customTagInput");
+  const menu = document.getElementById("customTagAutocomplete");
+  if (!inp || !menu) return;
+
+  const q = inp.value.trim().toLowerCase().replace(/^#/, "");
+  const allTags = getAllKnownTags();
+  const matches = q
+    ? allTags.filter(tg => tg.toLowerCase().replace(/^#/, "").includes(q))
+    : allTags.slice(0, 8);
+
+  const normalizedInput = normalizeTagInput(inp.value);
+  const exactExists = allTags.some(tg => tg.toLowerCase() === normalizedInput.toLowerCase());
+
+  let html = matches.slice(0, 8).map(tg => `
+    <div class="tag-ac-item" onmousedown="event.preventDefault(); addOrSelectCustomTag('${tg.replace(/'/g, "\'")}')">
+      <span>${tg}</span>
+      ${selectedNewPostTags.includes(tg) ? '<span style="color:var(--accent)">✓</span>' : ''}
+    </div>
+  `).join("");
+
+  if (normalizedInput && normalizedInput !== "#" && !exactExists) {
+    html += `
+      <div class="tag-ac-item create-new" onmousedown="event.preventDefault(); addOrSelectCustomTag('${normalizedInput.replace(/'/g, "\'")}')">
+        <span>+ ${t("Добавить тег", "Yangi teg qöşiş")}: <strong>${normalizedInput}</strong></span>
+      </div>
+    `;
+  }
+
+  if (!html) {
+    menu.classList.add("hidden");
+  } else {
+    menu.innerHTML = html;
+    menu.classList.remove("hidden");
+  }
+}
+
+function renderNewPostTagsArea() {
+  const wrap = document.getElementById("tgNewPostTags");
+  if (!wrap) return;
+
+  // Базовые теги + выбранные пользователем кастомные теги (чтобы не перегружать форму)
+  const extraSelected = selectedNewPostTags.filter(tg => !TG_TAGS.includes(tg));
+  const chipsToShow = [...TG_TAGS, ...extraSelected];
+
+  const chipsHtml = chipsToShow.map(tag => `
+    <div class="tag-chip ${selectedNewPostTags.includes(tag) ? 'active' : ''}" onclick="toggleNewPostTag('${tag.replace(/'/g, "\'")}')">${tag}</div>
+  `).join("");
+
+  const customControlHtml = isCustomTagInputOpen
+    ? `
+      <div class="custom-tag-inline-wrap">
+        <input type="text" id="customTagInput" class="custom-tag-input" placeholder="${t("Введите #тег...", "#teg kiriting...")}" oninput="updateCustomTagAutocomplete()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addOrSelectCustomTag(this.value);} else if(event.key==='Escape'){closeCustomTagInput();}" />
+        <button type="button" class="tag-chip custom-tag-btn" onclick="addOrSelectCustomTag(document.getElementById('customTagInput').value)">+</button>
+        <div id="customTagAutocomplete" class="tag-autocomplete-menu hidden"></div>
+      </div>
+    `
+    : `
+      <button type="button" class="tag-chip custom-tag-btn" onclick="openCustomTagInput()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+        <span>${t("Свой тег", "Öz tegim")}</span>
+      </button>
+    `;
+
+  wrap.innerHTML = chipsHtml + customControlHtml;
+}
+
+function toggleAllTagsDropdown(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById("tgAllTagsDropdown");
+  if (!dd) return;
+  const wasOpen = dd.classList.contains("open");
+  document.querySelectorAll(".tg-all-tags-dropdown.open").forEach(el => el.classList.remove("open"));
+  if (!wasOpen) {
+    dd.classList.add("open");
+    const inp = document.getElementById("tgFilterTagSearch");
+    if (inp) {
+      inp.value = tgAllTagsSearchQuery;
+      inp.focus();
+      renderFilterTagSearchList();
+    }
+  }
+}
+
+function renderFilterTagSearchList() {
+  const listEl = document.getElementById("tgFilterTagList");
+  const inp = document.getElementById("tgFilterTagSearch");
+  if (!listEl) return;
+  tgAllTagsSearchQuery = inp ? inp.value : "";
+  const q = tgAllTagsSearchQuery.trim().toLowerCase().replace(/^#/, "");
+  const allTags = getAllKnownTags();
+  const filtered = q
+    ? allTags.filter(tg => tg.toLowerCase().replace(/^#/, "").includes(q))
+    : allTags;
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Теги не найдены", "Teglar topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(tg => `
+    <div class="cs-option ${activeTgTagFilter === tg ? 'selected' : ''}" onclick="setTgTagFilter('${tg.replace(/'/g, "\'")}')">
+      <span>${tg}</span>
+      ${activeTgTagFilter === tg ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>' : ''}
+    </div>
+  `).join("");
+}
+
+function renderReportTagSelect() {
+  const wrap = document.getElementById("reportTagSelectWrap");
+  if (!wrap) return;
+
+  const currentLabel = reportSelectedTag === "all"
+    ? t("Все категории тегов", "Barça teg toifalari")
+    : reportSelectedTag;
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('reportTagSelectWrap')">
+      <span>${currentLabel}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" style="min-width: 100%; padding: 8px;" onclick="event.stopPropagation()">
+      <input type="text" id="reportTagSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск тега...", "Teg qidiriş...")}" value="${reportTagSearchQuery}" oninput="renderReportTagOptionsList()" />
+      <div id="reportTagOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  renderReportTagOptionsList();
+}
+
+function renderReportTagOptionsList() {
+  const listEl = document.getElementById("reportTagOptionsList");
+  const inp = document.getElementById("reportTagSearchInput");
+  if (!listEl) return;
+
+  reportTagSearchQuery = inp ? inp.value : "";
+  const q = reportTagSearchQuery.trim().toLowerCase().replace(/^#/, "");
+  const top5 = getTop5RecentTags();
+  const allTags = getAllKnownTags();
+  const restTags = allTags.filter(tg => !top5.includes(tg));
+
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>';
+
+  let html = "";
+  if (!q) {
+    html += `
+      <div class="cs-option ${reportSelectedTag === 'all' ? 'selected' : ''}" onclick="selectReportTag('all')">
+        <span>${t("Все категории тегов", "Barça teg toifalari")}</span>
+        ${reportSelectedTag === 'all' ? checkSvg : ''}
+      </div>
+      <div class="cs-divider-label">${t("Последние 5 тегов", "Oxirgi 5 ta teg")}</div>
+      ${top5.map(tg => `
+        <div class="cs-option ${reportSelectedTag === tg ? 'selected' : ''}" onclick="selectReportTag('${tg.replace(/'/g, "\'")}')">
+          <span>${tg}</span>
+          ${reportSelectedTag === tg ? checkSvg : ''}
+        </div>
+      `).join("")}
+    `;
+    if (restTags.length) {
+      html += `
+        <div class="cs-divider-label">${t("Все остальные теги", "Boşqa barça teglar")}</div>
+        ${restTags.map(tg => `
+          <div class="cs-option ${reportSelectedTag === tg ? 'selected' : ''}" onclick="selectReportTag('${tg.replace(/'/g, "\'")}')">
+            <span>${tg}</span>
+            ${reportSelectedTag === tg ? checkSvg : ''}
+          </div>
+        `).join("")}
+      `;
+    }
+  } else {
+    const matched = allTags.filter(tg => tg.toLowerCase().replace(/^#/, "").includes(q));
+    html = matched.length
+      ? matched.map(tg => `
+          <div class="cs-option ${reportSelectedTag === tg ? 'selected' : ''}" onclick="selectReportTag('${tg.replace(/'/g, "\'")}')">
+            <span>${tg}</span>
+            ${reportSelectedTag === tg ? checkSvg : ''}
+          </div>
+        `).join("")
+      : `<div class="st-meta" style="padding:8px 10px;">${t("Теги не найдены", "Teglar topilmadi")}</div>`;
+  }
+
+  listEl.innerHTML = html;
+}
+
+function selectReportTag(val) {
+  reportSelectedTag = val;
+  reportTagSearchQuery = "";
+  const wrap = document.getElementById("reportTagSelectWrap");
+  if (wrap) wrap.classList.remove("open");
+  renderReportTagSelect();
+  updateReportPreview();
+}
 
 function renderTelegramSection() {
   document.getElementById("tgDateInput").value = new Date().toISOString().slice(0, 10);
 
-  document.getElementById("tgNewPostTags").innerHTML = TG_TAGS.map(tag => `
-    <div class="tag-chip ${selectedNewPostTags.includes(tag) ? 'active' : ''}" onclick="toggleNewPostTag('${tag}')">${tag}</div>
-  `).join("");
+  renderNewPostTagsArea();
 
-  const allTags = ["all", ...TG_TAGS];
-  document.getElementById("tgFilterTagsRow").innerHTML = allTags.map(tg => `
-    <div class="tag-chip ${activeTgTagFilter === tg ? 'active' : ''}" onclick="setTgTagFilter('${tg}')">${tg === 'all' ? t('Все посты', 'Barça postlar') : tg}</div>
-  `).join("");
+  // Фильтр постов: «Все посты» + 5 последних использованных тегов + выпадающий список всех тегов с поиском
+  const top5 = getTop5RecentTags();
+  const isCustomActiveOutsideTop5 = activeTgTagFilter !== "all" && !top5.includes(activeTgTagFilter);
+  const filterRowEl = document.getElementById("tgFilterTagsRow");
 
-  const tagOpts = [{ value: "all", label: t("Все категории тегов", "Barça teg toifalari") }].concat(TG_TAGS.map(tg => ({ value: tg, label: tg })));
-  renderCustomSelect("reportTagSelectWrap", tagOpts, reportSelectedTag, (val) => {
-    reportSelectedTag = val;
-    renderTelegramSection();
-  });
+  filterRowEl.innerHTML = `
+    <div class="tag-chip ${activeTgTagFilter === 'all' ? 'active' : ''}" onclick="setTgTagFilter('all')">${t('Все посты', 'Barça postlar')}</div>
+    ${top5.map(tg => `
+      <div class="tag-chip ${activeTgTagFilter === tg ? 'active' : ''}" onclick="setTgTagFilter('${tg.replace(/'/g, "\'")}')">${tg}</div>
+    `).join("")}
+    ${isCustomActiveOutsideTop5 ? `<div class="tag-chip active" onclick="setTgTagFilter('${activeTgTagFilter.replace(/'/g, "\'")}')">${activeTgTagFilter}</div>` : ""}
+    <div class="tg-all-tags-dropdown" id="tgAllTagsDropdown">
+      <button type="button" class="tg-all-tags-trigger" onclick="toggleAllTagsDropdown(event)">
+        <span>${t("Все теги", "Barça teglar")}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6l6 -6"/></svg>
+      </button>
+      <div class="tg-all-tags-menu" onclick="event.stopPropagation()">
+        <input type="text" id="tgFilterTagSearch" class="tg-tag-search-input" placeholder="${t("Поиск тега...", "Teg qidiriş...")}" oninput="renderFilterTagSearchList()" />
+        <div id="tgFilterTagList" class="tg-tag-search-list"></div>
+      </div>
+    </div>
+  `;
+
+  renderReportTagSelect();
 
   let posts = currentUser.role === "tutor"
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
@@ -2026,11 +2316,12 @@ function toggleNewPostTag(tag) {
   } else {
     selectedNewPostTags.push(tag);
   }
-  renderTelegramSection();
+  renderNewPostTagsArea();
 }
 
 function setTgTagFilter(tag) {
   activeTgTagFilter = tag;
+  tgAllTagsSearchQuery = "";
   renderTelegramSection();
 }
 
@@ -2091,6 +2382,7 @@ async function parseTelegramPost() {
     images
   });
 
+  recordRecentTags(selectedNewPostTags);
   saveState();
   document.getElementById("tgUrlInput").value = "";
   textInput.value = "";
