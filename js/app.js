@@ -2769,6 +2769,7 @@ function renderTelegramSection() {
   document.getElementById("tgDateInput").value = new Date().toISOString().slice(0, 10);
 
   renderNewPostTagsArea();
+  renderTgCollabSelect();
 
   // Фильтр постов: «Все посты» + 5 последних использованных тегов + выпадающий список всех тегов с поиском
   const top5 = getTop5RecentTags();
