@@ -790,7 +790,6 @@ body.dark .pill-sm.active { background: var(--accent); }
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding-bottom: 15px;
 }
 
 .subtab-btn {
@@ -1816,7 +1815,62 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   }
 }
 
+
+/* ==================== ИСПРАВЛЕНИЕ ДВОЙНОГО СКРОЛЛБАРА В ОТЧЕТАХ ==================== */
 #reportTagSelectWrap .cs-menu {
   max-height: none;
   overflow: visible;
+}
+
+/* ==================== ВЫПАДАЮЩИЙ СПИСОК ВОЛОНТЕРСТВА ВВЕРХ (DROP-UP) ==================== */
+#stVolunteerWrap .cs-menu,
+.drop-up .cs-menu,
+.drop-up .tg-all-tags-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+  max-height: none;
+  overflow: visible;
+}
+
+#stVolunteerWrap .cs-menu {
+  min-width: 100%;
+  width: 100%;
+  max-width: none;
+  padding: 8px;
+}
+
+/* ==================== КАСТОМНЫЕ СОЦ. КАТЕГОРИИ И МУЛЬТИВЫБОР ==================== */
+.social-other-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.social-other-dropdown .tg-all-tags-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: 0;
+  width: 240px;
+}
+
+.social-check-option {
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.social-check-option:hover {
+  background: var(--surface-alt);
+}
+
+.social-check-option input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
 }
