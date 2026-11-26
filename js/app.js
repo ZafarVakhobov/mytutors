@@ -22,7 +22,7 @@ const I18N = {
     kpi_channel: "Канал: studlifeuniv",
     kpi_gdoc_ready: "Готово к Google Doc",
     kpi_volunteers: "ВОЛОНТЕРЫ",
-    kpi_vol_tags: "Эко / Приемная / Медиа",
+    kpi_vol_tags: "Направления волонтерства",
     kpi_monitoring: "МОНИТОРИНГ / СОЦРЕЕСТР",
     chart_activity_title: "Активность постов и мероприятий",
     chart_activity_sub: "Динамика публикаций и воспитательной работы по месяцам",
@@ -32,6 +32,7 @@ const I18N = {
     dist_gender: "По полу (М/Ж)",
     dist_employment: "По работе",
     dist_study_form: "По форме обучения",
+    dist_volunteers: "По волонтерству",
     students_title: "Студенты и HEMIS",
     btn_sync_hemis: "Синхронизировать с tyutor.hemis.uz",
     btn_add_student: "Добавить студента",
@@ -136,7 +137,7 @@ const I18N = {
     lbl_nu_groups: "Закрепленные группы",
     btn_create_cabinet: "Создать кабинет",
     lbl_partial_admin: "Частичные права администратора",
-    desc_partial_admin: "Полный доступ к управлению и удалению данных»"
+    desc_partial_admin: "Полный доступ к управлению и удалению данных"
   },
   oz: {
     auth_title: "Kabinetga kiriş",
@@ -145,7 +146,7 @@ const I18N = {
     pass_label: "PAROL",
     login_btn: "Kiriş",
     nav_dashboard: "Umumiy köriniş",
-    nav_students: "Talabalar",
+    nav_students: "Talabalar va HEMIS",
     nav_telegram: "Telegram va Hisobotlar",
     nav_diaries: "Kundaliklar",
     nav_profile: "Profil va CV",
@@ -170,6 +171,7 @@ const I18N = {
     dist_gender: "Jinsi böyiça (E/A)",
     dist_employment: "Iş bilan bandlik",
     dist_study_form: "Ta’lim şakli böyiça",
+    dist_volunteers: "Volontyorlik böyiça",
     students_title: "Talabalar va HEMIS",
     btn_sync_hemis: "tyutor.hemis.uz bilan sinxronlaş",
     btn_add_student: "Talaba qöşiş",
@@ -187,8 +189,8 @@ const I18N = {
     ph_tg_text: "Post matni (Cloudflare Worker orqali avtomatik yuklanadi yoki qölda kiriting)...",
     report_builder: "Hisobot konstruktori (Google Doc)",
     report_sub: "Tanlangan davr va toifalar doirasida postlarni saralaş",
-    period_from: "DAVR DAN",
-    period_to: "DAVR GAÇA",
+    period_from: "DAVR (DAN)",
+    period_to: "DAVR (GAÇA)",
     report_tag_filter: "TEGLAR TOIFASI",
     btn_send_gdoc: "Google Doc ga ötkaziş",
     diaries_title: "Monitoring va ota-onalar bilan işlaş kundaliklari",
@@ -408,6 +410,8 @@ let activeTab = "dashboard";
 let activeStudentSubtab = "all";
 let activeHousingFilter = "all";
 let activeEmploymentFilter = "all";
+let activeVolunteerFilter = "all";
+let volFilterSearchQuery = "";
 let activeDiarySubtab = "monitoring";
 let activeMonitoringFilter = "active";
 let activeTgTagFilter = "all";
@@ -1163,6 +1167,16 @@ function renderCharts() {
       students.filter(s => !s.studyForm || s.studyForm === "contract").length
     ];
     colors = ["#10b981", "#2563eb", "#ff6b3d"];
+  } else if (distChartMode === "volunteers") {
+    const allDirs = getAllVolunteerDirections();
+    labels = allDirs.map(d => d.label);
+    series = allDirs.map(d => {
+      if (d.value === "Не состоит") {
+        return students.filter(s => !s.volunteer || s.volunteer === "Не состоит").length;
+      }
+      return students.filter(s => s.volunteer === d.value).length;
+    });
+    colors = ["#94a3b8", "#10b981", "#2563eb", "#7c3aed", "#ff6b3d", "#f59e0b", "#ec4899", "#06b6d4"];
   }
 
   if (distChartInstance) distChartInstance.destroy();
@@ -1460,16 +1474,61 @@ function renderStudentsSection() {
 
   if (activeStudentSubtab === "volunteers") {
     const vols = students.filter(s => s.volunteer && s.volunteer !== "Не состоит");
+    const activeDirs = getAllVolunteerDirections().filter(d => d.value !== "Не состоит");
+    const first5Dirs = activeDirs.slice(0, 5);
+    const extraDirs = activeDirs.slice(5);
+
+    const isExtraActive = activeVolunteerFilter !== "all" && !first5Dirs.some(d => d.value === activeVolunteerFilter);
+    const activeExtraObj = isExtraActive ? activeDirs.find(d => d.value === activeVolunteerFilter) : null;
+
+    let list = vols;
+    if (activeVolunteerFilter !== "all") {
+      list = vols.filter(s => s.volunteer === activeVolunteerFilter);
+    }
+
+    const filterButtons = `
+      <div class="subtabs-pills mb-16">
+        <button type="button" class="subtab-btn ${activeVolunteerFilter === 'all' ? 'active' : ''}" onclick="setVolunteerFilter('all')">${t("Все", "Barçasi")} (${vols.length})</button>
+        ${first5Dirs.map(d => {
+          const cnt = vols.filter(s => s.volunteer === d.value).length;
+          return `<button type="button" class="subtab-btn ${activeVolunteerFilter === d.value ? 'active' : ''}" onclick="setVolunteerFilter('${d.value.replace(/'/g, "\'")}')">${d.label} (${cnt})</button>`;
+        }).join("")}
+        ${activeExtraObj ? `<button type="button" class="subtab-btn active" onclick="setVolunteerFilter('${activeExtraObj.value.replace(/'/g, "\'")}')">${activeExtraObj.label} (${vols.filter(s => s.volunteer === activeExtraObj.value).length})</button>` : ""}
+        ${extraDirs.length > 0 ? `
+          <div class="tg-all-tags-dropdown" id="volOtherDirsDropdown">
+            <button type="button" class="tg-all-tags-trigger" onclick="toggleVolOtherDirsDropdown(event)">
+              <span>${t("Другие направления", "Boşqa yönalişlar")}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6l6 -6"/></svg>
+            </button>
+            <div class="tg-all-tags-menu" onclick="event.stopPropagation()">
+              <input type="text" id="volFilterSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск направления...", "Yönaliş qidiriş...")}" oninput="renderVolFilterSearchList()" />
+              <div id="volFilterSearchList" class="tg-tag-search-list"></div>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+
     if (!vols.length) {
-      area.innerHTML = `<div class="empty-state">${t(
+      area.innerHTML = `${filterButtons}<div class="empty-state">${t(
         "Группы волонтеров пока пусты. Назначьте направление в карточке студента.",
         "Volontyorlar guruhi hozirça böş. Talaba kartasida yönalişni belgilang."
       )}</div>`;
       return;
     }
+
+    if (!list.length) {
+      area.innerHTML = `${filterButtons}<div class="empty-state">${t(
+        "По выбранному направлению волонтеров пока нет.",
+        "Tanlangan yönaliş böyiça volontyorlar hozirça yöq."
+      )}</div>`;
+      return;
+    }
+
     area.innerHTML = `
+      ${filterButtons}
       <div class="cards-grid-3">
-        ${vols.map(s => `
+        ${list.map(s => `
           <div class="student-card">
             <div>
               <div class="st-card-top">
@@ -1581,6 +1640,60 @@ function renderStudentsSection() {
       </div>
     `;
   }
+}
+
+
+function setVolunteerFilter(val) {
+  activeVolunteerFilter = val;
+  volFilterSearchQuery = "";
+  renderStudentsSection();
+}
+
+function toggleVolOtherDirsDropdown(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById("volOtherDirsDropdown");
+  if (!dd) return;
+  const wasOpen = dd.classList.contains("open");
+  document.querySelectorAll(".tg-all-tags-dropdown.open").forEach(el => el.classList.remove("open"));
+  if (!wasOpen) {
+    dd.classList.add("open");
+    const inp = document.getElementById("volFilterSearchInput");
+    if (inp) {
+      inp.value = volFilterSearchQuery;
+      inp.focus();
+      renderVolFilterSearchList();
+    }
+  }
+}
+
+function renderVolFilterSearchList() {
+  const listEl = document.getElementById("volFilterSearchList");
+  const inp = document.getElementById("volFilterSearchInput");
+  if (!listEl) return;
+
+  volFilterSearchQuery = inp ? inp.value : "";
+  const q = volFilterSearchQuery.trim().toLowerCase();
+  const students = getRoleScopedStudents();
+  const vols = students.filter(s => s.volunteer && s.volunteer !== "Не состоит");
+  const extraDirs = getAllVolunteerDirections().filter(d => d.value !== "Не состоит").slice(5);
+  const filtered = q
+    ? extraDirs.filter(d => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q))
+    : extraDirs;
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Направления не найдены", "Yönalişlar topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(d => {
+    const cnt = vols.filter(s => s.volunteer === d.value).length;
+    return `
+      <div class="cs-option ${activeVolunteerFilter === d.value ? 'selected' : ''}" onclick="setVolunteerFilter('${d.value.replace(/'/g, "\'")}')">
+        <span>${d.label} (${cnt})</span>
+        ${activeVolunteerFilter === d.value ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>' : ''}
+      </div>
+    `;
+  }).join("");
 }
 
 function setHousingFilter(filter) {
