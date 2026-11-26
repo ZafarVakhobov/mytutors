@@ -790,7 +790,6 @@ body.dark .pill-sm.active { background: var(--accent); }
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding-bottom: 15px;
 }
 
 .subtab-btn {
@@ -1958,13 +1957,14 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   }
 }
 
+
+/* ==================== УБРАТЬ ДВОЙНОЙ СКРОЛЛБАР У РЕГИОНОВ ==================== */
 #stRegionSelectWrap .cs-menu {
   max-height: none;
   overflow: visible;
   width: 100%;
   max-width: none;
 }
-
 
 /* ==================== КОЛЛАБОРАЦИЯ В ПОСТАХ TELEGRAM ==================== */
 .tg-collab-row {
