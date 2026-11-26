@@ -1956,3 +1956,10 @@ body.dark ::-webkit-scrollbar-thumb:hover {
     grid-template-columns: 1fr;
   }
 }
+
+#stRegionSelectWrap .cs-menu {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+}
