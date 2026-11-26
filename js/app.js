@@ -1152,7 +1152,7 @@ function renderCharts() {
     series = SOCIAL_CATEGORIES.map(cat => students.filter(s => (s.social || []).includes(cat.value)).length);
   } else if (distChartMode === "employment") {
     labels = currentLang === "oz"
-      ? ["Iş bilan band (Trudoustroen)", "Işlamaydi (Band emas)"]
+      ? ["Iş bilan band", "Işlamaydi"]
       : ["Трудоустроенные", "Не трудоустроенные"];
     series = [
       students.filter(s => s.employed === true).length,
