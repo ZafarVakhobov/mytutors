@@ -44,6 +44,12 @@ body {
   min-height: 100vh;
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
 .hidden { display: none !important; }
 .mt-6 { margin-top: 6px; }
 .mt-10 { margin-top: 10px; }
