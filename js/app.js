@@ -1773,7 +1773,7 @@ function renderHousingTypeSelector(st = null) {
     { value: "dorm", label: t("Общежитие", "Yotoqxona") },
     { value: "rent", label: t("Съемная квартира", "Ijara xonadon") },
     { value: "relatives", label: t("У родственников", "Qarindoşinikida") },
-    { value: "own", label: t("Свой дом (маркер домика)", "Öz uyi (uyça belgisi)") }
+    { value: "own", label: t("Свой дом", "Öz uyidan qatnaydi") }
   ];
   renderCustomSelect("stHousingTypeWrap", opts, modalStudentState.housingType, (val) => {
     modalStudentState.housingType = val;
