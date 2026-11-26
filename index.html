@@ -371,9 +371,15 @@
               </div>
               <textarea id="tgTextInput" class="form-textarea mt-10" rows="2" data-i18n-placeholder="ph_tg_text" placeholder="Текст поста (подтянется автоматически через Cloudflare Worker или вставьте вручную для предпросмотра)..."></textarea>
               <div class="tg-tags-select mt-10" id="tgNewPostTags"></div>
-              <div class="tg-collab-row mt-12">
-                <label class="form-label" data-i18n="lbl_tg_collab">Совместно с (коллаборация)</label>
-                <div class="custom-select" id="tgCollabSelectWrap"></div>
+              <div class="tg-meta-grid mt-12" id="tgMetaGrid">
+                <div class="form-group hidden" id="tgAuthorFieldWrap" style="margin-bottom:0;">
+                  <label class="form-label" data-i18n="lbl_tg_author">Автор поста</label>
+                  <div class="custom-select" id="tgAuthorSelectWrap"></div>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label" data-i18n="lbl_tg_collab">Совместно с (коллаборация)</label>
+                  <div class="custom-select" id="tgCollabSelectWrap"></div>
+                </div>
               </div>
             </div>
 
@@ -904,6 +910,53 @@
       <div class="modal-foot">
         <button type="button" class="btn-ghost" onclick="closeModal('newUserModal')" data-i18n="btn_cancel">Отмена</button>
         <button type="button" class="btn-orange" onclick="createNewUser()" data-i18n="btn_create_cabinet">Создать кабинет</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: РЕДАКТИРОВАНИЕ ПОСТА TELEGRAM (АДМИН) -->
+  <div class="modal-backdrop hidden" id="editTgPostModal">
+    <div class="modal-box lg">
+      <div class="modal-head">
+        <h3 class="modal-title" data-i18n="tg_edit_modal_title">Редактирование поста Telegram</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('editTgPostModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editTgPostId" />
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl_tg_url">Ссылка на пост</label>
+            <input type="url" id="editTgUrl" class="form-input" placeholder="https://t.me/studlifeuniv/12028" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl_tg_date">Дата публикации</label>
+            <input type="date" id="editTgDate" class="form-input" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="lbl_tg_text">Текст публикации</label>
+          <textarea id="editTgText" class="form-textarea" rows="4" style="min-height:120px;"></textarea>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl_tg_author">Автор поста</label>
+            <div class="custom-select" id="editTgAuthorWrap"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl_tg_collab">Совместно с (коллаборация)</label>
+            <div class="custom-select" id="editTgCollabWrap"></div>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" data-i18n="lbl_tg_tags">Теги публикации</label>
+          <div class="tg-tags-select" id="editTgTagsWrap"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('editTgPostModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveEditedTgPost()" data-i18n="btn_save_changes">Сохранить изменения</button>
       </div>
     </div>
   </div>
