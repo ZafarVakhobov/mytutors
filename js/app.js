@@ -13,11 +13,16 @@ const I18N = {
     nav_profile: "Профиль и CV",
     nav_calendar: "Календарь и Блог",
     nav_users: "Пользователи",
+    drive_synced: "Google Drive синхронизирован",
+    menu_edit_profile: "Редактировать профиль и CV",
+    menu_logout: "Выйти из профиля",
     dash_sub: "Сводная аналитика воспитательной и тюторской деятельности",
     kpi_students: "ВСЕГО СТУДЕНТОВ",
     kpi_posts: "ПОСТЫ В TELEGRAM",
+    kpi_channel: "Канал: studlifeuniv",
     kpi_gdoc_ready: "Готово к Google Doc",
     kpi_volunteers: "ВОЛОНТЕРЫ",
+    kpi_vol_tags: "Эко / Приемная / Медиа",
     kpi_monitoring: "МОНИТОРИНГ / СОЦРЕЕСТР",
     chart_activity_title: "Активность постов и мероприятий",
     chart_activity_sub: "Динамика публикаций и воспитательной работы по месяцам",
@@ -25,6 +30,7 @@ const I18N = {
     dist_housing: "По жилью",
     dist_social: "По соцреестру",
     dist_gender: "По полу (М/Ж)",
+    dist_employment: "По работе",
     students_title: "Студенты и HEMIS",
     btn_sync_hemis: "Синхронизировать с tyutor.hemis.uz",
     btn_add_student: "Добавить студента",
@@ -32,11 +38,14 @@ const I18N = {
     sub_housing: "Жилье",
     sub_social: "Социальный реестр",
     sub_volunteers: "Волонтеры",
+    sub_employment: "Трудоустройство",
     sub_schedule: "Расписание (HEMIS)",
+    ph_room_search: "Поиск комнаты № (напр. 401)",
     tg_title: "Telegram-архив и Генератор отчетов",
     tg_sub: "Импорт постов из t.me/studlifeuniv с сортировкой по датам и выгрузкой в Google Docs",
     tg_add_post: "Добавить пост по ссылке",
     btn_load_post: "Загрузить пост",
+    ph_tg_text: "Текст поста (подтянется автоматически через Cloudflare Worker или вставьте вручную для предпросмотра)...",
     report_builder: "Конструктор отчета (Google Doc)",
     report_sub: "Отбор публикаций строго в рамках выбранного периода и категорий",
     period_from: "ПЕРИОД С",
@@ -52,17 +61,81 @@ const I18N = {
     btn_print_cv: "Печать / PDF CV",
     profile_form_title: "Анкета сотрудника / тютора",
     upload_photo: "Загрузить фото",
+    photo_hint: "JPG / PNG • Сохраняется в папку Google Drive",
+    lbl_fio: "Ф.И.О.",
+    lbl_position: "Должность",
+    lbl_dept: "Факультет / Отдел",
+    lbl_phone: "Телефон",
+    lbl_email: "Email",
+    lbl_edu: "Образование / Степень",
+    lbl_bio: "Опыт работы и достижения",
     cal_title: "Календарь событий и Личный дневник",
     cal_sub: "Планирование мероприятий, напоминания и свободные заметки тютора",
     btn_add_event: "Добавить событие",
     blog_title: "Личный мини-блог и To-Do",
+    mode_note: "Заметка / Блог",
+    mode_todo: "Список дел (To-Do)",
+    ph_note_title: "Заголовок заметки или идеи...",
+    ph_note_body: "Запишите мысли, план работы со студентами или задачи...",
+    ph_todo_task: "Новая задача (например: Проверить общежитие №2)...",
+    btn_add_todo: "Добавить",
     btn_save_note: "Сохранить запись",
     users_title: "Управление профилями и паролями",
     users_sub: "Создание новых кабинетов, привязка папок Google Drive и сброс паролей",
-    btn_new_user: "Открыть новый профиль"
+    btn_new_user: "Открыть новый профиль",
+    lbl_st_fio: "Ф.И.О. студента *",
+    lbl_st_group: "Группа *",
+    lbl_st_course: "Курс",
+    lbl_st_gender: "Пол",
+    lbl_st_phone: "Телефон студента",
+    lbl_st_tutor: "Закрепленный тютор",
+    sec_housing: "ДАННЫЕ О ПРОЖИВАНИИ",
+    lbl_housing_type: "Тип жилья",
+    sec_employment: "РАБОТА И ТРУДОУСТРОЙСТВО",
+    lbl_emp_status: "Статус занятости",
+    lbl_emp_org: "Наименование организации",
+    ph_emp_org: "ООО / Гостиница / Организация...",
+    lbl_emp_position: "Должность",
+    ph_emp_position: "Например: Администратор / Официант",
+    lbl_emp_address: "Адрес места работы",
+    ph_emp_address: "г. Самарканд, ул. ...",
+    lbl_emp_boss: "Ф.И.О. руководителя",
+    ph_emp_boss: "Каримов Алишер Ботирович",
+    lbl_emp_boss_phone: "Номер телефона руководителя",
+    lbl_emp_from: "Время работы (с)",
+    lbl_emp_to: "Время работы (до)",
+    lbl_emp_salary: "Зарплата (UZS)",
+    sec_family: "ДАННЫЕ О РОДИТЕЛЯХ И РОДСТВЕННИКАХ",
+    btn_add_short: "Добавить",
+    lbl_soc_cats: "Социальные категории",
+    lbl_vol_dir: "Волонтерское направление",
+    btn_cancel: "Отмена",
+    btn_save_changes: "Сохранить изменения",
+    btn_save: "Сохранить",
+    mon_modal_title: "Поставить студента на мониторинг",
+    lbl_student: "Студент",
+    lbl_mon_cat: "Категория мониторинга",
+    lbl_mon_custom: "Укажите категорию вручную",
+    lbl_mon_note: "Первичная запись в дневнике",
+    hemis_desc: "Вставьте список студентов из выгрузки HEMIS (каждый с новой строки в формате: Ф.И.О. | Группа | Курс | Пол (М/Ж) | Телефон) или подключите токен API HEMIS.",
+    lbl_hemis_url: "API Токен / Ссылка профиля tyutor.hemis.uz",
+    lbl_hemis_bulk: "Пакетный импорт списка студентов",
+    btn_import_db: "Импортировать в базу",
+    ev_modal_title: "Новое событие календаря",
+    lbl_ev_title: "Название события",
+    lbl_ev_time: "Время",
+    lbl_ev_color: "Цветовая метка",
+    lbl_ev_desc: "Описание / Место проведения",
+    btn_save_event: "Сохранить событие",
+    lbl_nu_name: "Ф.И.О. сотрудника",
+    lbl_nu_login: "Логин",
+    lbl_nu_pass: "Пароль",
+    lbl_nu_role: "Роль",
+    lbl_nu_groups: "Закрепленные группы",
+    btn_create_cabinet: "Создать кабинет"
   },
   oz: {
-    auth_title: "Kabinetga kiriş",
+    auth_title: "İşçi maydonga kiriş",
     auth_desc: "HEMIS va Google Drive bilan sinxronlaşgan yagona tyutorlar platformasi.",
     login_label: "PROFIL LOGINI",
     pass_label: "PAROL",
@@ -74,11 +147,16 @@ const I18N = {
     nav_profile: "Profil va CV",
     nav_calendar: "Taqvim va Blog",
     nav_users: "Foydalanuvçilar",
+    drive_synced: "Google Drive sinxronlaşgan",
+    menu_edit_profile: "Profil va CV ni tahrirlaş",
+    menu_logout: "Profildan çiqiş",
     dash_sub: "Tarbiyaviy va tyutorlik faoliyatining yiğma tahlili",
     kpi_students: "JAMI TALABALAR",
     kpi_posts: "TELEGRAM POSTLARI",
+    kpi_channel: "Kanal: studlifeuniv",
     kpi_gdoc_ready: "Google Doc uşun tayyor",
     kpi_volunteers: "VOLONTYORLAR",
+    kpi_vol_tags: "Eko / Qabul / Media",
     kpi_monitoring: "MONITORING / IJTIMOIY REESTR",
     chart_activity_title: "Postlar va tadbirlar faolligi",
     chart_activity_sub: "Oylar böyiça naşrlar va tarbiyaviy işlar dinamikasi",
@@ -86,6 +164,7 @@ const I18N = {
     dist_housing: "Turar joy böyiça",
     dist_social: "Ijtimoiy reestr",
     dist_gender: "Jinsi böyiça (E/A)",
+    dist_employment: "Iş bilan bandlik",
     students_title: "Talabalar va HEMIS",
     btn_sync_hemis: "tyutor.hemis.uz bilan sinxronlaş",
     btn_add_student: "Talaba qöşiş",
@@ -93,11 +172,14 @@ const I18N = {
     sub_housing: "Turar joy",
     sub_social: "Ijtimoiy reestr",
     sub_volunteers: "Volontyorlar",
+    sub_employment: "Bandlik / Iş",
     sub_schedule: "Dars jadvali (HEMIS)",
+    ph_room_search: "Xona № qidiriş (masalan, 401)",
     tg_title: "Telegram arxivi va Hisobotlar konstruktori",
     tg_sub: "t.me/studlifeuniv postlarini sanalar böyiça saralaş va Google Docs ga çiqariş",
     tg_add_post: "Havola orqali post qöşiş",
     btn_load_post: "Postni yuklaş",
+    ph_tg_text: "Post matni (Cloudflare Worker orqali avtomatik yuklanadi yoki qölda kiriting)...",
     report_builder: "Hisobot konstruktori (Google Doc)",
     report_sub: "Tanlangan davr va toifalar doirasida postlarni saralaş",
     period_from: "DAVR DAN",
@@ -113,35 +195,90 @@ const I18N = {
     btn_print_cv: "Çop etiş / PDF CV",
     profile_form_title: "Xodim / tyutor anketasi",
     upload_photo: "Rasm yuklaş",
+    photo_hint: "JPG / PNG • Google Drive papkasiga saqlanadi",
+    lbl_fio: "F.I.Ş.",
+    lbl_position: "Lavozim",
+    lbl_dept: "Fakultet / Bölim",
+    lbl_phone: "Telefon",
+    lbl_email: "Email",
+    lbl_edu: "Ma’lumoti / Ilmiy daraja",
+    lbl_bio: "Iş tajribasi va yutuqlar",
     cal_title: "Tadbirlar taqvimi va Şaxsiy kundalik",
     cal_sub: "Tadbirlarni rejalashtiriş, eslatmalar va tyutorning erkin qaydları",
     btn_add_event: "Tadbir qöşiş",
     blog_title: "Şaxsiy mini-blog va To-Do",
+    mode_note: "Qayd / Blog",
+    mode_todo: "Işlar röyxati (To-Do)",
+    ph_note_title: "Qayd yoki ğoya sarlavhasi...",
+    ph_note_body: "Fikrlar, talabalar bilan işlaş rejasi yoki vazifalarni yozing...",
+    ph_todo_task: "Yangi vazifa (masalan: 2-yotoqxonani tekşiriş)...",
+    btn_add_todo: "Qöşiş",
     btn_save_note: "Qaydni saqlaş",
     users_title: "Profillar va parollarni boşqariş",
     users_sub: "Yangi kabinetlar oçiş, Google Drive papkalarini biriktiriş va parollarni tiklaş",
-    btn_new_user: "Yangi profil oçiş"
+    btn_new_user: "Yangi profil oçiş",
+    lbl_st_fio: "Talabaning F.I.Ş. *",
+    lbl_st_group: "Guruh *",
+    lbl_st_course: "Kurs",
+    lbl_st_gender: "Jinsi",
+    lbl_st_phone: "Talaba telefoni",
+    lbl_st_tutor: "Biriktirilgan tyutor",
+    sec_housing: "TURAR JOY MA’LUMOTLARI",
+    lbl_housing_type: "Turar joy turi",
+    sec_employment: "IŞ VA BANDLIK MA’LUMOTLARI",
+    lbl_emp_status: "Bandlik holati",
+    lbl_emp_org: "Taşkilot nomi",
+    ph_emp_org: "MÇJ / Mehmonxona / Taşkilot...",
+    lbl_emp_position: "Lavozimi",
+    ph_emp_position: "Masalan: Administrator / Ofitsiant",
+    lbl_emp_address: "Iş joyi manzili",
+    ph_emp_address: "Samarqand ş., ... köçasi",
+    lbl_emp_boss: "Rahbarning F.I.Ş.",
+    ph_emp_boss: "Karimov Alişer Botiroviç",
+    lbl_emp_boss_phone: "Rahbar telefon raqami",
+    lbl_emp_from: "Iş vaqti (dan)",
+    lbl_emp_to: "Iş vaqti (gaça)",
+    lbl_emp_salary: "Oylik maosh (UZS)",
+    sec_family: "OTA-ONALAR VA QARINDOŞLAR MA’LUMOTLARI",
+    btn_add_short: "Qöşiş",
+    lbl_soc_cats: "Ijtimoiy toifalar",
+    lbl_vol_dir: "Volontyorlik yönalişi",
+    btn_cancel: "Bekor qiliş",
+    btn_save_changes: "Özgarishlarni saqlaş",
+    btn_save: "Saqlaş",
+    mon_modal_title: "Talabani monitoringga qöyiş",
+    lbl_student: "Talaba",
+    lbl_mon_cat: "Monitoring toifasi",
+    lbl_mon_custom: "Toifani qölda kiriting",
+    lbl_mon_note: "Kundalikdagi dastlabki qayd",
+    hemis_desc: "HEMIS tizimidan talabalar röyxatini joylaştirinq (har bir qatorda: F.I.Ş. | Guruh | Kurs | Jinsi (E/A) | Telefon) yoki HEMIS API tokenini ulang.",
+    lbl_hemis_url: "API Token / tyutor.hemis.uz profil havolasi",
+    lbl_hemis_bulk: "Talabalar röyxatini ommaviy import qiliş",
+    btn_import_db: "Bazaga import qiliş",
+    ev_modal_title: "Taqvimda yangi tadbir",
+    lbl_ev_title: "Tadbir nomi",
+    lbl_ev_time: "Vaqti",
+    lbl_ev_color: "Rang belgisi",
+    lbl_ev_desc: "Tavsif / Ötkaziliş joyi",
+    btn_save_event: "Tadbirni saqlaş",
+    lbl_nu_name: "Xodimning F.I.Ş.",
+    lbl_nu_login: "Login",
+    lbl_nu_pass: "Parol",
+    lbl_nu_role: "Rol",
+    lbl_nu_groups: "Biriktirilgan guruhlar",
+    btn_create_cabinet: "Kabinet oçiş"
   }
 };
+
+function t(ruText, ozText) {
+  return currentLang === "oz" ? ozText : ruText;
+}
 
 const STORAGE_KEY = "mytutors_uz_state_v3";
 const SESSION_USER_KEY = "mytutors_uz_session_user_v1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTLIm6lvnKEE2Ol1JlylHM3QCuhJu_-7Cz0eB_8xBhsFdOhBUQmQ8FrZR4b2hPUq4y/exec";
 
-function syncToGoogleDrive() {
-  if (!currentUser || !APPS_SCRIPT_URL.includes("/exec")) return;
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      action: "saveUserData",
-      userId: currentUser.id,
-      data: appState
-    })
-  }).catch(() => {});
-}
-
-// ==================== ПРЕДУСТАНОВЛЕННЫЕ 16 ПРОФИЛЕЙ (БЕЗ СЛУЧАЙНЫХ СТУДЕНТОВ) ====================
+// ==================== ПРЕДУСТАНОВЛЕННЫЕ 16 ПРОФИЛЕЙ ====================
 const DEFAULT_USERS = [
   { id: "admin", login: "admin", pass: "admin2026", name: "Зафар Вахобов", role: "admin", roleTitle: "Главный администратор", dept: "Отдел по работе со студентами", groups: "Все группы", driveFolder: "MyTutors_Root_Master", phone: "+998 90 100 00 01", email: "z.vakhobov@univ-silkroad.uz", edu: "Магистр, НИР (ВАК)", bio: "Координация тюторской службы, цифровой мониторинг и студенческие медиа-проекты.", photo: "" },
   { id: "head", login: "head", pass: "head2026", name: "Гульмира Рашидова", role: "management", roleTitle: "Начальница отдела", dept: "Отдел по работе со студентами", groups: "Все группы", driveFolder: "MyTutors_Management_Head", phone: "+998 90 100 00 02", email: "g.rashidova@univ-silkroad.uz", edu: "Высшее педагогическое", bio: "Руководство отделом по работе со студентами и координация воспитательных программ.", photo: "" },
@@ -167,90 +304,199 @@ const TG_TAGS = [
 ];
 
 const SOCIAL_CATEGORIES = [
-  "Сироты", "Инвалидность", "Железная тетрадь", "Женская тетрадь", "Малообеспеченные"
+  { value: "Сироты", ru: "Сироты", oz: "Yetimlar" },
+  { value: "Инвалидность", ru: "Инвалидность", oz: "Nogironligi bor" },
+  { value: "Железная тетрадь", ru: "Железная тетрадь", oz: "Temir daftar" },
+  { value: "Женская тетрадь", ru: "Женская тетрадь", oz: "Ayollar daftari" },
+  { value: "Малообеспеченные", ru: "Малообеспеченные", oz: "Kam ta’minlangan" }
 ];
 
 const VOLUNTEER_DIRECTIONS = [
-  "Не состоит", "Эко-волонтеры", "Волонтеры Приемной кампании", "Медиа-волонтеры", "Культурно-массовый сектор"
+  { value: "Не состоит", ru: "Не состоит", oz: "A’zo emas" },
+  { value: "Эко-волонтеры", ru: "Эко-волонтеры", oz: "Eko-volontyorlar" },
+  { value: "Волонтеры Приемной кампании", ru: "Волонтеры Приемной кампании", oz: "Qabul komissiyasi volontyorlari" },
+  { value: "Медиа-волонтеры", ru: "Медиа-волонтеры", oz: "Media-volontyorlar" },
+  { value: "Культурно-массовый сектор", ru: "Культурно-массовый сектор", oz: "Madaniy-ommaviy sektor" }
 ];
 
 const MONITORING_CATEGORIES = [
-  "Курение", "Хиджаб", "Борода", "Прогулы", "Другое..."
+  { value: "Курение", ru: "Курение", oz: "Çekiş" },
+  { value: "Хиджаб", ru: "Хиджаб", oz: "Hijob" },
+  { value: "Борода", ru: "Борода", oz: "Soqol" },
+  { value: "Прогулы", ru: "Прогулы", oz: "Dars qoldiriş" },
+  { value: "Другое...", ru: "Другое...", oz: "Boşqa..." }
 ];
 
 const RELATIVE_TYPES = [
-  "Мать", "Отец", "Дедушка", "Бабушка", "Тётя", "Дядя", "Брат", "Сестра", "Отчим", "Мачеха", "Другое..."
+  { value: "Мать", ru: "Мать", oz: "Onasi" },
+  { value: "Отец", ru: "Отец", oz: "Otasi" },
+  { value: "Дедушка", ru: "Дедушка", oz: "Bobosi" },
+  { value: "Бабушка", ru: "Бабушка", oz: "Buvisi" },
+  { value: "Тётя", ru: "Тётя", oz: "Xolasi / Ammasi" },
+  { value: "Дядя", ru: "Дядя", oz: "Toğasi / Amakisi" },
+  { value: "Брат", ru: "Брат", oz: "Akasi / Ukasi" },
+  { value: "Сестра", ru: "Сестра", oz: "Opasi / Singlisi" },
+  { value: "Отчим", ru: "Отчим", oz: "Ögay otasi" },
+  { value: "Мачеха", ru: "Мачеха", oz: "Ögay onasi" },
+  { value: "Другое...", ru: "Другое...", oz: "Boşqa..." }
 ];
 
-// Начальное состояние: база студентов, постов и дневников полностью чистая — тюторы заполняют сами
+function getLabelFromDict(dictArr, val) {
+  const found = dictArr.find(x => x.value === val);
+  if (!found) return val;
+  return currentLang === "oz" ? found.oz : found.ru;
+}
+
+function localizeRoleTitle(role, fallbackTitle) {
+  if (currentLang === "oz") {
+    if (role === "admin") return "Boş administrator";
+    if (role === "management") return "Rahbariyat / Bölim";
+    if (role === "tutor") return "Tyutor";
+  } else {
+    if (role === "admin") return "Главный администратор";
+    if (role === "tutor") return "Тютор";
+  }
+  return fallbackTitle || (role === "tutor" ? t("Тютор", "Tyutor") : "");
+}
+
+// ==================== СОСТОЯНИЕ И СИНХРОНИЗАЦИЯ БЕЗ ДУБЛИКАТОВ ====================
 let appState = loadState();
 let currentUser = null;
 let currentLang = "ru";
 let activeTab = "dashboard";
 let activeStudentSubtab = "all";
 let activeHousingFilter = "all";
+let activeEmploymentFilter = "all";
 let activeDiarySubtab = "monitoring";
 let activeMonitoringFilter = "active";
 let activeTgTagFilter = "all";
 let selectedNewPostTags = ["#TalabalarHayoti"];
 let distChartMode = "housing";
 let distSelectedGroup = "all";
+let blogActiveMode = "note";
 
 let dashFilters = { tutor: "all", course: "all", group: "all", gender: "all" };
 let calYear = 2026;
-let calMonth = 10; // Ноябрь (0-indexed)
+let calMonth = 10;
 let selectedCalDate = "2026-11-26";
 
 let activityChartInstance = null;
 let distChartInstance = null;
 let tempFamilyMembers = [];
 
+function deduplicateById(arr) {
+  if (!Array.isArray(arr)) return [];
+  const seen = new Set();
+  const res = [];
+  for (const item of arr) {
+    if (!item || typeof item !== "object") continue;
+    const key = item.id || JSON.stringify(item);
+    if (!seen.has(key)) {
+      seen.add(key);
+      res.push(item);
+    }
+  }
+  return res;
+}
+
+function sanitizeAppState(rawObj) {
+  const base = rawObj || {};
+  return {
+    users: deduplicateById(base.users || JSON.parse(JSON.stringify(DEFAULT_USERS))),
+    students: deduplicateById(base.students || []),
+    tgPosts: deduplicateById(base.tgPosts || []),
+    monitoring: deduplicateById(base.monitoring || []),
+    parentMeetings: deduplicateById(base.parentMeetings || []),
+    schedule: deduplicateById(base.schedule || []),
+    calendarEvents: deduplicateById(base.calendarEvents || []),
+    blogPosts: deduplicateById(base.blogPosts || []),
+    todos: deduplicateById(base.todos || [])
+  };
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw);
-      return {
-        users: parsed.users || JSON.parse(JSON.stringify(DEFAULT_USERS)),
-        students: parsed.students || [],
-        tgPosts: parsed.tgPosts || [],
-        monitoring: parsed.monitoring || [],
-        parentMeetings: parsed.parentMeetings || [],
-        schedule: parsed.schedule || [],
-        calendarEvents: parsed.calendarEvents || [],
-        blogPosts: parsed.blogPosts || []
-      };
+      return sanitizeAppState(JSON.parse(raw));
     }
   } catch (e) {}
+  return sanitizeAppState(null);
+}
+
+// Изолированная отправка данных: каждый тютор сохраняет в папку user_<id> ТОЛЬКО свои записи,
+// а админ — полный снимок (или свои записи + реестр пользователей), чтобы удаленные записи не воскресали!
+function buildPayloadForCurrentUser() {
+  if (!currentUser) return appState;
+  if (currentUser.role === "tutor") {
+    return {
+      students: appState.students.filter(s => s.tutorId === currentUser.id),
+      tgPosts: appState.tgPosts.filter(p => p.authorId === currentUser.id),
+      monitoring: appState.monitoring.filter(m => m.tutorId === currentUser.id),
+      parentMeetings: appState.parentMeetings.filter(m => m.tutorId === currentUser.id),
+      schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === currentUser.id),
+      calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
+      blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
+      todos: appState.todos.filter(td => td.userId === currentUser.id)
+    };
+  }
+  // Для админа/руководства: сохраняем их личные записи (календарь, блог, todo, посты без привязки к тютору)
   return {
-    users: JSON.parse(JSON.stringify(DEFAULT_USERS)),
-    students: [],
-    tgPosts: [],
-    monitoring: [],
-    parentMeetings: [],
-    schedule: [],
-    calendarEvents: [],
-    blogPosts: []
+    users: appState.users,
+    students: appState.students.filter(s => s.tutorId === currentUser.id),
+    tgPosts: appState.tgPosts.filter(p => p.authorId === currentUser.id),
+    monitoring: appState.monitoring.filter(m => m.tutorId === currentUser.id),
+    parentMeetings: appState.parentMeetings.filter(m => m.tutorId === currentUser.id),
+    schedule: appState.schedule,
+    calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
+    blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
+    todos: appState.todos.filter(td => td.userId === currentUser.id)
   };
 }
 
-function saveState() {
+function saveState(skipCloudSync = false) {
+  appState = sanitizeAppState(appState);
   localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
 
-  function syncToGoogleDrive() {
-    if (!currentUser || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (!skipCloudSync && currentUser && APPS_SCRIPT_URL.includes("/exec")) {
+    const scopedData = buildPayloadForCurrentUser();
     fetch(APPS_SCRIPT_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "saveUserData",
         userId: currentUser.id,
-        data: appState
+        data: scopedData
       })
     }).catch(() => {});
   }
+}
 
-  syncToGoogleDrive();
+// Если админ отредактировал или удалил студента/пост конкретного тютора — синхронизируем и папку этого тютора
+function syncSpecificTutorFolder(tutorId) {
+  if (!tutorId || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (currentUser && currentUser.id === tutorId) return; // Уже синхронизируется через saveState()
+
+  const tutorPayload = {
+    students: appState.students.filter(s => s.tutorId === tutorId),
+    tgPosts: appState.tgPosts.filter(p => p.authorId === tutorId),
+    monitoring: appState.monitoring.filter(m => m.tutorId === tutorId),
+    parentMeetings: appState.parentMeetings.filter(m => m.tutorId === tutorId),
+    schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === tutorId),
+    calendarEvents: appState.calendarEvents.filter(ev => ev.userId === tutorId),
+    blogPosts: appState.blogPosts.filter(b => b.userId === tutorId),
+    todos: appState.todos.filter(td => td.userId === tutorId)
+  };
+
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "saveUserData",
+      userId: tutorId,
+      data: tutorPayload
+    })
+  }).catch(() => {});
 }
 
 // ==================== УНИВЕРСАЛЬНОЕ ПОДТВЕРЖДЕНИЕ ПЕРЕД УДАЛЕНИЕМ ====================
@@ -259,7 +505,9 @@ let pendingDeleteCallback = null;
 function askConfirmDelete(anchorBtn, onConfirm, customMessage) {
   const popover = document.getElementById("confirmPopover");
   const textEl = document.getElementById("confirmPopoverText");
-  textEl.textContent = customMessage || (currentLang === "oz" ? "Rostdan ham öçirmoqçimisiz?" : "Вы точно хотите удалить?");
+  textEl.textContent = customMessage || t("Вы точно хотите удалить?", "Rostdan ham öçirmoqçimisiz?");
+  document.getElementById("confirmYesBtn").textContent = t("Да", "Ha");
+  document.getElementById("confirmNoBtn").textContent = t("Нет", "Yöq");
   pendingDeleteCallback = onConfirm;
 
   popover.classList.remove("hidden");
@@ -298,11 +546,37 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest(".custom-select")) {
     document.querySelectorAll(".custom-select.open").forEach(el => el.classList.remove("open"));
   }
+  if (!e.target.closest("#userDropdownWrap")) {
+    closeUserDropdown();
+  }
 });
+
+// ==================== ВЫПАДАЮЩЕЕ МЕНЮ ПРОФИЛЯ В ШАПКЕ ====================
+function toggleUserDropdown(e) {
+  if (e) e.stopPropagation();
+  const wrap = document.getElementById("userDropdownWrap");
+  const menu = document.getElementById("userDropdownMenu");
+  if (!wrap || !menu) return;
+  const isOpen = !menu.classList.contains("hidden");
+  if (isOpen) {
+    closeUserDropdown();
+  } else {
+    menu.classList.remove("hidden");
+    wrap.classList.add("open");
+  }
+}
+
+function closeUserDropdown() {
+  const wrap = document.getElementById("userDropdownWrap");
+  const menu = document.getElementById("userDropdownMenu");
+  if (menu) menu.classList.add("hidden");
+  if (wrap) wrap.classList.remove("open");
+}
 
 // ==================== ЯЗЫК И ТЕМА ====================
 function setLanguage(lang) {
   currentLang = lang;
+  localStorage.setItem("mytutors_lang_v1", lang);
   const slider = document.getElementById("langSlider");
   slider.style.transform = lang === "oz" ? "translateX(38px)" : "translateX(0)";
   document.querySelectorAll(".lang-btn").forEach(btn => {
@@ -313,6 +587,13 @@ function setLanguage(lang) {
     const key = el.dataset.i18n;
     if (I18N[lang] && I18N[lang][key]) {
       el.textContent = I18N[lang][key];
+    }
+  });
+
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (I18N[lang] && I18N[lang][key]) {
+      el.setAttribute("placeholder", I18N[lang][key]);
     }
   });
 
@@ -341,33 +622,61 @@ function showToast(msg) {
   window._toastTimer = setTimeout(() => toast.classList.add("hidden"), 3000);
 }
 
-// ==================== АВТОРИЗАЦИЯ И РАЗГРАНИЧЕНИЕ ПРАВ ====================
+// ==================== АВТОРИЗАЦИЯ И СИНХРОНИЗАЦИЯ ====================
 async function loadFromGoogleDrive() {
   if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
-  showToast(currentLang === "oz" ? "Google Drive dan ma’lumotlar yuklanmoqda..." : "Загрузка базы из Google Drive...");
+  showToast(t("Загрузка базы из Google Drive...", "Google Drive dan ma’lumotlar yuklanmoqda..."));
   try {
-    const url = `${APPS_SCRIPT_URL}?userId=${encodeURIComponent(currentUser.id)}&role=${encodeURIComponent(currentUser.role)}`;
-    const res = await fetch(url);
+    const url = `${APPS_SCRIPT_URL}?userId=${encodeURIComponent(currentUser.id)}&role=${encodeURIComponent(currentUser.role)}&t=${Date.now()}`;
+    const res = await fetch(url, { method: "GET", redirect: "follow" });
     const json = await res.json();
 
     if (json.status === "ok" && json.data) {
       const savedUsers = appState.users;
-      appState = {
-        users: (currentUser.role === "admin" && Array.isArray(json.data.users)) ? json.data.users : savedUsers,
-        students: json.data.students || [],
-        tgPosts: json.data.tgPosts || [],
-        monitoring: json.data.monitoring || [],
-        parentMeetings: json.data.parentMeetings || [],
-        schedule: json.data.schedule || [],
-        calendarEvents: json.data.calendarEvents || [],
-        blogPosts: json.data.blogPosts || []
-      };
+      const incoming = json.data;
+
+      // Если заходит тютор — загружаем строго его актуальные данные, перезаписывая устаревший кэш
+      if (currentUser.role === "tutor") {
+        appState = sanitizeAppState({
+          users: savedUsers,
+          students: (incoming.students || []).filter(s => s.tutorId === currentUser.id),
+          tgPosts: (incoming.tgPosts || []).filter(p => p.authorId === currentUser.id),
+          monitoring: (incoming.monitoring || []).filter(m => m.tutorId === currentUser.id),
+          parentMeetings: (incoming.parentMeetings || []).filter(m => m.tutorId === currentUser.id),
+          schedule: incoming.schedule || [],
+          calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
+          blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
+          todos: (incoming.todos || []).filter(td => td.userId === currentUser.id)
+        });
+      } else {
+        // Админ/руководство получает объединенный и дедуплицированный реестр по всем папкам
+        appState = sanitizeAppState({
+          users: (currentUser.role === "admin" && Array.isArray(incoming.users) && incoming.users.length) ? incoming.users : savedUsers,
+          students: incoming.students || [],
+          tgPosts: incoming.tgPosts || [],
+          monitoring: incoming.monitoring || [],
+          parentMeetings: incoming.parentMeetings || [],
+          schedule: incoming.schedule || [],
+          calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
+          blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
+          todos: (incoming.todos || []).filter(td => td.userId === currentUser.id)
+        });
+      }
+
+      // Синхронизируем ссылку на currentUser (включая фото профиля)
+      const refreshedMe = appState.users.find(u => u.id === currentUser.id);
+      if (refreshedMe) {
+        currentUser = refreshedMe;
+      }
+
       localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      updateHeaderAndGreeting();
+      loadProfileForm();
       renderAllViews();
-      showToast(currentLang === "oz" ? "Baza Google Drive dan sinxronlandi" : "База синхронизирована с Google Drive");
+      showToast(t("База синхронизирована с Google Drive", "Baza Google Drive dan sinxronlandi"));
     }
   } catch (err) {
-    showToast(currentLang === "oz" ? "Lokal keshdan foydalanilmoqda" : "Работаем с локальной копией данных");
+    showToast(t("Работаем с локальной копией данных", "Lokal keshdan foydalanilmoqda"));
   }
 }
 
@@ -389,7 +698,7 @@ async function handleLogin(e) {
       });
       const json = await res.json();
       if (json.status === "ok" && Array.isArray(json.users) && json.users.length) {
-        appState.users = json.users;
+        appState.users = deduplicateById(json.users);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
       }
     }
@@ -401,7 +710,7 @@ async function handleLogin(e) {
 
   const found = appState.users.find(u => u.login === login && u.pass === pass);
   if (!found) {
-    errEl.textContent = currentLang === "oz" ? "Login yoki parol notöğri kiritildi." : "Неверный логин или пароль профиля.";
+    errEl.textContent = t("Неверный логин или пароль профиля.", "Login yoki parol notöğri kiritildi.");
     errEl.classList.remove("hidden");
     return;
   }
@@ -435,6 +744,11 @@ function logout() {
 }
 
 function restoreSession() {
+  const savedLang = localStorage.getItem("mytutors_lang_v1");
+  if (savedLang === "oz" || savedLang === "ru") {
+    setLanguage(savedLang);
+  }
+
   const savedId = localStorage.getItem(SESSION_USER_KEY);
   if (!savedId || !Array.isArray(appState.users)) return;
 
@@ -463,13 +777,18 @@ function restoreSession() {
 
 function updateHeaderAndGreeting() {
   if (!currentUser) return;
-  const initials = currentUser.name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
-  document.getElementById("headerUserAvatar").textContent = initials;
+  const initials = (currentUser.name || "UT").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
+  const avatarEl = document.getElementById("headerUserAvatar");
+  if (avatarEl) {
+    avatarEl.innerHTML = currentUser.photo
+      ? `<img src="${currentUser.photo}" alt="Avatar" />`
+      : initials;
+  }
   document.getElementById("headerUserName").textContent = currentUser.name;
-  document.getElementById("headerUserRole").textContent = currentUser.roleTitle;
+  document.getElementById("headerUserRole").textContent = localizeRoleTitle(currentUser.role, currentUser.roleTitle);
   document.getElementById("driveTooltip").textContent = `Google Drive: ${currentUser.driveFolder}`;
 
-  const greetPrefix = currentLang === "oz" ? "Xuş kelibsiz" : "Добро пожаловать";
+  const greetPrefix = t("Добро пожаловать", "Xuş kelibsiz");
   document.getElementById("welcomeGreeting").textContent = `${greetPrefix}, ${currentUser.name}`;
 }
 
@@ -550,7 +869,10 @@ function switchTab(tabName, subTab = null) {
 function positionNavSlider() {
   const activeBtn = document.querySelector(".nav-item.active");
   const slider = document.getElementById("navPillSlider");
-  if (!activeBtn || !slider) return;
+  if (!activeBtn || !slider) {
+    if (slider) slider.style.width = "0px";
+    return;
+  }
   slider.style.width = `${activeBtn.offsetWidth}px`;
   slider.style.transform = `translateX(${activeBtn.offsetLeft - 4}px)`;
 }
@@ -572,34 +894,55 @@ function renderAllViews() {
 function renderDashboard() {
   const tutors = appState.users.filter(u => u.role === "tutor");
   const filterTutorWrap = document.getElementById("filterTutorWrap");
+  const scopedStudents = getRoleScopedStudents();
 
   if (currentUser.role === "tutor") {
     filterTutorWrap.classList.add("hidden");
   } else {
     filterTutorWrap.classList.remove("hidden");
-    const tutorOpts = [{ value: "all", label: currentLang === "oz" ? "Barça tyutorlar" : "Все тюторы" }]
-      .concat(tutors.map(t => ({ value: t.id, label: t.name })));
+    const tutorOpts = [{ value: "all", label: t("Все тюторы", "Barça tyutorlar") }]
+      .concat(tutors.map(tr => ({ value: tr.id, label: tr.name })));
     renderCustomSelect("filterTutorWrap", tutorOpts, dashFilters.tutor, (val) => {
       dashFilters.tutor = val;
       renderDashboard();
     });
   }
 
-  const courseOpts = [
-    { value: "all", label: currentLang === "oz" ? "Barça kurslar" : "Все курсы" },
-    { value: "1", label: "1 курс" },
-    { value: "2", label: "2 курс" },
-    { value: "3", label: "3 курс" },
-    { value: "4", label: "4 курс" }
-  ];
+  // Умный фильтр курсов: у тютора отображается только курс его студентов (или реальные курсы его студентов),
+  // а у админа и руководства — полноценное меню со всеми курсами (1–4)
+  let courseOpts = [];
+  if (currentUser.role === "tutor") {
+    const tutorCourses = [...new Set(scopedStudents.map(s => String(s.course)).filter(Boolean))].sort();
+    if (tutorCourses.length === 1) {
+      dashFilters.course = tutorCourses[0];
+      courseOpts = [{ value: tutorCourses[0], label: `${tutorCourses[0]} ${t("курс", "kurs")}` }];
+    } else if (tutorCourses.length > 1) {
+      if (dashFilters.course !== "all" && !tutorCourses.includes(String(dashFilters.course))) {
+        dashFilters.course = "all";
+      }
+      courseOpts = [{ value: "all", label: t("Все курсы", "Barça kurslar") }]
+        .concat(tutorCourses.map(c => ({ value: c, label: `${c} ${t("курс", "kurs")}` })));
+    } else {
+      dashFilters.course = "all";
+      courseOpts = [{ value: "all", label: t("Курс не задан", "Kurs kiritilmagan") }];
+    }
+  } else {
+    courseOpts = [
+      { value: "all", label: t("Все курсы", "Barça kurslar") },
+      { value: "1", label: `1 ${t("курс", "kurs")}` },
+      { value: "2", label: `2 ${t("курс", "kurs")}` },
+      { value: "3", label: `3 ${t("курс", "kurs")}` },
+      { value: "4", label: `4 ${t("курс", "kurs")}` }
+    ];
+  }
+
   renderCustomSelect("filterCourseWrap", courseOpts, dashFilters.course, (val) => {
     dashFilters.course = val;
     renderDashboard();
   });
 
-  const scopedStudents = getRoleScopedStudents();
   const uniqueGroups = [...new Set(scopedStudents.map(s => s.group).filter(Boolean))];
-  const groupOpts = [{ value: "all", label: currentLang === "oz" ? "Barça guruhlar" : "Все группы" }]
+  const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
     .concat(uniqueGroups.map(g => ({ value: g, label: g })));
   renderCustomSelect("filterGroupWrap", groupOpts, dashFilters.group, (val) => {
     dashFilters.group = val;
@@ -607,9 +950,9 @@ function renderDashboard() {
   });
 
   const genderOpts = [
-    { value: "all", label: currentLang === "oz" ? "Jinsi: Barça" : "Пол: Все" },
-    { value: "М", label: currentLang === "oz" ? "Erkak (E)" : "Мужской (М)" },
-    { value: "Ж", label: currentLang === "oz" ? "Ayol (A)" : "Женский (Ж)" }
+    { value: "all", label: t("Пол: Все", "Jinsi: Barça") },
+    { value: "М", label: t("Мужской (М)", "Erkak (E)") },
+    { value: "Ж", label: t("Женский (Ж)", "Ayol (A)") }
   ];
   renderCustomSelect("filterGenderWrap", genderOpts, dashFilters.gender, (val) => {
     dashFilters.gender = val;
@@ -617,7 +960,7 @@ function renderDashboard() {
   });
 
   // Выпадающий список групп для круговой диаграммы
-  const distGroupOpts = [{ value: "all", label: currentLang === "oz" ? "Guruhlar böyiça" : "По группам" }]
+  const distGroupOpts = [{ value: "all", label: t("По группам", "Guruhlar böyiça") }]
     .concat(uniqueGroups.map(g => ({ value: g, label: g })));
   renderCustomSelect("distGroupSelectWrap", distGroupOpts, distSelectedGroup, (val) => {
     distSelectedGroup = val;
@@ -629,7 +972,7 @@ function renderDashboard() {
   // KPI подсчеты на реальных данных
   const filtered = getVisibleStudents();
   const dormCount = filtered.filter(s => s.housingType === "dorm").length;
-  const ownCount = filtered.filter(s => s.housingType === "own").length;
+  const employedCount = filtered.filter(s => s.employed === true).length;
 
   const posts = currentUser.role === "tutor"
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
@@ -648,14 +991,14 @@ function renderDashboard() {
   const socStudents = filtered.filter(s => Array.isArray(s.social) && s.social.length > 0);
 
   document.getElementById("kpiTotalStudents").textContent = filtered.length;
-  document.getElementById("kpiDormCount").textContent = `Общежитие: ${dormCount}`;
-  document.getElementById("kpiOwnHouseCount").textContent = `Свой дом: ${ownCount}`;
+  document.getElementById("kpiDormCount").textContent = `${t("Общежитие", "Yotoqxona")}: ${dormCount}`;
+  document.getElementById("kpiOwnHouseCount").textContent = `${t("Работают", "Işlaydi")}: ${employedCount}`;
   document.getElementById("kpiTotalPosts").textContent = posts.length;
   document.getElementById("kpiTotalVolunteers").textContent = volunteers.length;
-  document.getElementById("kpiVolDirs").textContent = `${volDirsCount} направлений`;
+  document.getElementById("kpiVolDirs").textContent = `${volDirsCount} ${t("направлений", "yönaliş")}`;
   document.getElementById("kpiMonSocValue").textContent = `${activeMon.length} / ${socStudents.length}`;
-  document.getElementById("kpiOnControl").textContent = `На контроле: ${activeMon.length}`;
-  document.getElementById("kpiSocCats").textContent = `Соц. категории: ${socStudents.length}`;
+  document.getElementById("kpiOnControl").textContent = `${t("На контроле", "Nazoratda")}: ${activeMon.length}`;
+  document.getElementById("kpiSocCats").textContent = `${t("Соц. категории", "Ijtimoiy toifa")}: ${socStudents.length}`;
 
   renderCharts();
 }
@@ -673,7 +1016,7 @@ function renderCharts() {
   const isDark = document.body.classList.contains("dark");
   const textColor = isDark ? "#9ca3af" : "#6b7280";
 
-  // 1. График реальной активности (посты Telegram + беседы в дневниках по месяцам Июн-Ноя 2026)
+  // 1. График активности
   const months = ["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"];
   const monthLabels = currentLang === "oz"
     ? ["Iyun", "Iyul", "Avg", "Sen", "Okt", "Noy"]
@@ -704,8 +1047,8 @@ function renderCharts() {
   activityChartInstance = new ApexCharts(document.querySelector("#activityChart"), {
     chart: { type: "bar", height: 270, toolbar: { show: false }, background: "transparent", fontFamily: "Inter, sans-serif" },
     series: [
-      { name: currentLang === "oz" ? "Telegram postlari" : "Посты Telegram", data: postsPerMonth },
-      { name: currentLang === "oz" ? "Uçraşuv va suhbatlar" : "Встречи и беседы", data: talksPerMonth }
+      { name: t("Посты Telegram", "Telegram postlari"), data: postsPerMonth },
+      { name: t("Встречи и беседы", "Uçraşuv va suhbatlar"), data: talksPerMonth }
     ],
     colors: ["#ff6b3d", isDark ? "#e5e7eb" : "#262932"],
     plotOptions: { bar: { borderRadius: 6, columnWidth: "44%" } },
@@ -738,8 +1081,8 @@ function renderCharts() {
       students.filter(s => s.housingType === "own").length
     ];
   } else if (distChartMode === "social") {
-    labels = SOCIAL_CATEGORIES;
-    series = SOCIAL_CATEGORIES.map(cat => students.filter(s => (s.social || []).includes(cat)).length);
+    labels = SOCIAL_CATEGORIES.map(c => currentLang === "oz" ? c.oz : c.ru);
+    series = SOCIAL_CATEGORIES.map(cat => students.filter(s => (s.social || []).includes(cat.value)).length);
   } else if (distChartMode === "gender") {
     labels = currentLang === "oz" ? ["Erkaklar (E)", "Ayollar (A)"] : ["Мужчины (М)", "Женщины (Ж)"];
     series = [
@@ -747,9 +1090,18 @@ function renderCharts() {
       students.filter(s => s.gender === "Ж").length
     ];
     colors = ["#2563eb", "#ff6b3d"];
+  } else if (distChartMode === "employment") {
+    labels = currentLang === "oz"
+      ? ["Iş bilan band (Trudoustroen)", "Işlamaydi (Band emas)"]
+      : ["Трудоустроенные", "Не трудоустроенные"];
+    series = [
+      students.filter(s => s.employed === true).length,
+      students.filter(s => !s.employed).length
+    ];
+    colors = ["#10b981", "#94a3b8"];
   } else if (distChartMode === "group_all") {
     const groups = [...new Set(students.map(s => s.group).filter(Boolean))];
-    labels = groups.length ? groups : ["Нет групп"];
+    labels = groups.length ? groups : [t("Нет групп", "Guruhlar yöq")];
     series = groups.length ? groups.map(g => students.filter(s => s.group === g).length) : [0];
   }
 
@@ -768,7 +1120,7 @@ function renderCharts() {
             show: true,
             total: {
               show: true,
-              label: currentLang === "oz" ? "Jami" : "Всего",
+              label: t("Всего", "Jami"),
               color: textColor,
               formatter: () => students.length
             }
@@ -782,7 +1134,6 @@ function renderCharts() {
   distChartInstance.render();
 }
 
-// Экспорт графиков в SVG и PNG 2K (ширина >= 2560px)
 async function exportChart(which, format) {
   const chart = which === "activity" ? activityChartInstance : distChartInstance;
   if (!chart) return;
@@ -796,7 +1147,6 @@ async function exportChart(which, format) {
     return;
   }
 
-  // Масштабирование PNG до 2K (2560px по ширине)
   const img = new Image();
   img.onload = () => {
     const targetWidth = 2560;
@@ -822,7 +1172,7 @@ function triggerDownload(url, filename) {
   a.remove();
 }
 
-// ==================== 2. СТУДЕНТЫ, ЖИЛЬЕ, СОЦРЕЕСТР, ВОЛОНТЕРЫ, РАСПИСАНИЕ ====================
+// ==================== 2. СТУДЕНТЫ, ЖИЛЬЕ, СОЦРЕЕСТР, ВОЛОНТЕРЫ, ТРУДОУСТРОЙСТВО, РАСПИСАНИЕ ====================
 function setStudentSubtab(sub) {
   activeStudentSubtab = sub;
   document.querySelectorAll("#studentSubtabs .subtab-btn").forEach(btn => {
@@ -838,13 +1188,37 @@ function updateRoomSearchVisibility() {
   box.classList.toggle("hidden", !show);
 }
 
+function formatGenderShort(g) {
+  if (currentLang === "oz") {
+    return g === "Ж" ? "A" : "E";
+  }
+  return g === "Ж" ? "Ж" : "М";
+}
+
+function formatSalaryUZS(val) {
+  const num = Number(val);
+  if (!num || isNaN(num)) return "—";
+  return `${num.toLocaleString("ru-RU")} UZS`;
+}
+
 function renderStudentsSection() {
   const area = document.getElementById("studentsContentArea");
   const students = getRoleScopedStudents();
 
+  const syncEl = document.getElementById("hemisSyncStatus");
+  if (syncEl && !syncEl.dataset.customTime) {
+    syncEl.textContent = t(
+      "Синхронизация с tyutor.hemis.uz: готова к импорту",
+      "tyutor.hemis.uz bilan sinxronlaş: importga tayyor"
+    );
+  }
+
   if (activeStudentSubtab === "all") {
     if (!students.length) {
-      area.innerHTML = `<div class="empty-state">Список студентов пуст. Нажмите «Добавить студента» или выполните синхронизацию с tyutor.hemis.uz.</div>`;
+      area.innerHTML = `<div class="empty-state">${t(
+        "Список студентов пуст. Нажмите «Добавить студента» или выполните синхронизацию с tyutor.hemis.uz.",
+        "Talabalar röyxati böş. «Talaba qöşiş» tugmasini bosing yoki tyutor.hemis.uz bilan sinxronlang."
+      )}</div>`;
       return;
     }
     area.innerHTML = `
@@ -853,29 +1227,34 @@ function renderStudentsSection() {
           <table class="data-table">
             <thead>
               <tr>
-                <th>Ф.И.О.</th>
-                <th>Группа / Курс</th>
-                <th>Пол</th>
-                <th>Жилье</th>
-                <th>Тютор</th>
-                <th>Телефон</th>
+                <th>${t("Ф.И.О.", "F.I.Ş.")}</th>
+                <th>${t("Группа / Курс", "Guruh / Kurs")}</th>
+                <th>${t("Пол", "Jinsi")}</th>
+                <th>${t("Жилье", "Turar joy")}</th>
+                <th>${t("Работа", "Iş joyi")}</th>
+                <th>${t("Тютор", "Tyutor")}</th>
+                <th>${t("Телефон", "Telefon")}</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
               ${students.map(s => {
                 const tutor = appState.users.find(u => u.id === s.tutorId);
+                const empBadge = s.employed
+                  ? `<span class="badge-pill work">${t("Трудоустроен", "Işlaydi")}${s.empOrg ? ` • ${s.empOrg}` : ""}</span>`
+                  : `<span class="badge-pill unemployed">${t("Не трудоустроен", "Işlamaydi")}</span>`;
                 return `
                   <tr>
                     <td><strong>${s.name}</strong></td>
-                    <td>${s.group} • ${s.course} курс</td>
-                    <td>${s.gender}</td>
+                    <td>${s.group} • ${s.course} ${t("курс", "kurs")}</td>
+                    <td>${formatGenderShort(s.gender)}</td>
                     <td>${formatHousingBadge(s)}</td>
+                    <td>${empBadge}</td>
                     <td>${tutor ? tutor.name : "—"}</td>
                     <td>${s.phone || "—"}</td>
                     <td style="text-align:right; white-space:nowrap;">
-                      <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">Изменить</button>
-                      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="Удалить">
+                      <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
+                      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
                         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
                       </button>
                     </td>
@@ -909,18 +1288,18 @@ function renderStudentsSection() {
 
     const filterButtons = `
       <div class="subtabs-pills mb-16">
-        <button type="button" class="subtab-btn ${activeHousingFilter === 'all' ? 'active' : ''}" onclick="setHousingFilter('all')">Все (${students.length})</button>
-        <button type="button" class="subtab-btn ${activeHousingFilter === 'dorm' ? 'active' : ''}" onclick="setHousingFilter('dorm')">Общежитие (${dorms.length})</button>
-        <button type="button" class="subtab-btn ${activeHousingFilter === 'rent' ? 'active' : ''}" onclick="setHousingFilter('rent')">Съемная квартира (${rents.length})</button>
-        <button type="button" class="subtab-btn ${activeHousingFilter === 'relatives' ? 'active' : ''}" onclick="setHousingFilter('relatives')">У родственников (${rels.length})</button>
-        <button type="button" class="subtab-btn ${activeHousingFilter === 'own' ? 'active' : ''}" onclick="setHousingFilter('own')">Свой дом (${owns.length})</button>
+        <button type="button" class="subtab-btn ${activeHousingFilter === 'all' ? 'active' : ''}" onclick="setHousingFilter('all')">${t("Все", "Barçasi")} (${students.length})</button>
+        <button type="button" class="subtab-btn ${activeHousingFilter === 'dorm' ? 'active' : ''}" onclick="setHousingFilter('dorm')">${t("Общежитие", "Yotoqxona")} (${dorms.length})</button>
+        <button type="button" class="subtab-btn ${activeHousingFilter === 'rent' ? 'active' : ''}" onclick="setHousingFilter('rent')">${t("Съемная квартира", "Ijara xonadon")} (${rents.length})</button>
+        <button type="button" class="subtab-btn ${activeHousingFilter === 'relatives' ? 'active' : ''}" onclick="setHousingFilter('relatives')">${t("У родственников", "Qarindoşinikida")} (${rels.length})</button>
+        <button type="button" class="subtab-btn ${activeHousingFilter === 'own' ? 'active' : ''}" onclick="setHousingFilter('own')">${t("Свой дом", "Öz uyi")} (${owns.length})</button>
       </div>
     `;
 
     if (!list.length) {
       const emptyMsg = (activeHousingFilter === "dorm" && roomQuery && currentUser.role === "tutor")
-        ? "Ваши студенты в данной комнате не проживают"
-        : "По выбранному фильтру записей не найдено.";
+        ? t("Ваши студенты в данной комнате не проживают", "Sizning talabalaringiz uşbu xonada yaşamaydi")
+        : t("По выбранному фильтру записей не найдено.", "Tanlangan filtr böyiça yozuvlar topilmadi.");
       area.innerHTML = `${filterButtons}<div class="empty-state">${emptyMsg}</div>`;
       return;
     }
@@ -929,36 +1308,35 @@ function renderStudentsSection() {
       ${filterButtons}
       <div class="cards-grid-3">
         ${list.map(s => {
-          // Автосвязка соседей по комнате в общежитии по всей базе
           let roommatesHtml = "";
           if (s.housingType === "dorm" && s.room) {
             const mates = appState.students.filter(other => other.id !== s.id && other.housingType === "dorm" && String(other.room) === String(s.room));
             roommatesHtml = `
               <div class="roommates-panel">
-                <div style="font-weight:700; margin-bottom:4px;">Комната № ${s.room} • Соседи (${mates.length}):</div>
+                <div style="font-weight:700; margin-bottom:4px;">${t("Комната №", "Xona №")} ${s.room} • ${t("Соседи", "Xonadoşlar")} (${mates.length}):</div>
                 ${mates.length
                   ? mates.map(m => `<div>• ${m.name} (${m.group})</div>`).join("")
-                  : `<div style="color:var(--text-muted)">Других студентов в этой комнате не найдено</div>`}
+                  : `<div style="color:var(--text-muted)">${t("Других студентов в этой комнате не найдено", "Bu xonada boşqa talabalar topilmadi")}</div>`}
               </div>
             `;
           } else if (s.housingType === "rent") {
             roommatesHtml = `
               <div class="roommates-panel">
-                <div><strong>Адрес:</strong> ${s.address || "Не указан"}</div>
-                <div><strong>Владелец:</strong> ${s.landlord || "Не указан"}</div>
+                <div><strong>${t("Адрес", "Manzil")}:</strong> ${s.address || t("Не указан", "Kiritilmagan")}</div>
+                <div><strong>${t("Владелец", "Uy egasi")}:</strong> ${s.landlord || t("Не указан", "Kiritilmagan")}</div>
               </div>
             `;
           } else if (s.housingType === "relatives") {
             roommatesHtml = `
               <div class="roommates-panel">
-                <div><strong>Адрес:</strong> ${s.address || "Не указан"}</div>
-                <div><strong>Родственник:</strong> ${s.relativeHost || "Не указан"}</div>
+                <div><strong>${t("Адрес", "Manzil")}:</strong> ${s.address || t("Не указан", "Kiritilmagan")}</div>
+                <div><strong>${t("Родственник", "Qarindoşi")}:</strong> ${s.relativeHost || t("Не указан", "Kiritilmagan")}</div>
               </div>
             `;
           } else {
             roommatesHtml = `
               <div class="roommates-panel">
-                <div><strong>Адрес:</strong> ${s.address || "Постоянное место жительства"}</div>
+                <div><strong>${t("Адрес", "Manzil")}:</strong> ${s.address || t("Постоянное место жительства", "Doimiy yaşaş joyi")}</div>
               </div>
             `;
           }
@@ -969,7 +1347,7 @@ function renderStudentsSection() {
                 <div class="st-card-top">
                   <div>
                     <div class="st-name">${s.name}</div>
-                    <div class="st-meta">${s.group} • ${s.course} курс</div>
+                    <div class="st-meta">${s.group} • ${s.course} ${t("курс", "kurs")}</div>
                   </div>
                   ${formatHousingBadge(s)}
                 </div>
@@ -978,7 +1356,7 @@ function renderStudentsSection() {
               <div class="st-card-actions">
                 <span class="st-meta">${s.phone || ""}</span>
                 <div>
-                  <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">Подробнее →</button>
+                  <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Подробнее →", "Batafsil →")}</button>
                 </div>
               </div>
             </div>
@@ -992,7 +1370,10 @@ function renderStudentsSection() {
   if (activeStudentSubtab === "social") {
     const socList = students.filter(s => Array.isArray(s.social) && s.social.length > 0);
     if (!socList.length) {
-      area.innerHTML = `<div class="empty-state">Студенты социально уязвимых категорий пока не добавлены. Отметьте категории в карточке студента.</div>`;
+      area.innerHTML = `<div class="empty-state">${t(
+        "Студенты социально уязвимых категорий пока не добавлены. Отметьте категории в карточке студента.",
+        "Ijtimoiy himoyaga muhtoj toifadagi talabalar hali qöşilmagan. Talaba kartasida toifalarni belgilang."
+      )}</div>`;
       return;
     }
     area.innerHTML = `
@@ -1001,14 +1382,14 @@ function renderStudentsSection() {
           <div class="student-card">
             <div>
               <div class="st-name">${s.name}</div>
-              <div class="st-meta mb-12">${s.group} • ${s.course} курс</div>
+              <div class="st-meta mb-12">${s.group} • ${s.course} ${t("курс", "kurs")}</div>
               <div class="checkbox-chips">
-                ${s.social.map(c => `<span class="badge-pill rent">${c}</span>`).join("")}
+                ${s.social.map(c => `<span class="badge-pill rent">${getLabelFromDict(SOCIAL_CATEGORIES, c)}</span>`).join("")}
               </div>
             </div>
             <div class="st-card-actions">
               <span class="st-meta">${s.phone || ""}</span>
-              <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">Открыть</button>
+              <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Открыть", "Oçiş")}</button>
             </div>
           </div>
         `).join("")}
@@ -1020,7 +1401,10 @@ function renderStudentsSection() {
   if (activeStudentSubtab === "volunteers") {
     const vols = students.filter(s => s.volunteer && s.volunteer !== "Не состоит");
     if (!vols.length) {
-      area.innerHTML = `<div class="empty-state">Группы волонтеров пока пусты. Назначьте направление в карточке студента.</div>`;
+      area.innerHTML = `<div class="empty-state">${t(
+        "Группы волонтеров пока пусты. Назначьте направление в карточке студента.",
+        "Volontyorlar guruhi hozirça böş. Talaba kartasida yönalişni belgilang."
+      )}</div>`;
       return;
     }
     area.innerHTML = `
@@ -1031,17 +1415,86 @@ function renderStudentsSection() {
               <div class="st-card-top">
                 <div>
                   <div class="st-name">${s.name}</div>
-                  <div class="st-meta">${s.group} • ${s.course} курс</div>
+                  <div class="st-meta">${s.group} • ${s.course} ${t("курс", "kurs")}</div>
                 </div>
-                <span class="badge-pill rel">${s.volunteer}</span>
+                <span class="badge-pill rel">${getLabelFromDict(VOLUNTEER_DIRECTIONS, s.volunteer)}</span>
               </div>
             </div>
             <div class="st-card-actions">
               <span class="st-meta">${s.phone || ""}</span>
-              <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">Изменить</button>
+              <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
             </div>
           </div>
         `).join("")}
+      </div>
+    `;
+    return;
+  }
+
+  if (activeStudentSubtab === "employment") {
+    const employedList = students.filter(s => s.employed === true);
+    const unemployedList = students.filter(s => !s.employed);
+
+    let list = students;
+    if (activeEmploymentFilter === "employed") list = employedList;
+    if (activeEmploymentFilter === "unemployed") list = unemployedList;
+
+    const filterButtons = `
+      <div class="subtabs-pills mb-16">
+        <button type="button" class="subtab-btn ${activeEmploymentFilter === 'all' ? 'active' : ''}" onclick="activeEmploymentFilter='all'; renderStudentsSection()">${t("Все", "Barçasi")} (${students.length})</button>
+        <button type="button" class="subtab-btn ${activeEmploymentFilter === 'employed' ? 'active' : ''}" onclick="activeEmploymentFilter='employed'; renderStudentsSection()">${t("Трудоустроенные", "Iş bilan bandlar")} (${employedList.length})</button>
+        <button type="button" class="subtab-btn ${activeEmploymentFilter === 'unemployed' ? 'active' : ''}" onclick="activeEmploymentFilter='unemployed'; renderStudentsSection()">${t("Не трудоустроенные", "Işlamaydiganlar")} (${unemployedList.length})</button>
+      </div>
+    `;
+
+    if (!list.length) {
+      area.innerHTML = `${filterButtons}<div class="empty-state">${t(
+        "По выбранному фильтру студентов не найдено.",
+        "Tanlangan filtr böyiça talabalar topilmadi."
+      )}</div>`;
+      return;
+    }
+
+    area.innerHTML = `
+      ${filterButtons}
+      <div class="cards-grid-3">
+        ${list.map(s => {
+          const workDetails = s.employed ? `
+            <div class="roommates-panel">
+              <div><strong>${t("Организация", "Taşkilot")}:</strong> ${s.empOrg || "—"}</div>
+              <div><strong>${t("Должность", "Lavozim")}:</strong> ${s.empPosition || "—"}</div>
+              <div><strong>${t("Адрес", "Manzil")}:</strong> ${s.empAddress || "—"}</div>
+              <div><strong>${t("Руководитель", "Rahbar")}:</strong> ${s.empBossName || "—"} ${s.empBossPhone ? `(${s.empBossPhone})` : ""}</div>
+              <div><strong>${t("График", "Iş vaqti")}:</strong> ${s.empTimeFrom || "—"} – ${s.empTimeTo || "—"}</div>
+              <div><strong>${t("Зарплата", "Maosh")}:</strong> ${formatSalaryUZS(s.empSalary)}</div>
+            </div>
+          ` : `
+            <div class="roommates-panel">
+              <div style="color:var(--text-muted)">${t("Студент в настоящее время не трудоустроен", "Talaba hozirgi vaqtda iş bilan band emas")}</div>
+            </div>
+          `;
+
+          return `
+            <div class="student-card">
+              <div>
+                <div class="st-card-top">
+                  <div>
+                    <div class="st-name">${s.name}</div>
+                    <div class="st-meta">${s.group} • ${s.course} ${t("курс", "kurs")}</div>
+                  </div>
+                  ${s.employed
+                    ? `<span class="badge-pill work">${t("Трудоустроен", "Işlaydi")}</span>`
+                    : `<span class="badge-pill unemployed">${t("Не трудоустроен", "Işlamaydi")}</span>`}
+                </div>
+                ${workDetails}
+              </div>
+              <div class="st-card-actions">
+                <span class="st-meta">${s.phone || ""}</span>
+                <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
+              </div>
+            </div>
+          `;
+        }).join("")}
       </div>
     `;
     return;
@@ -1052,19 +1505,19 @@ function renderStudentsSection() {
       <div class="bento-card">
         <div class="card-head">
           <div>
-            <h3 class="card-title">Расписание занятий групп (парсинг tyutor.hemis.uz)</h3>
-            <p class="card-sub">Актуальная сетка пар, аудиторий и преподавателей прикрепленных групп</p>
+            <h3 class="card-title">${t("Расписание занятий групп (парсинг tyutor.hemis.uz)", "Guruhlar dars jadvali (tyutor.hemis.uz)")}</h3>
+            <p class="card-sub">${t("Актуальная сетка пар, аудиторий и преподавателей прикрепленных групп", "Biriktirilgan guruhlarning joriy dars jadvali, auditoriyalari va öqituvçilari")}</p>
           </div>
-          <button type="button" class="btn-blue" onclick="openHemisImportModal()">Обновить расписание</button>
+          <button type="button" class="btn-blue" onclick="openHemisImportModal()">${t("Обновить расписание", "Jadvalni yangilaş")}</button>
         </div>
         ${appState.schedule.length ? `
           <table class="data-table">
-            <thead><tr><th>Группа</th><th>Пара / Время</th><th>Дисциплина</th><th>Аудитория</th><th>Преподаватель</th></tr></thead>
+            <thead><tr><th>${t("Группа", "Guruh")}</th><th>${t("Пара / Время", "Juftlik / Vaqt")}</th><th>${t("Дисциплина", "Fan")}</th><th>${t("Аудитория", "Auditoriya")}</th><th>${t("Преподаватель", "Öqituvçi")}</th></tr></thead>
             <tbody>
               ${appState.schedule.map(row => `<tr><td><strong>${row.group}</strong></td><td>${row.time}</td><td>${row.subject}</td><td>${row.room}</td><td>${row.teacher}</td></tr>`).join("")}
             </tbody>
           </table>
-        ` : `<div class="empty-state">Расписание еще не загружено из HEMIS.</div>`}
+        ` : `<div class="empty-state">${t("Расписание еще не загружено из HEMIS.", "Dars jadvali hali HEMIS dan yuklanmagan.")}</div>`}
       </div>
     `;
   }
@@ -1077,19 +1530,28 @@ function setHousingFilter(filter) {
 }
 
 function formatHousingBadge(s) {
-  if (s.housingType === "dorm") return `<span class="badge-pill">Общежитие, комн. ${s.room || "—"}</span>`;
-  if (s.housingType === "rent") return `<span class="badge-pill rent">Съемная квартира</span>`;
-  if (s.housingType === "relatives") return `<span class="badge-pill rel">У родственников</span>`;
-  return `<span class="badge-pill house"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/></svg> Свой дом</span>`;
+  if (s.housingType === "dorm") return `<span class="badge-pill">${t("Общежитие, комн.", "Yotoqxona, xona")} ${s.room || "—"}</span>`;
+  if (s.housingType === "rent") return `<span class="badge-pill rent">${t("Съемная квартира", "Ijara xonadon")}</span>`;
+  if (s.housingType === "relatives") return `<span class="badge-pill rel">${t("У родственников", "Qarindoşinikida")}</span>`;
+  return `<span class="badge-pill house"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-7"/></svg> ${t("Свой дом", "Öz uyi")}</span>`;
 }
 
 // ==================== МОДАЛКА КАРТОЧКИ СТУДЕНТА ====================
-let modalStudentState = { course: "1", gender: "М", tutorId: "", housingType: "dorm", volunteer: "Не состоит" };
+let modalStudentState = {
+  course: "1",
+  gender: "М",
+  tutorId: "",
+  housingType: "dorm",
+  volunteer: "Не состоит",
+  employed: "no"
+};
 
 function openStudentModal(studentId = null) {
   const st = studentId ? appState.students.find(s => s.id === studentId) : null;
   document.getElementById("editStudentId").value = st ? st.id : "";
-  document.getElementById("studentModalTitle").textContent = st ? "Редактирование карточки студента" : "Новый студент";
+  document.getElementById("studentModalTitle").textContent = st
+    ? t("Редактирование карточки студента", "Talaba kartasini tahrirlaş")
+    : t("Новый студент", "Yangi talaba");
   document.getElementById("stFullName").value = st ? st.name : "";
   document.getElementById("stGroup").value = st ? st.group : "";
   document.getElementById("stPhone").value = st ? st.phone : "";
@@ -1099,34 +1561,44 @@ function openStudentModal(studentId = null) {
     gender: st ? st.gender : "М",
     tutorId: st ? st.tutorId : (currentUser.role === "tutor" ? currentUser.id : "tutor1"),
     housingType: st ? st.housingType : "dorm",
-    volunteer: st ? (st.volunteer || "Не состоит") : "Не состоит"
+    volunteer: st ? (st.volunteer || "Не состоит") : "Не состоит",
+    employed: st && st.employed ? "yes" : "no"
   };
 
-  renderCustomSelect("stCourseSelectWrap", [
-    { value: "1", label: "1 курс" }, { value: "2", label: "2 курс" },
-    { value: "3", label: "3 курс" }, { value: "4", label: "4 курс" }
-  ], modalStudentState.course, v => { modalStudentState.course = v; renderCustomSelect("stCourseSelectWrap", [
-    { value: "1", label: "1 курс" }, { value: "2", label: "2 курс" },
-    { value: "3", label: "3 курс" }, { value: "4", label: "4 курс" }
-  ], v, arguments.callee); });
+  const courseOptions = [
+    { value: "1", label: `1 ${t("курс", "kurs")}` },
+    { value: "2", label: `2 ${t("курс", "kurs")}` },
+    { value: "3", label: `3 ${t("курс", "kurs")}` },
+    { value: "4", label: `4 ${t("курс", "kurs")}` }
+  ];
+  const onCourseChange = (v) => {
+    modalStudentState.course = v;
+    renderCustomSelect("stCourseSelectWrap", courseOptions, v, onCourseChange);
+  };
+  renderCustomSelect("stCourseSelectWrap", courseOptions, modalStudentState.course, onCourseChange);
 
-  renderCustomSelect("stGenderSelectWrap", [
-    { value: "М", label: "Мужской (М)" }, { value: "Ж", label: "Женский (Ж)" }
-  ], modalStudentState.gender, v => {
+  const genderOptions = [
+    { value: "М", label: t("Мужской (М)", "Erkak (E)") },
+    { value: "Ж", label: t("Женский (Ж)", "Ayol (A)") }
+  ];
+  const onGenderChange = (v) => {
     modalStudentState.gender = v;
-    renderCustomSelect("stGenderSelectWrap", [{ value: "М", label: "Мужской (М)" }, { value: "Ж", label: "Женский (Ж)" }], v, arguments.callee);
-  });
+    renderCustomSelect("stGenderSelectWrap", genderOptions, v, onGenderChange);
+  };
+  renderCustomSelect("stGenderSelectWrap", genderOptions, modalStudentState.gender, onGenderChange);
 
   const tutors = appState.users.filter(u => u.role === "tutor");
-  const tutorOpts = tutors.map(t => ({ value: t.id, label: t.name }));
-  renderCustomSelect("stTutorSelectWrap", tutorOpts, modalStudentState.tutorId, v => {
+  const tutorOpts = tutors.map(tr => ({ value: tr.id, label: tr.name }));
+  const onTutorChange = (v) => {
     modalStudentState.tutorId = v;
-    renderCustomSelect("stTutorSelectWrap", tutorOpts, v, arguments.callee);
-  });
+    renderCustomSelect("stTutorSelectWrap", tutorOpts, v, onTutorChange);
+  };
+  renderCustomSelect("stTutorSelectWrap", tutorOpts, modalStudentState.tutorId, onTutorChange);
 
   renderHousingTypeSelector(st);
+  renderEmploymentSelector(st);
 
-  // Родители и родственники (по умолчанию Мать и Отец)
+  // Родители и родственники
   tempFamilyMembers = st && Array.isArray(st.family) && st.family.length
     ? JSON.parse(JSON.stringify(st.family))
     : [
@@ -1138,24 +1610,59 @@ function openStudentModal(studentId = null) {
   // Социальные чипы
   const activeSoc = st && Array.isArray(st.social) ? st.social : [];
   document.getElementById("stSocialChips").innerHTML = SOCIAL_CATEGORIES.map(cat => `
-    <div class="tag-chip ${activeSoc.includes(cat) ? 'active' : ''}" onclick="this.classList.toggle('active')">${cat}</div>
+    <div class="tag-chip ${activeSoc.includes(cat.value) ? 'active' : ''}" data-val="${cat.value}" onclick="this.classList.toggle('active')">${currentLang === "oz" ? cat.oz : cat.ru}</div>
   `).join("");
 
-  const volOpts = VOLUNTEER_DIRECTIONS.map(v => ({ value: v, label: v }));
-  renderCustomSelect("stVolunteerWrap", volOpts, modalStudentState.volunteer, v => {
+  const volOpts = VOLUNTEER_DIRECTIONS.map(v => ({ value: v.value, label: currentLang === "oz" ? v.oz : v.ru }));
+  const onVolChange = (v) => {
     modalStudentState.volunteer = v;
-    renderCustomSelect("stVolunteerWrap", volOpts, v, arguments.callee);
-  });
+    renderCustomSelect("stVolunteerWrap", volOpts, v, onVolChange);
+  };
+  renderCustomSelect("stVolunteerWrap", volOpts, modalStudentState.volunteer, onVolChange);
 
   document.getElementById("studentModal").classList.remove("hidden");
 }
 
+function renderEmploymentSelector(st = null) {
+  const empOpts = [
+    { value: "no", label: t("Не трудоустроен", "Işlamaydi (Band emas)") },
+    { value: "yes", label: t("Трудоустроен", "Işlaydi (Trudoustroen)") }
+  ];
+  renderCustomSelect("stEmploymentStatusWrap", empOpts, modalStudentState.employed, (val) => {
+    modalStudentState.employed = val;
+    renderEmploymentSelector(st);
+  });
+
+  const orgBox = document.getElementById("employmentOrgField");
+  const extraBox = document.getElementById("employmentExtraFields");
+
+  if (modalStudentState.employed === "yes") {
+    orgBox.innerHTML = `
+      <div class="form-group">
+        <label class="form-label">${t("Наименование организации", "Taşkilot nomi")}</label>
+        <input type="text" id="stEmpOrg" class="form-input" value="${st && st.empOrg ? st.empOrg : ""}" placeholder="${t("ООО / Гостиница / Организация...", "MÇJ / Mehmonxona / Taşkilot...")}" />
+      </div>
+    `;
+    extraBox.classList.remove("hidden");
+    document.getElementById("stEmpPosition").value = st && st.empPosition ? st.empPosition : "";
+    document.getElementById("stEmpAddress").value = st && st.empAddress ? st.empAddress : "";
+    document.getElementById("stEmpBossName").value = st && st.empBossName ? st.empBossName : "";
+    document.getElementById("stEmpBossPhone").value = st && st.empBossPhone ? st.empBossPhone : "";
+    document.getElementById("stEmpTimeFrom").value = st && st.empTimeFrom ? st.empTimeFrom : "14:00";
+    document.getElementById("stEmpTimeTo").value = st && st.empTimeTo ? st.empTimeTo : "18:00";
+    document.getElementById("stEmpSalary").value = st && st.empSalary ? st.empSalary : "";
+  } else {
+    orgBox.innerHTML = "";
+    extraBox.classList.add("hidden");
+  }
+}
+
 function renderHousingTypeSelector(st = null) {
   const opts = [
-    { value: "dorm", label: "Общежитие" },
-    { value: "rent", label: "Съемная квартира" },
-    { value: "relatives", label: "У родственников" },
-    { value: "own", label: "Свой дом (маркер домика)" }
+    { value: "dorm", label: t("Общежитие", "Yotoqxona") },
+    { value: "rent", label: t("Съемная квартира", "Ijara xonadon") },
+    { value: "relatives", label: t("У родственников", "Qarindoşinikida") },
+    { value: "own", label: t("Свой дом (маркер домика)", "Öz uyi (uyça belgisi)") }
   ];
   renderCustomSelect("stHousingTypeWrap", opts, modalStudentState.housingType, (val) => {
     modalStudentState.housingType = val;
@@ -1175,8 +1682,8 @@ function renderDynamicHousingInputs(st = null) {
   if (type === "dorm") {
     dyn.innerHTML = `
       <div class="form-group">
-        <label class="form-label">Номер комнаты в общежитии</label>
-        <input type="text" id="stRoomInput" class="form-input" value="${st && st.room ? st.room : ''}" placeholder="Например: 401" oninput="updateModalRoommatesPreview()" />
+        <label class="form-label">${t("Номер комнаты в общежитии", "Yotoqxonadagi xona raqami")}</label>
+        <input type="text" id="stRoomInput" class="form-input" value="${st && st.room ? st.room : ''}" placeholder="${t("Например: 401", "Masalan: 401")}" oninput="updateModalRoommatesPreview()" />
       </div>
     `;
     extra.innerHTML = "";
@@ -1184,34 +1691,34 @@ function renderDynamicHousingInputs(st = null) {
   } else if (type === "rent") {
     dyn.innerHTML = `
       <div class="form-group">
-        <label class="form-label">Адрес съемной квартиры</label>
-        <input type="text" id="stAddressInput" class="form-input" value="${st && st.address ? st.address : ''}" placeholder="г. Самарканд, ул. ..." />
+        <label class="form-label">${t("Адрес съемной квартиры", "Ijara xonadon manzili")}</label>
+        <input type="text" id="stAddressInput" class="form-input" value="${st && st.address ? st.address : ''}" placeholder="${t("г. Самарканд, ул. ...", "Samarqand ş., ... köçasi")}" />
       </div>
     `;
     extra.innerHTML = `
       <div class="form-group">
-        <label class="form-label">Данные о владельце квартиры (Ф.И.О., телефон, паспорт)</label>
-        <input type="text" id="stLandlordInput" class="form-input" value="${st && st.landlord ? st.landlord : ''}" placeholder="Ф.И.О. арендодателя и номер телефона" />
+        <label class="form-label">${t("Данные о владельце квартиры (Ф.И.О., телефон, паспорт)", "Uy egasi haqida ma’lumot (F.I.Ş., telefon, pasport)")}</label>
+        <input type="text" id="stLandlordInput" class="form-input" value="${st && st.landlord ? st.landlord : ''}" placeholder="${t("Ф.И.О. арендодателя и номер телефона", "Uy egasining F.I.Ş. va telefon raqami")}" />
       </div>
     `;
   } else if (type === "relatives") {
     dyn.innerHTML = `
       <div class="form-group">
-        <label class="form-label">Адрес проживания у родственников</label>
-        <input type="text" id="stAddressInput" class="form-input" value="${st && st.address ? st.address : ''}" placeholder="Адрес родственников..." />
+        <label class="form-label">${t("Адрес проживания у родственников", "Qarindoşinikida yaşaş manzili")}</label>
+        <input type="text" id="stAddressInput" class="form-input" value="${st && st.address ? st.address : ''}" placeholder="${t("Адрес родственников...", "Qarindoşining manzili...")}" />
       </div>
     `;
     extra.innerHTML = `
       <div class="form-group">
-        <label class="form-label">Данные о родственниках (степень родства, Ф.И.О., телефон)</label>
-        <input type="text" id="stRelativeHostInput" class="form-input" value="${st && st.relativeHost ? st.relativeHost : ''}" placeholder="Например: Дядя — Каримов Б., +998 90 ..." />
+        <label class="form-label">${t("Данные о родственниках (степень родства, Ф.И.О., телефон)", "Qarindoşi haqida ma’lumot (qarindoşlik darajasi, F.I.Ş., telefon)")}</label>
+        <input type="text" id="stRelativeHostInput" class="form-input" value="${st && st.relativeHost ? st.relativeHost : ''}" placeholder="${t("Например: Дядя — Каримов Б., +998 90 ...", "Masalan: Toğasi — Karimov B., +998 90 ...")}" />
       </div>
     `;
   } else {
     dyn.innerHTML = `
       <div class="form-group">
-        <label class="form-label">Адрес собственного дома</label>
-        <input type="text" id="stAddressInput" class="form-input" value="${st && st.address ? st.address : ''}" placeholder="г. Самарканд, ..." />
+        <label class="form-label">${t("Адрес собственного дома", "Öz uyining manzili")}</label>
+        <input type="text" id="stAddressInput" class="form-input" value="${st && st.address ? st.address : ''}" placeholder="${t("г. Самарканд, ...", "Samarqand ş., ...")}" />
       </div>
     `;
     extra.innerHTML = "";
@@ -1232,8 +1739,8 @@ function updateModalRoommatesPreview() {
   const mates = appState.students.filter(s => s.id !== editId && s.housingType === "dorm" && String(s.room) === roomVal);
   preview.classList.remove("hidden");
   preview.innerHTML = mates.length
-    ? `Автосвязка по комнате № ${roomVal}: найдено соседей — ${mates.map(m => `${m.name} (${m.group})`).join(", ")}`
-    : `Комната № ${roomVal}: других студентов в базе пока не зарегистрировано.`;
+    ? `${t("Автосвязка по комнате №", "Xona № böyiça avtomatik boğlaniş")} ${roomVal}: ${t("найдено соседей", "xonadoşlar topildi")} — ${mates.map(m => `${m.name} (${m.group})`).join(", ")}`
+    : `${t("Комната №", "Xona №")} ${roomVal}: ${t("других студентов в базе пока не зарегистрировано.", "bazada boşqa talabalar hali röyxatga olinmagan.")}`;
 }
 
 function renderFamilyMembersRows() {
@@ -1242,19 +1749,19 @@ function renderFamilyMembersRows() {
     <div class="family-row">
       <div>
         <div class="custom-select" id="famRelSelect_${idx}"></div>
-        ${mem.relation === "Другое..." ? `<input type="text" class="form-input mt-6" placeholder="Кто именно..." value="${mem.customRelation || ''}" onchange="tempFamilyMembers[${idx}].customRelation = this.value" />` : ""}
+        ${mem.relation === "Другое..." ? `<input type="text" class="form-input mt-6" placeholder="${t("Кто именно...", "Kim ekanligi...")}" value="${mem.customRelation || ''}" onchange="tempFamilyMembers[${idx}].customRelation = this.value" />` : ""}
       </div>
-      <input type="text" class="form-input" placeholder="Ф.И.О." value="${mem.name || ''}" onchange="tempFamilyMembers[${idx}].name = this.value" />
-      <input type="text" class="form-input" placeholder="Телефон" value="${mem.phone || ''}" onchange="tempFamilyMembers[${idx}].phone = this.value" />
-      <input type="text" class="form-input" placeholder="Место работы" value="${mem.work || ''}" onchange="tempFamilyMembers[${idx}].work = this.value" />
-      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="removeFamilyMemberRow(${idx}, this)" title="Удалить">
+      <input type="text" class="form-input" placeholder="${t("Ф.И.О.", "F.I.Ş.")}" value="${mem.name || ''}" onchange="tempFamilyMembers[${idx}].name = this.value" />
+      <input type="text" class="form-input" placeholder="${t("Телефон", "Telefon")}" value="${mem.phone || ''}" onchange="tempFamilyMembers[${idx}].phone = this.value" />
+      <input type="text" class="form-input" placeholder="${t("Место работы", "Iş joyi")}" value="${mem.work || ''}" onchange="tempFamilyMembers[${idx}].work = this.value" />
+      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="removeFamilyMemberRow(${idx}, this)" title="${t("Удалить", "Öçiriş")}">
         <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
       </button>
     </div>
   `).join("");
 
   tempFamilyMembers.forEach((mem, idx) => {
-    const opts = RELATIVE_TYPES.map(r => ({ value: r, label: r }));
+    const opts = RELATIVE_TYPES.map(r => ({ value: r.value, label: currentLang === "oz" ? r.oz : r.ru }));
     renderCustomSelect(`famRelSelect_${idx}`, opts, mem.relation, (val) => {
       tempFamilyMembers[idx].relation = val;
       renderFamilyMembersRows();
@@ -1278,15 +1785,17 @@ function saveStudent() {
   const name = document.getElementById("stFullName").value.trim();
   const group = document.getElementById("stGroup").value.trim();
   if (!name || !group) {
-    showToast("Укажите Ф.И.О. и группу студента");
+    showToast(t("Укажите Ф.И.О. и группу студента", "Talabaning F.I.Ş. va guruhini kiriting"));
     return;
   }
 
   const editId = document.getElementById("editStudentId").value;
-  const social = [...document.querySelectorAll("#stSocialChips .tag-chip.active")].map(el => el.textContent);
+  const oldStudent = editId ? appState.students.find(s => s.id === editId) : null;
+  const social = [...document.querySelectorAll("#stSocialChips .tag-chip.active")].map(el => el.dataset.val || el.textContent);
+  const isEmployed = modalStudentState.employed === "yes";
 
   const record = {
-    id: editId || `st_${Date.now()}`,
+    id: editId || `st_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     name,
     group,
     course: modalStudentState.course,
@@ -1298,6 +1807,15 @@ function saveStudent() {
     address: document.getElementById("stAddressInput") ? document.getElementById("stAddressInput").value.trim() : "",
     landlord: document.getElementById("stLandlordInput") ? document.getElementById("stLandlordInput").value.trim() : "",
     relativeHost: document.getElementById("stRelativeHostInput") ? document.getElementById("stRelativeHostInput").value.trim() : "",
+    employed: isEmployed,
+    empOrg: isEmployed && document.getElementById("stEmpOrg") ? document.getElementById("stEmpOrg").value.trim() : "",
+    empPosition: isEmployed ? document.getElementById("stEmpPosition").value.trim() : "",
+    empAddress: isEmployed ? document.getElementById("stEmpAddress").value.trim() : "",
+    empBossName: isEmployed ? document.getElementById("stEmpBossName").value.trim() : "",
+    empBossPhone: isEmployed ? document.getElementById("stEmpBossPhone").value.trim() : "",
+    empTimeFrom: isEmployed ? document.getElementById("stEmpTimeFrom").value : "",
+    empTimeTo: isEmployed ? document.getElementById("stEmpTimeTo").value : "",
+    empSalary: isEmployed ? document.getElementById("stEmpSalary").value.trim() : "",
     family: tempFamilyMembers,
     social,
     volunteer: modalStudentState.volunteer
@@ -1311,17 +1829,25 @@ function saveStudent() {
   }
 
   saveState();
+  syncSpecificTutorFolder(record.tutorId);
+  if (oldStudent && oldStudent.tutorId !== record.tutorId) {
+    syncSpecificTutorFolder(oldStudent.tutorId);
+  }
+
   closeModal("studentModal");
   renderAllViews();
-  showToast("Карточка студента сохранена");
+  showToast(t("Карточка студента сохранена", "Talaba kartasi saqlandi"));
 }
 
 function deleteStudent(id, btnEl) {
   askConfirmDelete(btnEl, () => {
+    const target = appState.students.find(s => s.id === id);
+    const ownerTutorId = target ? target.tutorId : null;
     appState.students = appState.students.filter(s => s.id !== id);
     saveState();
+    if (ownerTutorId) syncSpecificTutorFolder(ownerTutorId);
     renderAllViews();
-    showToast("Студент удален из базы");
+    showToast(t("Студент удален из базы", "Talaba bazadan öçirildi"));
   });
 }
 
@@ -1333,34 +1859,43 @@ function openHemisImportModal() {
 function runHemisImport() {
   const bulk = document.getElementById("hemisBulkText").value.trim();
   if (!bulk) {
-    showToast("Вставьте данные студентов из HEMIS");
+    showToast(t("Вставьте данные студентов из HEMIS", "HEMIS dan talabalar ma’lumotlarini kiriting"));
     return;
   }
   const lines = bulk.split("\n").filter(Boolean);
   let added = 0;
+  const targetTutorId = currentUser.role === "tutor" ? currentUser.id : "tutor1";
+
   lines.forEach((line, i) => {
     const parts = line.split("|").map(p => p.trim());
     if (parts[0]) {
+      const gRaw = (parts[3] || "М").toUpperCase();
+      const isFemale = gRaw.startsWith("Ж") || gRaw.startsWith("A");
       appState.students.unshift({
-        id: `hemis_${Date.now()}_${i}`,
+        id: `hemis_${Date.now()}_${i}_${Math.random().toString(36).slice(2, 5)}`,
         name: parts[0],
         group: parts[1] || "TR-101",
         course: parts[2] || "1",
-        gender: (parts[3] || "М").toUpperCase().startsWith("Ж") ? "Ж" : "М",
+        gender: isFemale ? "Ж" : "М",
         phone: parts[4] || "",
-        tutorId: currentUser.role === "tutor" ? currentUser.id : "tutor1",
+        tutorId: targetTutorId,
         housingType: "own",
         room: "", address: "", landlord: "", relativeHost: "",
+        employed: false, empOrg: "", empPosition: "", empAddress: "",
+        empBossName: "", empBossPhone: "", empTimeFrom: "", empTimeTo: "", empSalary: "",
         family: [], social: [], volunteer: "Не состоит"
       });
       added++;
     }
   });
   saveState();
+  syncSpecificTutorFolder(targetTutorId);
   closeModal("hemisModal");
-  document.getElementById("hemisSyncStatus").textContent = `Последняя синхронизация с tyutor.hemis.uz: ${new Date().toLocaleString()}`;
+  const syncEl = document.getElementById("hemisSyncStatus");
+  syncEl.dataset.customTime = "1";
+  syncEl.textContent = `${t("Последняя синхронизация с tyutor.hemis.uz", "tyutor.hemis.uz bilan oxirgi sinxronlaş")}: ${new Date().toLocaleString()}`;
   renderAllViews();
-  showToast(`Импортировано студентов: ${added}`);
+  showToast(`${t("Импортировано студентов", "Import qilingan talabalar")}: ${added}`);
 }
 
 // ==================== 3. TELEGRAM И ОТЧЕТЫ GOOGLE DOCS ====================
@@ -1375,11 +1910,11 @@ function renderTelegramSection() {
   `).join("");
 
   const allTags = ["all", ...TG_TAGS];
-  document.getElementById("tgFilterTagsRow").innerHTML = allTags.map(t => `
-    <div class="tag-chip ${activeTgTagFilter === t ? 'active' : ''}" onclick="setTgTagFilter('${t}')">${t === 'all' ? 'Все посты' : t}</div>
+  document.getElementById("tgFilterTagsRow").innerHTML = allTags.map(tg => `
+    <div class="tag-chip ${activeTgTagFilter === tg ? 'active' : ''}" onclick="setTgTagFilter('${tg}')">${tg === 'all' ? t('Все посты', 'Barça postlar') : tg}</div>
   `).join("");
 
-  const tagOpts = [{ value: "all", label: "Все категории тегов" }].concat(TG_TAGS.map(t => ({ value: t, label: t })));
+  const tagOpts = [{ value: "all", label: t("Все категории тегов", "Barça teg toifalari") }].concat(TG_TAGS.map(tg => ({ value: tg, label: tg })));
   renderCustomSelect("reportTagSelectWrap", tagOpts, reportSelectedTag, (val) => {
     reportSelectedTag = val;
     renderTelegramSection();
@@ -1397,30 +1932,36 @@ function renderTelegramSection() {
 
   const listEl = document.getElementById("tgPostsList");
   if (!posts.length) {
-    listEl.innerHTML = `<div class="empty-state">Загруженных постов из Telegram пока нет. Вставьте ссылку формата https://t.me/studlifeuniv/12028 выше.</div>`;
+    listEl.innerHTML = `<div class="empty-state">${t(
+      "Загруженных постов из Telegram пока нет. Вставьте ссылку формата https://t.me/studlifeuniv/12028 выше.",
+      "Telegram dan yuklangan postlar hozirça yöq. Yuqorida https://t.me/studlifeuniv/12028 şaklidagi havolani kiriting."
+    )}</div>`;
   } else {
-    listEl.innerHTML = posts.map(p => `
-      <div class="post-card">
-        <div class="post-head">
-          <div>
-            <a href="${p.url}" target="_blank" style="color:var(--blue); font-weight:700; text-decoration:none;">${p.url}</a>
-            <span class="st-meta"> • ${p.date}</span>
+    listEl.innerHTML = posts.map(p => {
+      const cleanImages = (p.images || []).filter(isRealPostPhoto);
+      return `
+        <div class="post-card">
+          <div class="post-head">
+            <div>
+              <a href="${p.url}" target="_blank" style="color:var(--blue); font-weight:700; text-decoration:none;">${p.url}</a>
+              <span class="st-meta"> • ${p.date}</span>
+            </div>
+            <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTgPost('${p.id}', this)" title="${t("Удалить пост", "Postni öçiriş")}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+            </button>
           </div>
-          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTgPost('${p.id}', this)" title="Удалить пост">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-          </button>
-        </div>
-        <p style="font-size:14px; white-space:pre-line;">${p.text}</p>
-        <div class="checkbox-chips mt-10">
-          ${(p.tags || []).map(t => `<span class="badge-pill">${t}</span>`).join("")}
-        </div>
-        ${(p.images || []).length ? `
-          <div class="post-images">
-            ${p.images.map(img => `<img src="${img}" alt="TG" onclick="openLightbox('${img}')" />`).join("")}
+          <p style="font-size:14px; white-space:pre-line;">${p.text}</p>
+          <div class="checkbox-chips mt-10">
+            ${(p.tags || []).map(tg => `<span class="badge-pill">${tg}</span>`).join("")}
           </div>
-        ` : ""}
-      </div>
-    `).join("");
+          ${cleanImages.length ? `
+            <div class="post-images">
+              ${cleanImages.map(img => `<img src="${img}" alt="TG" onclick="openLightbox('${img}')" />`).join("")}
+            </div>
+          ` : ""}
+        </div>
+      `;
+    }).join("");
   }
 
   updateReportPreview();
@@ -1428,7 +1969,7 @@ function renderTelegramSection() {
 
 function toggleNewPostTag(tag) {
   if (selectedNewPostTags.includes(tag)) {
-    selectedNewPostTags = selectedNewPostTags.filter(t => t !== tag);
+    selectedNewPostTags = selectedNewPostTags.filter(tg => tg !== tag);
   } else {
     selectedNewPostTags.push(tag);
   }
@@ -1458,11 +1999,11 @@ async function parseTelegramPost() {
   let images = [];
 
   if (!url) {
-    showToast("Введите ссылку на публикацию в Telegram");
+    showToast(t("Введите ссылку на публикацию в Telegram", "Telegram post havolasini kiriting"));
     return;
   }
 
-  showToast(currentLang === "oz" ? "Telegram post yuklanmoqda..." : "Загрузка поста из Telegram...");
+  showToast(t("Загрузка поста из Telegram...", "Telegram post yuklanmoqda..."));
 
   try {
     const endpoint = `${TELEGRAM_WORKER_URL.replace(/\/+$/, "")}/tg?url=${encodeURIComponent(url)}`;
@@ -1481,11 +2022,14 @@ async function parseTelegramPost() {
   }
 
   if (!text) {
-    text = `Публикация из канала @studlifeuniv (${url}). Проведено воспитательно-просветительское мероприятие со студентами университета.`;
+    text = t(
+      `Публикация из канала @studlifeuniv (${url}). Проведено воспитательно-просветительское мероприятие со студентами университета.`,
+      `@studlifeuniv kanalidagi naşr (${url}). Universitet talabalari bilan ma’naviy-ma’rifiy tadbir ötkazildi.`
+    );
   }
 
   appState.tgPosts.unshift({
-    id: `post_${Date.now()}`,
+    id: `post_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     authorId: currentUser.id,
     url,
     date: postDate,
@@ -1498,15 +2042,18 @@ async function parseTelegramPost() {
   document.getElementById("tgUrlInput").value = "";
   textInput.value = "";
   renderTelegramSection();
-  showToast(currentLang === "oz" ? "Post qöşildi va sana böyiça saralandi" : "Пост добавлен и отсортирован по дате");
+  showToast(t("Пост добавлен и отсортирован по дате", "Post qöşildi va sana böyiça saralandi"));
 }
 
 function deleteTgPost(id, btnEl) {
   askConfirmDelete(btnEl, () => {
+    const target = appState.tgPosts.find(p => p.id === id);
+    const ownerAuthorId = target ? target.authorId : null;
     appState.tgPosts = appState.tgPosts.filter(p => p.id !== id);
     saveState();
+    if (ownerAuthorId) syncSpecificTutorFolder(ownerAuthorId);
     renderTelegramSection();
-    showToast("Публикация удалена");
+    showToast(t("Публикация удалена", "Post öçirildi"));
   });
 }
 
@@ -1528,15 +2075,15 @@ function getFilteredReportPosts() {
 function updateReportPreview() {
   const matched = getFilteredReportPosts();
   document.getElementById("reportSummaryBox").innerHTML = `
-    Найдено публикаций за период: <strong>${matched.length}</strong><br/>
-    <span class="st-meta">Документ назначения: Google Doc (${currentUser.driveFolder})</span>
+    ${t("Найдено публикаций за период", "Tanlangan davrda topilgan postlar")}: <strong>${matched.length}</strong><br/>
+    <span class="st-meta">${t("Документ назначения", "Belgilangan hujjat")}: Google Doc (${currentUser.driveFolder})</span>
   `;
 }
 
 async function exportToGoogleDoc() {
   const matched = getFilteredReportPosts();
   if (!matched.length) {
-    showToast(currentLang === "oz" ? "Tanlangan davrda hisobot uşun postlar yöq" : "За выбранный период нет публикаций для отчета");
+    showToast(t("За выбранный период нет публикаций для отчета", "Tanlangan davrda hisobot uşun postlar yöq"));
     return;
   }
 
@@ -1546,7 +2093,7 @@ async function exportToGoogleDoc() {
 
   const reportText = matched.map((p, idx) => {
     const tagsStr = Array.isArray(p.tags) && p.tags.length ? ` [${p.tags.join(", ")}]` : "";
-    return `${idx + 1}. (${p.date})${tagsStr}\n${p.text}\nСсылка: ${p.url}`;
+    return `${idx + 1}. (${p.date})${tagsStr}\n${p.text}\n${t("Ссылка", "Havola")}: ${p.url}`;
   }).join("\n\n");
 
   if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) {
@@ -1554,7 +2101,7 @@ async function exportToGoogleDoc() {
     return;
   }
 
-  showToast(currentLang === "oz" ? "Google Doc ga yuborilmoqda..." : "Отправка отчета в Google Doc...");
+  showToast(t("Отправка отчета в Google Doc...", "Google Doc ga yuborilmoqda..."));
 
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
@@ -1572,13 +2119,13 @@ async function exportToGoogleDoc() {
     const json = JSON.parse(text);
 
     if (json.status === "ok") {
-      showToast(currentLang === "oz" ? "Hisobot Google Doc ga qöşildi" : "Отчет добавлен в Google Doc тютора");
+      showToast(t("Отчет добавлен в Google Doc тютора", "Hisobot Google Doc ga qöşildi"));
     } else {
-      showToast("Ошибка Google Doc: " + (json.message || "неизвестная ошибка"));
+      showToast(`${t("Ошибка Google Doc", "Google Doc xatosi")}: ` + (json.message || t("неизвестная ошибка", "noma’lum xato")));
     }
   } catch (err) {
     console.error("Ошибка экспорта в Google Doc:", err);
-    showToast("Не удалось отправить отчет в Google Doc");
+    showToast(t("Не удалось отправить отчет в Google Doc", "Hisobotni Google Doc ga yuborib bölmadi"));
   }
 }
 
@@ -1607,13 +2154,13 @@ function renderDiariesSection() {
     area.innerHTML = `
       <div class="subtabs-row">
         <div class="subtabs-pills">
-          <button type="button" class="subtab-btn ${activeMonitoringFilter === 'active' ? 'active' : ''}" onclick="activeMonitoringFilter='active'; renderDiariesSection()">Активные на учете (${list.filter(m => m.status === 'active').length})</button>
-          <button type="button" class="subtab-btn ${activeMonitoringFilter === 'archived' ? 'active' : ''}" onclick="activeMonitoringFilter='archived'; renderDiariesSection()">Снятые с учета / Архив (${list.filter(m => m.status === 'archived').length})</button>
+          <button type="button" class="subtab-btn ${activeMonitoringFilter === 'active' ? 'active' : ''}" onclick="activeMonitoringFilter='active'; renderDiariesSection()">${t("Активные на учете", "Hisobda turganlar")} (${list.filter(m => m.status === 'active').length})</button>
+          <button type="button" class="subtab-btn ${activeMonitoringFilter === 'archived' ? 'active' : ''}" onclick="activeMonitoringFilter='archived'; renderDiariesSection()">${t("Снятые с учета / Архив", "Hisobdan çiqarilgan / Arxiv")} (${list.filter(m => m.status === 'archived').length})</button>
         </div>
-        <button type="button" class="btn-orange" onclick="openMonitoringModal()">+ Поставить на мониторинг</button>
+        <button type="button" class="btn-orange" onclick="openMonitoringModal()">+ ${t("Поставить на мониторинг", "Monitoringga qöyiş")}</button>
       </div>
 
-      ${!filtered.length ? `<div class="empty-state">В данной вкладке записей мониторинга пока нет.</div>` : `
+      ${!filtered.length ? `<div class="empty-state">${t("В данной вкладке записей мониторинга пока нет.", "Uşbu bölimda monitoring yozuvlari hozirça yöq.")}</div>` : `
         <div class="diary-grid">
           ${filtered.map(rec => {
             const st = appState.students.find(s => s.id === rec.studentId);
@@ -1623,11 +2170,11 @@ function renderDiariesSection() {
                 <div class="st-card-top">
                   <div>
                     <div class="st-name">${st ? st.name : rec.studentName}</div>
-                    <div class="st-meta">${st ? st.group : ""} • Тютор: ${tutor ? tutor.name : ""}</div>
+                    <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : ""}</div>
                   </div>
                   <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="badge-pill rent">${rec.category}</span>
-                    <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteMonitoringRecord('${rec.id}', this)" title="Удалить карточку">
+                    <span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, rec.category)}</span>
+                    <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteMonitoringRecord('${rec.id}', this)" title="${t("Удалить карточку", "Kartani öçiriş")}">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
                     </button>
                   </div>
@@ -1636,24 +2183,24 @@ function renderDiariesSection() {
                 <div class="diary-entries">
                   ${(rec.entries || []).map(ent => `
                     <div class="diary-entry-item ${ent.type || ''}">
-                      <div class="diary-entry-date">${ent.date} ${ent.type === 'positive' ? '• Положительный результат (снят с учета)' : ''} ${ent.type === 'reopened' ? '• Повторная постановка на учет' : ''}</div>
+                      <div class="diary-entry-date">${ent.date} ${ent.type === 'positive' ? `• ${t("Положительный результат (снят с учета)", "Ijobiy natija (hisobdan çiqarildi)")}` : ''} ${ent.type === 'reopened' ? `• ${t("Повторная постановка на учет", "Qayta hisobga olindi")}` : ''}</div>
                       <div>${ent.text}</div>
                     </div>
                   `).join("")}
                 </div>
 
                 ${rec.status === "active" ? `
-                  <textarea id="noteInput_${rec.id}" class="form-textarea mt-10" rows="2" placeholder="Запись о проведенной беседе..."></textarea>
+                  <textarea id="noteInput_${rec.id}" class="form-textarea mt-10" rows="2" placeholder="${t("Запись о проведенной беседе...", "Ötkazilgan suhbat haqida qayd...")}"></textarea>
                   <div class="st-card-actions">
                     <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--emerald); font-weight:600; cursor:pointer;">
-                      <input type="checkbox" id="posCheck_${rec.id}" /> Положительный результат (снять с учета)
+                      <input type="checkbox" id="posCheck_${rec.id}" /> ${t("Положительный результат (снять с учета)", "Ijobiy natija (hisobdan çiqariş)")}
                     </label>
-                    <button type="button" class="btn-dark" onclick="addMonitoringEntry('${rec.id}')">Добавить запись</button>
+                    <button type="button" class="btn-dark" onclick="addMonitoringEntry('${rec.id}')">${t("Добавить запись", "Qayd qöşiş")}</button>
                   </div>
                 ` : `
                   <div class="st-card-actions">
-                    <span class="st-meta">Все записи сохранены в БД</span>
-                    <button type="button" class="btn-orange sm" onclick="reopenMonitoringRecord('${rec.id}')">Вернуть на учет повторно</button>
+                    <span class="st-meta">${t("Все записи сохранены в БД", "Barça qaydlar bazada saqlangan")}</span>
+                    <button type="button" class="btn-orange sm" onclick="reopenMonitoringRecord('${rec.id}')">${t("Вернуть на учет повторно", "Qayta hisobga qaytariş")}</button>
                   </div>
                 `}
               </div>
@@ -1673,17 +2220,17 @@ function renderDiariesSection() {
   const students = getRoleScopedStudents();
   area.innerHTML = `
     <div class="bento-card mb-16">
-      <h3 class="card-title mb-12">Зафиксировать встречу / беседу с родителями</h3>
+      <h3 class="card-title mb-12">${t("Зафиксировать встречу / беседу с родителями", "Ota-onalar bilan uçraşuv / suhbatni qayd etiş")}</h3>
       <div class="form-grid-3">
         <div class="custom-select" id="pmStudentSelectWrap"></div>
         <input type="date" id="pmDateInput" class="form-input" value="${new Date().toISOString().slice(0, 10)}" />
-        <input type="text" id="pmParentWho" class="form-input" placeholder="Кто присутствовал (Мать / Отец)" />
+        <input type="text" id="pmParentWho" class="form-input" placeholder="${t("Кто присутствовал (Мать / Отец)", "Kim qatnaşdi (Onasi / Otasi)")}" />
       </div>
-      <textarea id="pmNotesInput" class="form-textarea mt-10" rows="2" placeholder="Какие вопросы обсуждались и какое принято решение..."></textarea>
-      <button type="button" class="btn-orange mt-10" onclick="addParentMeeting()">Сохранить запись встречи</button>
+      <textarea id="pmNotesInput" class="form-textarea mt-10" rows="2" placeholder="${t("Какие вопросы обсуждались и какое принято решение...", "Qanday masalalar muhokama qilindi va qanday qaror qabul qilindi...")}"></textarea>
+      <button type="button" class="btn-orange mt-10" onclick="addParentMeeting()">${t("Сохранить запись встречи", "Uçraşuv qaydini saqlaş")}</button>
     </div>
 
-    ${!meetings.length ? `<div class="empty-state">Записей о встречах с родителями пока нет.</div>` : `
+    ${!meetings.length ? `<div class="empty-state">${t("Записей о встречах с родителями пока нет.", "Ota-onalar bilan uçraşuv qaydları hozirça yöq.")}</div>` : `
       <div class="diary-grid">
         ${meetings.map(m => `
           <div class="diary-card">
@@ -1692,7 +2239,7 @@ function renderDiariesSection() {
                 <div class="st-name">${m.studentName}</div>
                 <div class="st-meta">${m.date} • ${m.who}</div>
               </div>
-              <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="Удалить">
+              <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
               </button>
             </div>
@@ -1706,12 +2253,13 @@ function renderDiariesSection() {
   window._selectedPmStudentId = students[0] ? students[0].id : "";
   const stOpts = students.length
     ? students.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }))
-    : [{ value: "", label: "Сначала добавьте студентов" }];
+    : [{ value: "", label: t("Сначала добавьте студентов", "Avval talabalarni qöşing") }];
 
-  renderCustomSelect("pmStudentSelectWrap", stOpts, window._selectedPmStudentId, (val) => {
+  const onPmStudentChange = (val) => {
     window._selectedPmStudentId = val;
-    renderCustomSelect("pmStudentSelectWrap", stOpts, val, arguments.callee);
-  });
+    renderCustomSelect("pmStudentSelectWrap", stOpts, val, onPmStudentChange);
+  };
+  renderCustomSelect("pmStudentSelectWrap", stOpts, window._selectedPmStudentId, onPmStudentChange);
 }
 
 let monModalStudentId = "";
@@ -1720,24 +2268,26 @@ let monModalCategory = "Курение";
 function openMonitoringModal() {
   const students = getRoleScopedStudents();
   if (!students.length) {
-    showToast("Сначала добавьте студентов в базу");
+    showToast(t("Сначала добавьте студентов в базу", "Avval bazaga talabalarni qöşing"));
     return;
   }
   monModalStudentId = students[0].id;
   monModalCategory = "Курение";
 
   const stOpts = students.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }));
-  renderCustomSelect("monStudentSelectWrap", stOpts, monModalStudentId, (v) => {
+  const onMonStChange = (v) => {
     monModalStudentId = v;
-    renderCustomSelect("monStudentSelectWrap", stOpts, v, arguments.callee);
-  });
+    renderCustomSelect("monStudentSelectWrap", stOpts, v, onMonStChange);
+  };
+  renderCustomSelect("monStudentSelectWrap", stOpts, monModalStudentId, onMonStChange);
 
-  const catOpts = MONITORING_CATEGORIES.map(c => ({ value: c, label: c }));
-  renderCustomSelect("monCategorySelectWrap", catOpts, monModalCategory, (v) => {
+  const catOpts = MONITORING_CATEGORIES.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  const onMonCatChange = (v) => {
     monModalCategory = v;
     document.getElementById("monCustomCatWrap").classList.toggle("hidden", v !== "Другое...");
-    renderCustomSelect("monCategorySelectWrap", catOpts, v, arguments.callee);
-  });
+    renderCustomSelect("monCategorySelectWrap", catOpts, v, onMonCatChange);
+  };
+  renderCustomSelect("monCategorySelectWrap", catOpts, monModalCategory, onMonCatChange);
 
   document.getElementById("monCustomCatWrap").classList.add("hidden");
   document.getElementById("monInitialNote").value = "";
@@ -1749,18 +2299,17 @@ function saveMonitoringRecord() {
   if (!st) return;
 
   const finalCat = monModalCategory === "Другое..."
-    ? (document.getElementById("monCustomCategoryInput").value.trim() || "Другое")
+    ? (document.getElementById("monCustomCategoryInput").value.trim() || t("Другое", "Boşqa"))
     : monModalCategory;
-  const note = document.getElementById("monInitialNote").value.trim() || "Поставлен(а) на индивидуальный мониторинг.";
+  const note = document.getElementById("monInitialNote").value.trim() || t("Поставлен(а) на индивидуальный мониторинг.", "Individual monitoringga qöyildi.");
 
-  // Если студент уже был в архиве по этой категории — возобновляем с фиксацией в истории
   const existing = appState.monitoring.find(m => m.studentId === st.id && m.category === finalCat);
   if (existing) {
     existing.status = "active";
     existing.entries.push({
       date: new Date().toISOString().slice(0, 10),
       type: "reopened",
-      text: `Повторно возвращен(а) на учет: ${note}`
+      text: `${t("Повторно возвращен(а) на учет", "Qayta hisobga olindi")}: ${note}`
     });
   } else {
     appState.monitoring.unshift({
@@ -1775,9 +2324,10 @@ function saveMonitoringRecord() {
   }
 
   saveState();
+  syncSpecificTutorFolder(st.tutorId);
   closeModal("monitoringModal");
   renderDiariesSection();
-  showToast("Запись мониторинга сохранена");
+  showToast(t("Запись мониторинга сохранена", "Monitoring qaydi saqlandi"));
 }
 
 function addMonitoringEntry(recId) {
@@ -1787,11 +2337,11 @@ function addMonitoringEntry(recId) {
   const check = document.getElementById(`posCheck_${recId}`);
   const text = input.value.trim();
   if (!text) {
-    showToast("Введите текст заметки");
+    showToast(t("Введите текст заметки", "Qayd matnini kiriting"));
     return;
   }
 
-  const autoPositive = /сбрил|сняла|бросил|устранен/i.test(text);
+  const autoPositive = /сбрил|сняла|бросил|устранен|oldirdi|yeçdi|taşladi/i.test(text);
   const isPositive = check.checked || autoPositive;
 
   rec.entries.push({
@@ -1802,12 +2352,13 @@ function addMonitoringEntry(recId) {
 
   if (isPositive) {
     rec.status = "archived";
-    showToast("Положительный результат зафиксирован. Студент перенесен в архив.");
+    showToast(t("Положительный результат зафиксирован. Студент перенесен в архив.", "Ijobiy natija qayd etildi. Talaba arxivga ötkazildi."));
   } else {
-    showToast("Запись добавлена в дневник");
+    showToast(t("Запись добавлена в дневник", "Qayd kundalikka qöşildi"));
   }
 
   saveState();
+  syncSpecificTutorFolder(rec.tutorId);
   renderDiariesSection();
 }
 
@@ -1818,20 +2369,27 @@ function reopenMonitoringRecord(recId) {
   rec.entries.push({
     date: new Date().toISOString().slice(0, 10),
     type: "reopened",
-    text: "Студент(ка) повторно возвращен(а) на учет для продолжения индивидуального контроля."
+    text: t(
+      "Студент(ка) повторно возвращен(а) на учет для продолжения индивидуального контроля.",
+      "Individual nazoratni davom ettiriş maqsadida talaba qayta hisobga olindi."
+    )
   });
   saveState();
+  syncSpecificTutorFolder(rec.tutorId);
   activeMonitoringFilter = "active";
   renderDiariesSection();
-  showToast("Студент возвращен на учет с сохранением истории");
+  showToast(t("Студент возвращен на учет с сохранением истории", "Talaba tarixi saqlangan holda hisobga qaytarildi"));
 }
 
 function deleteMonitoringRecord(id, btnEl) {
   askConfirmDelete(btnEl, () => {
+    const target = appState.monitoring.find(m => m.id === id);
+    const ownerTutorId = target ? target.tutorId : null;
     appState.monitoring = appState.monitoring.filter(m => m.id !== id);
     saveState();
+    if (ownerTutorId) syncSpecificTutorFolder(ownerTutorId);
     renderDiariesSection();
-    showToast("Карточка мониторинга удалена");
+    showToast(t("Карточка мониторинга удалена", "Monitoring kartasi öçirildi"));
   });
 }
 
@@ -1839,33 +2397,38 @@ function addParentMeeting() {
   const st = appState.students.find(s => s.id === window._selectedPmStudentId);
   const notes = document.getElementById("pmNotesInput").value.trim();
   if (!st || !notes) {
-    showToast("Выберите студента и опишите итоги встречи");
+    showToast(t("Выберите студента и опишите итоги встречи", "Talabani tanlang va uçraşuv natijasini yozing"));
     return;
   }
+  const ownerId = st.tutorId || currentUser.id;
   appState.parentMeetings.unshift({
     id: `pm_${Date.now()}`,
-    tutorId: currentUser.id,
+    tutorId: ownerId,
     studentId: st.id,
     studentName: `${st.name} (${st.group})`,
     date: document.getElementById("pmDateInput").value,
-    who: document.getElementById("pmParentWho").value.trim() || "Родители",
+    who: document.getElementById("pmParentWho").value.trim() || t("Родители", "Ota-onasi"),
     notes
   });
   saveState();
+  syncSpecificTutorFolder(ownerId);
   renderDiariesSection();
-  showToast("Встреча с родителями зафиксирована");
+  showToast(t("Встреча с родителями зафиксирована", "Ota-onalar bilan uçraşuv qayd etildi"));
 }
 
 function deleteParentMeeting(id, btnEl) {
   askConfirmDelete(btnEl, () => {
+    const target = appState.parentMeetings.find(m => m.id === id);
+    const ownerTutorId = target ? target.tutorId : null;
     appState.parentMeetings = appState.parentMeetings.filter(m => m.id !== id);
     saveState();
+    if (ownerTutorId) syncSpecificTutorFolder(ownerTutorId);
     renderDiariesSection();
-    showToast("Запись удалена");
+    showToast(t("Запись удалена", "Qayd öçirildi"));
   });
 }
 
-// ==================== 5. ПРОФИЛЬ И АВТО-CV ====================
+// ==================== 5. ПРОФИЛЬ И АВТО-CV (ВКЛЮЧАЯ АВАТАР В ВЕРХНЕМ МЕНЮ) ====================
 function loadProfileForm() {
   if (!currentUser) return;
   document.getElementById("profFullName").value = currentUser.name || "";
@@ -1875,7 +2438,23 @@ function loadProfileForm() {
   document.getElementById("profEmail").value = currentUser.email || "";
   document.getElementById("profEducation").value = currentUser.edu || "";
   document.getElementById("profBio").value = currentUser.bio || "";
-  syncProfileCV();
+  syncProfileCV(true);
+}
+
+function compressAvatarDataUrl(dataUrl, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const maxSide = 256;
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(img.width * scale);
+    canvas.height = Math.round(img.height * scale);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    callback(canvas.toDataURL("image/jpeg", 0.85));
+  };
+  img.onerror = () => callback(dataUrl);
+  img.src = dataUrl;
 }
 
 function handleProfilePhotoUpload(e) {
@@ -1883,15 +2462,22 @@ function handleProfilePhotoUpload(e) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    currentUser.photo = reader.result;
-    saveState();
-    syncProfileCV();
-    showToast("Фото обновлено в профиле и CV");
+    compressAvatarDataUrl(reader.result, (compressed) => {
+      currentUser.photo = compressed;
+      const idx = appState.users.findIndex(u => u.id === currentUser.id);
+      if (idx !== -1) appState.users[idx].photo = compressed;
+
+      saveState();
+      syncUsersToGoogleDrive();
+      updateHeaderAndGreeting();
+      syncProfileCV(true);
+      showToast(t("Фото обновлено в профиле, CV и верхнем меню", "Rasm profil, CV va yuqori menyuda yangilandi"));
+    });
   };
   reader.readAsDataURL(file);
 }
 
-function syncProfileCV() {
+function syncProfileCV(skipSave = false) {
   if (!currentUser) return;
   currentUser.name = document.getElementById("profFullName").value;
   currentUser.roleTitle = document.getElementById("profPosition").value;
@@ -1900,7 +2486,21 @@ function syncProfileCV() {
   currentUser.email = document.getElementById("profEmail").value;
   currentUser.edu = document.getElementById("profEducation").value;
   currentUser.bio = document.getElementById("profBio").value;
-  saveState();
+
+  const idx = appState.users.findIndex(u => u.id === currentUser.id);
+  if (idx !== -1) {
+    appState.users[idx] = { ...appState.users[idx], ...currentUser };
+  }
+
+  updateHeaderAndGreeting();
+
+  if (!skipSave) {
+    saveState();
+    clearTimeout(window._userProfileSyncTimer);
+    window._userProfileSyncTimer = setTimeout(() => {
+      syncUsersToGoogleDrive();
+    }, 900);
+  }
 
   const initials = (currentUser.name || "UT").split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase();
   const prev = document.getElementById("profilePhotoPreview");
@@ -1916,14 +2516,89 @@ function syncProfileCV() {
         <div class="st-meta mt-6">${currentUser.phone} • ${currentUser.email}</div>
       </div>
     </div>
-    <div class="mb-12"><strong>Образование:</strong> ${currentUser.edu || "—"}</div>
-    <div class="mb-12"><strong>Закрепленные группы:</strong> ${currentUser.groups} (${myStudents.length} студ.)</div>
-    <div><strong>Профессиональный профиль:</strong><p class="mt-6" style="font-size:13px; color:var(--text-muted);">${currentUser.bio || "—"}</p></div>
+    <div class="mb-12"><strong>${t("Образование", "Ma’lumoti")}:</strong> ${currentUser.edu || "—"}</div>
+    <div class="mb-12"><strong>${t("Закрепленные группы", "Biriktirilgan guruhlar")}:</strong> ${currentUser.groups} (${myStudents.length} ${t("студ.", "talaba")})</div>
+    <div><strong>${t("Профессиональный профиль", "Kasbiy profil")}:</strong><p class="mt-6" style="font-size:13px; color:var(--text-muted);">${currentUser.bio || "—"}</p></div>
   `;
 }
 
-// ==================== 6. КАЛЕНДАРЬ И ЛИЧНЫЙ БЛОГ ====================
+// ==================== 6. КАЛЕНДАРЬ, ЛИЧНЫЙ БЛОГ И TO-DO С ЧЕКБОКСАМИ ====================
 let selectedEventColor = "#ff6b3d";
+
+function setBlogMode(mode) {
+  blogActiveMode = mode;
+  const noteBtn = document.getElementById("blogModeNoteBtn");
+  const todoBtn = document.getElementById("blogModeTodoBtn");
+  const noteWrap = document.getElementById("blogNoteFormWrap");
+  const todoWrap = document.getElementById("blogTodoFormWrap");
+
+  if (noteBtn) noteBtn.classList.toggle("active", mode === "note");
+  if (todoBtn) todoBtn.classList.toggle("active", mode === "todo");
+  if (noteWrap) noteWrap.classList.toggle("hidden", mode !== "note");
+  if (todoWrap) todoWrap.classList.toggle("hidden", mode !== "todo");
+
+  renderTodoList();
+}
+
+function renderTodoList() {
+  const listEl = document.getElementById("todoItemsList");
+  if (!listEl || !currentUser) return;
+
+  const myTodos = appState.todos.filter(td => td.userId === currentUser.id);
+  if (!myTodos.length) {
+    listEl.innerHTML = `<div class="st-meta">${t("Список задач пока пуст.", "Vazifalar röyxati hozirça böş.")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = myTodos.map(td => `
+    <div class="todo-item-row ${td.done ? "done" : ""}">
+      <label class="todo-check-label">
+        <input type="checkbox" ${td.done ? "checked" : ""} onchange="toggleTodoItem('${td.id}')" />
+        <span class="todo-text">${td.text}</span>
+      </label>
+      <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTodoItem('${td.id}', this)" title="${t("Удалить задачу", "Vazifani öçiriş")}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+      </button>
+    </div>
+  `).join("");
+}
+
+function addTodoItem() {
+  const input = document.getElementById("todoTaskInput");
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+
+  appState.todos.unshift({
+    id: `todo_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+    userId: currentUser.id,
+    text,
+    done: false,
+    date: new Date().toLocaleDateString()
+  });
+
+  saveState();
+  input.value = "";
+  renderTodoList();
+  showToast(t("Задача добавлена в список", "Vazifa röyxatga qöşildi"));
+}
+
+function toggleTodoItem(todoId) {
+  const item = appState.todos.find(td => td.id === todoId);
+  if (!item) return;
+  item.done = !item.done;
+  saveState();
+  renderTodoList();
+}
+
+function deleteTodoItem(todoId, btnEl) {
+  askConfirmDelete(btnEl, () => {
+    appState.todos = appState.todos.filter(td => td.id !== todoId);
+    saveState();
+    renderTodoList();
+    showToast(t("Задача удалена", "Vazifa öçirildi"));
+  });
+}
 
 function renderCalendarAndBlog() {
   const monthNames = currentLang === "oz"
@@ -1961,7 +2636,7 @@ function renderCalendarAndBlog() {
 
   // Список событий выбранного дня
   const selectedEvents = myEvents.filter(ev => ev.date === selectedCalDate);
-  document.getElementById("selectedDayLabel").textContent = `${selectedCalDate} • ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ (${selectedEvents.length})`;
+  document.getElementById("selectedDayLabel").textContent = `${selectedCalDate} • ${t("ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ", "REJALASHTIRILGAN TADBIRLAR")} (${selectedEvents.length})`;
 
   const listEl = document.getElementById("selectedDayEventsList");
   listEl.innerHTML = selectedEvents.length
@@ -1971,12 +2646,14 @@ function renderCalendarAndBlog() {
             <div style="font-weight:700; font-size:13px;"><span style="color:${ev.color}">●</span> ${ev.time} — ${ev.title}</div>
             <div class="st-meta">${ev.desc || ""}</div>
           </div>
-          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteCalendarEvent('${ev.id}', this)" title="Удалить событие">
+          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteCalendarEvent('${ev.id}', this)" title="${t("Удалить событие", "Tadbirni öçiriş")}">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
           </button>
         </div>
       `).join("")
-    : `<div class="st-meta">На выбранную дату событий пока не запланировано.</div>`;
+    : `<div class="st-meta">${t("На выбранную дату событий пока не запланировано.", "Tanlangan sanaga tadbirlar hozirça rejalashtirilmagan.")}</div>`;
+
+  renderTodoList();
 
   // Личный блог
   const myBlogs = appState.blogPosts.filter(b => b.userId === currentUser.id);
@@ -1988,12 +2665,12 @@ function renderCalendarAndBlog() {
             <div class="st-meta mb-8">${b.date}</div>
             <div style="font-size:13px;">${b.body}</div>
           </div>
-          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteBlogPost('${b.id}', this)" title="Удалить запись">
+          <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteBlogPost('${b.id}', this)" title="${t("Удалить запись", "Qaydni öçiriş")}">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
           </button>
         </div>
       `).join("")
-    : `<div class="st-meta">Личный дневник пока пуст.</div>`;
+    : `<div class="st-meta">${t("Личный дневник пока пуст.", "Şaxsiy kundalik hozirça böş.")}</div>`;
 }
 
 function changeCalMonth(delta) {
@@ -2010,15 +2687,16 @@ function selectCalDate(dateStr) {
 
 function openEventModal() {
   const colorOpts = [
-    { value: "#ff6b3d", label: "Оранжевый (Важно)" },
-    { value: "#2563eb", label: "Синий (Учебный процесс)" },
-    { value: "#10b981", label: "Зеленый (Мероприятие)" },
-    { value: "#7c3aed", label: "Фиолетовый (Личное)" }
+    { value: "#ff6b3d", label: t("Оранжевый (Важно)", "Zarg‘aldoq (Muhim)") },
+    { value: "#2563eb", label: t("Синий (Учебный процесс)", "Kök (Öquv jarayoni)") },
+    { value: "#10b981", label: t("Зеленый (Мероприятие)", "Yaşil (Tadbir)") },
+    { value: "#7c3aed", label: t("Фиолетовый (Личное)", "Binafşa (Şaxsiy)") }
   ];
-  renderCustomSelect("evColorSelectWrap", colorOpts, selectedEventColor, (val) => {
+  const onColorChange = (val) => {
     selectedEventColor = val;
-    renderCustomSelect("evColorSelectWrap", colorOpts, val, arguments.callee);
-  });
+    renderCustomSelect("evColorSelectWrap", colorOpts, val, onColorChange);
+  };
+  renderCustomSelect("evColorSelectWrap", colorOpts, selectedEventColor, onColorChange);
   document.getElementById("evTitle").value = "";
   document.getElementById("evDesc").value = "";
   document.getElementById("eventModal").classList.remove("hidden");
@@ -2027,7 +2705,7 @@ function openEventModal() {
 function saveCalendarEvent() {
   const title = document.getElementById("evTitle").value.trim();
   if (!title) {
-    showToast("Введите название события");
+    showToast(t("Введите название события", "Tadbir nomini kiriting"));
     return;
   }
   appState.calendarEvents.push({
@@ -2042,7 +2720,7 @@ function saveCalendarEvent() {
   saveState();
   closeModal("eventModal");
   renderCalendarAndBlog();
-  showToast("Событие добавлено в календарь");
+  showToast(t("Событие добавлено в календарь", "Tadbir taqvimga qöşildi"));
 }
 
 function deleteCalendarEvent(id, btnEl) {
@@ -2050,7 +2728,7 @@ function deleteCalendarEvent(id, btnEl) {
     appState.calendarEvents = appState.calendarEvents.filter(ev => ev.id !== id);
     saveState();
     renderCalendarAndBlog();
-    showToast("Событие удалено");
+    showToast(t("Событие удалено", "Tadbir öçirildi"));
   });
 }
 
@@ -2061,7 +2739,7 @@ function addBlogPost() {
   appState.blogPosts.unshift({
     id: `blog_${Date.now()}`,
     userId: currentUser.id,
-    title: title || "Заметка",
+    title: title || t("Заметка", "Qayd"),
     body,
     date: new Date().toLocaleDateString()
   });
@@ -2069,7 +2747,7 @@ function addBlogPost() {
   document.getElementById("blogPostTitle").value = "";
   document.getElementById("blogPostBody").value = "";
   renderCalendarAndBlog();
-  showToast("Запись сохранена");
+  showToast(t("Запись сохранена", "Qayd saqlandi"));
 }
 
 function deleteBlogPost(id, btnEl) {
@@ -2077,7 +2755,7 @@ function deleteBlogPost(id, btnEl) {
     appState.blogPosts = appState.blogPosts.filter(b => b.id !== id);
     saveState();
     renderCalendarAndBlog();
-    showToast("Запись удалена");
+    showToast(t("Запись удалена", "Qayd öçirildi"));
   });
 }
 
@@ -2102,9 +2780,9 @@ function ensureEditUserModal() {
 
   const modalHtml = `
     <div id="editUserModal" class="modal-backdrop hidden" style="position:fixed; inset:0; background:rgba(15,23,42,0.55); display:flex; align-items:center; justify-content:center; z-index:9999; padding:16px;">
-      <div class="modal-card" style="background:var(--card-bg, #ffffff); color:var(--text-main, #0f172a); border-radius:16px; width:100%; max-width:480px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.25);">
+      <div class="modal-card" style="background:var(--surface, #ffffff); color:var(--text, #0f172a); border-radius:16px; width:100%; max-width:480px; padding:24px; box-shadow:0 20px 50px rgba(0,0,0,0.25);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;">
-          <h3 style="margin:0; font-size:18px; font-weight:700;">Редактирование профиля</h3>
+          <h3 style="margin:0; font-size:18px; font-weight:700;">${t("Редактирование профиля", "Profilni tahrirlaş")}</h3>
           <button type="button" onclick="closeEditUserModal()" aria-label="Закрыть" style="background:transparent; border:none; cursor:pointer; color:inherit; padding:4px; display:inline-flex; align-items:center; justify-content:center;">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
           </button>
@@ -2112,41 +2790,41 @@ function ensureEditUserModal() {
 
         <div style="display:flex; flex-direction:column; gap:12px;">
           <div>
-            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Ф.И.О. сотрудника</label>
-            <input type="text" id="euName" class="form-input" style="width:100%;" placeholder="Например: Ш. Зайнидинова" />
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Ф.И.О. сотрудника", "Xodimning F.I.Ş.")}</label>
+            <input type="text" id="euName" class="form-input" style="width:100%;" />
           </div>
 
           <div>
-            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Роль в системе</label>
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Роль в системе", "Tizimdagi roli")}</label>
             <select id="euRole" class="form-input" style="width:100%;">
-              <option value="tutor">Тютор</option>
-              <option value="management">Руководство / Отдел</option>
-              <option value="admin">Главный администратор</option>
+              <option value="tutor">${t("Тютор", "Tyutor")}</option>
+              <option value="management">${t("Руководство / Отдел", "Rahbariyat / Bölim")}</option>
+              <option value="admin">${t("Главный администратор", "Boş administrator")}</option>
             </select>
           </div>
 
           <div>
-            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Закрепленные группы</label>
-            <input type="text" id="euGroups" class="form-input" style="width:100%;" placeholder="Например: TR-101, TR-102 или Все группы" />
+            <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Закрепленные группы", "Biriktirilgan guruhlar")}</label>
+            <input type="text" id="euGroups" class="form-input" style="width:100%;" />
           </div>
 
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
             <div>
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Логин</label>
-              <input type="text" id="euLogin" class="form-input" style="width:100%;" placeholder="tutor1" />
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Логин", "Login")}</label>
+              <input type="text" id="euLogin" class="form-input" style="width:100%;" />
             </div>
             <div>
-              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">Пароль</label>
-              <input type="text" id="euPass" class="form-input" style="width:100%;" placeholder="Пароль" />
+              <label style="display:block; font-size:13px; font-weight:600; margin-bottom:4px;">${t("Пароль", "Parol")}</label>
+              <input type="text" id="euPass" class="form-input" style="width:100%;" />
             </div>
           </div>
         </div>
 
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:22px;">
-          <button type="button" class="btn-export" onclick="closeEditUserModal()" style="background:transparent; border:1px solid var(--border-color, #cbd5e1); color:inherit;">Отмена</button>
+          <button type="button" class="btn-export" onclick="closeEditUserModal()" style="background:transparent; border:1px solid var(--border, #cbd5e1); color:inherit;">${t("Отмена", "Bekor qiliş")}</button>
           <button type="button" class="btn-export" onclick="saveEditedUser()" style="display:inline-flex; align-items:center; gap:6px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"/></svg>
-            <span>Сохранить изменения</span>
+            <span>${t("Сохранить изменения", "Özgarishlarni saqlaş")}</span>
           </button>
         </div>
       </div>
@@ -2190,18 +2868,18 @@ function saveEditedUser() {
 
   const name = document.getElementById("euName").value.trim();
   const role = document.getElementById("euRole").value;
-  const groups = document.getElementById("euGroups").value.trim() || "Не назначены";
+  const groups = document.getElementById("euGroups").value.trim() || t("Не назначены", "Biriktirilmagan");
   const login = document.getElementById("euLogin").value.trim();
   const pass = document.getElementById("euPass").value.trim();
 
   if (!name || !login || !pass) {
-    showToast("Заполните Ф.И.О., логин и пароль");
+    showToast(t("Заполните Ф.И.О., логин и пароль", "F.I.Ş., login va parolni töldiring"));
     return;
   }
 
   const duplicateLogin = appState.users.some(item => item.id !== u.id && item.login === login);
   if (duplicateLogin) {
-    showToast("Такой логин уже используется другим профилем");
+    showToast(t("Такой логин уже используется другим профилем", "Bu login boşqa profil tomonidan band qilingan"));
     return;
   }
 
@@ -2221,16 +2899,14 @@ function saveEditedUser() {
   if (currentUser && currentUser.id === u.id) {
     currentUser = u;
     document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
-    if (typeof updateHeaderAndGreeting === "function") {
-      updateHeaderAndGreeting();
-    }
+    updateHeaderAndGreeting();
   }
 
   saveState();
   syncUsersToGoogleDrive();
   closeEditUserModal();
   renderUsersAdminTable();
-  showToast(`Профиль «${u.name}» обновлен и сохранен`);
+  showToast(`${t("Профиль обновлен и сохранен", "Profil yangilandi va saqlandi")}: ${u.name}`);
 }
 
 function renderUsersAdminTable() {
@@ -2238,12 +2914,12 @@ function renderUsersAdminTable() {
   table.innerHTML = `
     <thead>
       <tr>
-        <th>Сотрудник</th>
-        <th>Роль</th>
-        <th>Группы</th>
-        <th>Логин</th>
-        <th>Пароль (изменить)</th>
-        <th>Папка Google Drive</th>
+        <th>${t("Сотрудник", "Xodim")}</th>
+        <th>${t("Роль", "Roli")}</th>
+        <th>${t("Группы", "Guruhlar")}</th>
+        <th>${t("Логин", "Login")}</th>
+        <th>${t("Пароль (изменить)", "Parol (özgartiriş)")}</th>
+        <th>${t("Папка Google Drive", "Google Drive papkasi")}</th>
         <th></th>
       </tr>
     </thead>
@@ -2251,23 +2927,23 @@ function renderUsersAdminTable() {
       ${appState.users.map(u => `
         <tr>
           <td><strong>${u.name}</strong></td>
-          <td>${u.roleTitle}</td>
+          <td>${localizeRoleTitle(u.role, u.roleTitle)}</td>
           <td>${u.groups}</td>
           <td><code>${u.login}</code></td>
           <td>
             <div style="display:flex; gap:6px; align-items:center;">
               <input type="text" id="passField_${u.id}" class="form-input" style="padding:6px 10px; width:130px;" value="${u.pass}" />
-              <button type="button" class="btn-export sm" onclick="updateUserPassword('${u.id}')">Обновить</button>
+              <button type="button" class="btn-export sm" onclick="updateUserPassword('${u.id}')">${t("Обновить", "Yangilaş")}</button>
             </div>
           </td>
           <td><span class="st-meta">${u.driveFolder}</span></td>
           <td style="text-align:right; white-space:nowrap;">
-            <button type="button" class="btn-export sm" onclick="openEditUserModal('${u.id}')" title="Редактировать профиль" style="display:inline-flex; align-items:center; gap:4px; margin-right:6px;">
+            <button type="button" class="btn-export sm" onclick="openEditUserModal('${u.id}')" title="${t("Редактировать профиль", "Profilni tahrirlaş")}" style="display:inline-flex; align-items:center; gap:4px; margin-right:6px;">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>
-              <span>Изменить</span>
+              <span>${t("Изменить", "Tahrirlaş")}</span>
             </button>
             ${u.id !== "admin" ? `
-              <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteUserAccount('${u.id}', this)" title="Удалить профиль">
+              <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteUserAccount('${u.id}', this)" title="${t("Удалить профиль", "Profilni öçiriş")}">
                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
               </button>
             ` : ""}
@@ -2285,19 +2961,20 @@ function updateUserPassword(userId) {
   u.pass = newPass;
   saveState();
   syncUsersToGoogleDrive();
-  showToast(`Новый пароль для ${u.name} сохранен`);
+  showToast(`${t("Новый пароль сохранен", "Yangi parol saqlandi")}: ${u.name}`);
 }
 
 function openNewUserModal() {
   const roleOpts = [
-    { value: "tutor", label: "Тютор" },
-    { value: "management", label: "Руководство / Отдел" },
-    { value: "admin", label: "Администратор" }
+    { value: "tutor", label: t("Тютор", "Tyutor") },
+    { value: "management", label: t("Руководство / Отдел", "Rahbariyat / Bölim") },
+    { value: "admin", label: t("Администратор", "Administrator") }
   ];
-  renderCustomSelect("nuRoleWrap", roleOpts, newUserRole, (v) => {
+  const onRoleChange = (v) => {
     newUserRole = v;
-    renderCustomSelect("nuRoleWrap", roleOpts, v, arguments.callee);
-  });
+    renderCustomSelect("nuRoleWrap", roleOpts, v, onRoleChange);
+  };
+  renderCustomSelect("nuRoleWrap", roleOpts, newUserRole, onRoleChange);
   document.getElementById("newUserModal").classList.remove("hidden");
 }
 
@@ -2305,14 +2982,14 @@ function createNewUser() {
   const name = document.getElementById("nuName").value.trim();
   const login = document.getElementById("nuLogin").value.trim();
   const pass = document.getElementById("nuPass").value.trim();
-  const groups = document.getElementById("nuGroups").value.trim() || "Не назначены";
+  const groups = document.getElementById("nuGroups").value.trim() || t("Не назначены", "Biriktirilmagan");
 
   if (!name || !login || !pass) {
-    showToast("Заполните Ф.И.О., логин и пароль");
+    showToast(t("Заполните Ф.И.О., логин и пароль", "F.I.Ş., login va parolni töldiring"));
     return;
   }
   if (appState.users.some(u => u.login === login)) {
-    showToast("Такой логин уже существует");
+    showToast(t("Такой логин уже существует", "Bunday login allaqaçon mavjud"));
     return;
   }
 
@@ -2334,7 +3011,7 @@ function createNewUser() {
   syncUsersToGoogleDrive();
   closeModal("newUserModal");
   renderUsersAdminTable();
-  showToast(`Кабинет для ${name} успешно открыт`);
+  showToast(`${t("Кабинет успешно открыт", "Kabinet muvaffaqiyatli oçildi")}: ${name}`);
 }
 
 function deleteUserAccount(userId, btnEl) {
@@ -2343,14 +3020,13 @@ function deleteUserAccount(userId, btnEl) {
     saveState();
     syncUsersToGoogleDrive();
     renderUsersAdminTable();
-    showToast("Профиль удален");
+    showToast(t("Профиль удален", "Profil öçirildi"));
   });
 }
 
 function closeModal(id) {
   document.getElementById(id).classList.add("hidden");
 }
-
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", restoreSession);
