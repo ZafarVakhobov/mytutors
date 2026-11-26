@@ -1353,7 +1353,7 @@ function renderStudentsSection() {
               <div class="st-card-actions">
                 <span class="st-meta">${s.phone || ""}</span>
                 <div>
-                  <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Подробнее →", "Batafsil →")}</button>
+                  <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Подробнее", "Batafsil")}</button>
                 </div>
               </div>
             </div>
