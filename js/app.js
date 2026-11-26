@@ -48,7 +48,13 @@ const I18N = {
     tg_sub: "Импорт постов из t.me/studlifeuniv с сортировкой по датам и выгрузкой в Google Docs",
     tg_add_post: "Добавить пост по ссылке",
     btn_load_post: "Загрузить пост",
+    lbl_tg_author: "Автор поста",
     lbl_tg_collab: "Совместно с (коллаборация)",
+    tg_edit_modal_title: "Редактирование поста Telegram",
+    lbl_tg_url: "Ссылка на пост",
+    lbl_tg_date: "Дата публикации",
+    lbl_tg_text: "Текст публикации",
+    lbl_tg_tags: "Теги публикации",
     ph_tg_text: "Текст поста (подтянется автоматически через Cloudflare Worker или вставьте вручную для предпросмотра)...",
     report_builder: "Конструктор отчета (Google Doc)",
     report_sub: "Отбор публикаций строго в рамках выбранного периода и категорий",
@@ -194,7 +200,13 @@ const I18N = {
     tg_sub: "t.me/studlifeuniv postlarini sanalar böyiça saralaş va Google Docs ga çiqariş",
     tg_add_post: "Havola orqali post qöşiş",
     btn_load_post: "Postni yuklaş",
+    lbl_tg_author: "Post muallifi",
     lbl_tg_collab: "Hamkorlikda (kollaboratsiya)",
+    tg_edit_modal_title: "Telegram postini tahrirlaş",
+    lbl_tg_url: "Post havolasi",
+    lbl_tg_date: "Naşr sanasi",
+    lbl_tg_text: "Post matni",
+    lbl_tg_tags: "Post teglari",
     ph_tg_text: "Post matni (Cloudflare Worker orqali avtomatik yuklanadi yoki qölda kiriting)...",
     report_builder: "Hisobot konstruktori (Google Doc)",
     report_sub: "Tanlangan davr va toifalar doirasida postlarni saralaş",
@@ -1002,6 +1014,7 @@ async function handleLogin(e) {
 
   errEl.classList.add("hidden");
   currentUser = found;
+  selectedPostAuthorId = found.id;
   localStorage.setItem(SESSION_USER_KEY, found.id);
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("appShell").classList.remove("hidden");
@@ -1041,6 +1054,7 @@ function restoreSession() {
   if (!found) return;
 
   currentUser = found;
+  selectedPostAuthorId = found.id;
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("appShell").classList.remove("hidden");
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
@@ -2379,9 +2393,95 @@ let isCustomTagInputOpen = false;
 let tgAllTagsSearchQuery = "";
 let reportTagSearchQuery = "";
 
+let selectedPostAuthorId = "";
+let tgAuthorSearchQuery = "";
 let selectedPostCollabs = []; // [{ type: "user", id, name } | { type: "custom", name }]
 let tgCollabSearchQuery = "";
 let activeTgAuthorFilter = "all";
+
+let editTgState = {
+  id: "",
+  authorId: "",
+  authorSearch: "",
+  collaborators: [],
+  collabSearch: "",
+  tags: []
+};
+
+function getEffectiveNewPostAuthorId() {
+  if (hasAdminPrivileges() && selectedPostAuthorId && appState.users.some(u => u.id === selectedPostAuthorId)) {
+    return selectedPostAuthorId;
+  }
+  return currentUser ? currentUser.id : "";
+}
+
+function renderTgAuthorSelect() {
+  const fieldWrap = document.getElementById("tgAuthorFieldWrap");
+  const grid = document.getElementById("tgMetaGrid");
+  const wrap = document.getElementById("tgAuthorSelectWrap");
+  if (!fieldWrap || !grid || !wrap) return;
+
+  if (!hasAdminPrivileges()) {
+    fieldWrap.classList.add("hidden");
+    grid.classList.remove("has-author");
+    return;
+  }
+
+  fieldWrap.classList.remove("hidden");
+  grid.classList.add("has-author");
+
+  const authorId = getEffectiveNewPostAuthorId();
+  selectedPostAuthorId = authorId;
+  const authorObj = appState.users.find(u => u.id === authorId);
+  const label = authorObj
+    ? `${authorObj.name} (${localizeRoleTitle(authorObj.role, authorObj.roleTitle)})`
+    : t("Выберите автора...", "Muallifni tanlang...");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('tgAuthorSelectWrap'); setTimeout(() => { const i = document.getElementById('tgAuthorSearchInput'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="tgAuthorSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск автора...", "Muallif qidiriş...")}" value="${tgAuthorSearchQuery}" oninput="renderTgAuthorOptionsList()" />
+      <div id="tgAuthorOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  renderTgAuthorOptionsList();
+}
+
+function renderTgAuthorOptionsList() {
+  const listEl = document.getElementById("tgAuthorOptionsList");
+  const inp = document.getElementById("tgAuthorSearchInput");
+  if (!listEl) return;
+
+  tgAuthorSearchQuery = inp ? inp.value : "";
+  const q = tgAuthorSearchQuery.trim().toLowerCase();
+  const users = appState.users || [];
+  const matched = q
+    ? users.filter(u => (u.name || "").toLowerCase().includes(q) || (u.login || "").toLowerCase().includes(q))
+    : users;
+
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>';
+  listEl.innerHTML = matched.length
+    ? matched.map(u => `
+        <div class="cs-option ${selectedPostAuthorId === u.id ? 'selected' : ''}" onclick="selectNewPostAuthor('${u.id}')">
+          <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+          ${selectedPostAuthorId === u.id ? checkSvg : ''}
+        </div>
+      `).join("")
+    : `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function selectNewPostAuthor(userId) {
+  selectedPostAuthorId = userId;
+  tgAuthorSearchQuery = "";
+  selectedPostCollabs = selectedPostCollabs.filter(c => !(c.type === "user" && c.id === userId));
+  const wrap = document.getElementById("tgAuthorSelectWrap");
+  if (wrap) wrap.classList.remove("open");
+  renderTgAuthorSelect();
+  renderTgCollabSelect();
+}
 
 function formatTgCollabTrigger() {
   if (!selectedPostCollabs.length) {
@@ -2420,8 +2520,9 @@ function renderTgCollabOptionsList() {
   tgCollabSearchQuery = inp ? inp.value : "";
   const q = tgCollabSearchQuery.trim().toLowerCase();
 
-  // Все зарегистрированные пользователи (кроме текущего автора)
-  const users = (appState.users || []).filter(u => !currentUser || u.id !== currentUser.id);
+  // Все зарегистрированные пользователи (кроме выбранного автора поста)
+  const effectiveAuthorId = getEffectiveNewPostAuthorId();
+  const users = (appState.users || []).filter(u => u.id !== effectiveAuthorId);
   const matchedUsers = q
     ? users.filter(u => (u.name || "").toLowerCase().includes(q) || (u.login || "").toLowerCase().includes(q))
     : users;
@@ -2544,7 +2645,6 @@ function recordRecentTags(tagsArr) {
 function openCustomTagInput() {
   isCustomTagInputOpen = true;
   renderNewPostTagsArea();
-  renderTgCollabSelect();
   const inp = document.getElementById("customTagInput");
   if (inp) {
     inp.focus();
@@ -2769,6 +2869,7 @@ function renderTelegramSection() {
   document.getElementById("tgDateInput").value = new Date().toISOString().slice(0, 10);
 
   renderNewPostTagsArea();
+  renderTgAuthorSelect();
   renderTgCollabSelect();
 
   // Фильтр постов: «Все посты» + 5 последних использованных тегов + выпадающий список всех тегов с поиском
@@ -2858,9 +2959,12 @@ function renderTelegramSection() {
               <a href="${p.url}" target="_blank" style="color:var(--blue); font-weight:700; text-decoration:none;">${p.url}</a>
               <span class="st-meta"> • ${p.date}</span>
             </div>
-            ${canDeleteData(p.authorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTgPost('${p.id}', this)" title="${t("Удалить пост", "Postni öçiriş")}">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-            </button>` : ""}
+            <div class="post-head-actions">
+              ${hasAdminPrivileges() ? `<button type="button" class="btn-link-orange" onclick="openEditTgPostModal('${p.id}')">${t("Изменить", "Tahrirlaş")}</button>` : ""}
+              ${canDeleteData(p.authorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTgPost('${p.id}', this)" title="${t("Удалить пост", "Postni öçiriş")}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+              </button>` : ""}
+            </div>
           </div>
           <p style="font-size:14px; white-space:pre-line;">${p.text}</p>
           <div class="checkbox-chips mt-10">
@@ -2894,7 +2998,6 @@ function toggleNewPostTag(tag) {
   }
   renderNewPostTagsArea();
 }
-
 function setTgTagFilter(tag) {
   activeTgTagFilter = tag;
   tgAllTagsSearchQuery = "";
@@ -2948,9 +3051,10 @@ async function parseTelegramPost() {
     );
   }
 
+  const chosenAuthorId = getEffectiveNewPostAuthorId();
   appState.tgPosts.unshift({
     id: `post_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    authorId: currentUser.id,
+    authorId: chosenAuthorId,
     collaborators: [...selectedPostCollabs],
     url,
     date: postDate,
@@ -2959,14 +3063,263 @@ async function parseTelegramPost() {
     images
   });
 
+  selectedPostAuthorId = currentUser.id;
+  tgAuthorSearchQuery = "";
   selectedPostCollabs = [];
   tgCollabSearchQuery = "";
   recordRecentTags(selectedNewPostTags);
   saveState();
+  syncSpecificTutorFolder(chosenAuthorId);
   document.getElementById("tgUrlInput").value = "";
   textInput.value = "";
   renderTelegramSection();
   showToast(t("Пост добавлен и отсортирован по дате", "Post qöşildi va sana böyiça saralandi"));
+}
+
+
+// ==================== РЕДАКТИРОВАНИЕ ПОСТА TELEGRAM (ТОЛЬКО АДМИН / ЧАСТ. АДМИН) ====================
+function openEditTgPostModal(postId) {
+  if (!hasAdminPrivileges()) {
+    showToast(t("Недостаточно прав для редактирования", "Tahrirlaş uşun ruxsat yetarli emas"));
+    return;
+  }
+  const post = appState.tgPosts.find(p => p.id === postId);
+  if (!post) return;
+
+  editTgState = {
+    id: post.id,
+    authorId: post.authorId || currentUser.id,
+    authorSearch: "",
+    collaborators: Array.isArray(post.collaborators) ? JSON.parse(JSON.stringify(post.collaborators)) : [],
+    collabSearch: "",
+    tags: Array.isArray(post.tags) ? [...post.tags] : []
+  };
+
+  document.getElementById("editTgPostId").value = post.id;
+  document.getElementById("editTgUrl").value = post.url || "";
+  document.getElementById("editTgDate").value = post.date || new Date().toISOString().slice(0, 10);
+  document.getElementById("editTgText").value = post.text || "";
+
+  renderEditTgAuthorSelect();
+  renderEditTgCollabSelect();
+  renderEditTgTagsArea();
+
+  document.getElementById("editTgPostModal").classList.remove("hidden");
+}
+
+function renderEditTgAuthorSelect() {
+  const wrap = document.getElementById("editTgAuthorWrap");
+  if (!wrap) return;
+  const authorObj = appState.users.find(u => u.id === editTgState.authorId);
+  const label = authorObj
+    ? `${authorObj.name} (${localizeRoleTitle(authorObj.role, authorObj.roleTitle)})`
+    : t("Выберите автора...", "Muallifni tanlang...");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('editTgAuthorWrap'); setTimeout(() => { const i = document.getElementById('editTgAuthorSearch'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="editTgAuthorSearch" class="tg-tag-search-input" placeholder="${t("Поиск автора...", "Muallif qidiriş...")}" value="${editTgState.authorSearch}" oninput="renderEditTgAuthorOptions()" />
+      <div id="editTgAuthorOptions" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  renderEditTgAuthorOptions();
+}
+
+function renderEditTgAuthorOptions() {
+  const listEl = document.getElementById("editTgAuthorOptions");
+  const inp = document.getElementById("editTgAuthorSearch");
+  if (!listEl) return;
+
+  editTgState.authorSearch = inp ? inp.value : "";
+  const q = editTgState.authorSearch.trim().toLowerCase();
+  const users = appState.users || [];
+  const matched = q
+    ? users.filter(u => (u.name || "").toLowerCase().includes(q) || (u.login || "").toLowerCase().includes(q))
+    : users;
+
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>';
+  listEl.innerHTML = matched.length
+    ? matched.map(u => `
+        <div class="cs-option ${editTgState.authorId === u.id ? 'selected' : ''}" onclick="selectEditTgAuthor('${u.id}')">
+          <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+          ${editTgState.authorId === u.id ? checkSvg : ''}
+        </div>
+      `).join("")
+    : `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function selectEditTgAuthor(userId) {
+  editTgState.authorId = userId;
+  editTgState.authorSearch = "";
+  editTgState.collaborators = editTgState.collaborators.filter(c => !(c.type === "user" && c.id === userId));
+  const wrap = document.getElementById("editTgAuthorWrap");
+  if (wrap) wrap.classList.remove("open");
+  renderEditTgAuthorSelect();
+  renderEditTgCollabSelect();
+}
+
+function formatEditTgCollabTrigger() {
+  if (!editTgState.collaborators.length) {
+    return t("Без соавторов", "Hamkorlarsiz");
+  }
+  const names = editTgState.collaborators.map(c => c.name);
+  if (names.length <= 2) return names.join(", ");
+  return `${names[0]}, ${names[1]} (+${names.length - 2})`;
+}
+
+function renderEditTgCollabSelect(keepOpen = false) {
+  const wrap = document.getElementById("editTgCollabWrap");
+  if (!wrap) return;
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('editTgCollabWrap'); setTimeout(() => { const i = document.getElementById('editTgCollabSearch'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${formatEditTgCollabTrigger()}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="editTgCollabSearch" class="tg-tag-search-input" placeholder="${t("Поиск сотрудника или новый партнёр...", "Xodimni qidiriş yoki yangi hamkor...")}" value="${editTgState.collabSearch}" oninput="renderEditTgCollabOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addEditTgCustomCollab(this.value);}" />
+      <div id="editTgCollabOptions" class="tg-tag-search-list"></div>
+    </div>
+  `;
+
+  if (wasOpen) wrap.classList.add("open");
+  renderEditTgCollabOptions();
+}
+
+function renderEditTgCollabOptions() {
+  const listEl = document.getElementById("editTgCollabOptions");
+  const inp = document.getElementById("editTgCollabSearch");
+  if (!listEl) return;
+
+  editTgState.collabSearch = inp ? inp.value : "";
+  const q = editTgState.collabSearch.trim().toLowerCase();
+  const users = (appState.users || []).filter(u => u.id !== editTgState.authorId);
+  const matchedUsers = q
+    ? users.filter(u => (u.name || "").toLowerCase().includes(q) || (u.login || "").toLowerCase().includes(q))
+    : users;
+
+  const exactUserMatch = users.some(u => (u.name || "").toLowerCase() === q);
+  const customSelected = editTgState.collaborators.filter(c => c.type === "custom");
+
+  let html = "";
+  if (customSelected.length && !q) {
+    html += `<div class="cs-divider-label">${t("Внешние партнёры", "Taşqi hamkorlar")}</div>`;
+    html += customSelected.map(c => `
+      <label class="social-check-option">
+        <input type="checkbox" checked onchange="removeEditTgCustomCollab('${c.name.replace(/'/g, "\\'")}')" />
+        <span>${c.name}</span>
+      </label>
+    `).join("");
+  }
+
+  if (matchedUsers.length) {
+    html += `<div class="cs-divider-label">${t("Пользователи системы", "Tizim foydalanuvçilari")}</div>`;
+    html += matchedUsers.map(u => {
+      const checked = editTgState.collaborators.some(c => c.type === "user" && c.id === u.id);
+      return `
+        <label class="social-check-option">
+          <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleEditTgCollabUser('${u.id}')" />
+          <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+        </label>
+      `;
+    }).join("");
+  }
+
+  const cleanQuery = editTgState.collabSearch.trim();
+  if (cleanQuery && !exactUserMatch) {
+    html += `
+      <div class="tag-ac-item create-new" onclick="addEditTgCustomCollab('${cleanQuery.replace(/'/g, "\\'")}')">
+        <span>+ ${t("Добавить партнёра", "Yangi hamkor qöşiş")}: <strong>${cleanQuery}</strong></span>
+      </div>
+    `;
+  }
+
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function toggleEditTgCollabUser(userId) {
+  const user = appState.users.find(u => u.id === userId);
+  if (!user) return;
+  const exists = editTgState.collaborators.some(c => c.type === "user" && c.id === userId);
+  if (exists) {
+    editTgState.collaborators = editTgState.collaborators.filter(c => !(c.type === "user" && c.id === userId));
+  } else {
+    editTgState.collaborators.push({ type: "user", id: user.id, name: user.name });
+  }
+  renderEditTgCollabSelect(true);
+}
+
+function addEditTgCustomCollab(rawName) {
+  const clean = convertUzbekLatinText(String(rawName || "").trim());
+  if (!clean) return;
+  const already = editTgState.collaborators.some(c => c.type === "custom" && c.name.toLowerCase() === clean.toLowerCase());
+  if (!already) {
+    editTgState.collaborators.push({ type: "custom", name: clean });
+  }
+  editTgState.collabSearch = "";
+  renderEditTgCollabSelect(true);
+}
+
+function removeEditTgCustomCollab(name) {
+  editTgState.collaborators = editTgState.collaborators.filter(c => !(c.type === "custom" && c.name === name));
+  renderEditTgCollabSelect(true);
+}
+
+function renderEditTgTagsArea() {
+  const wrap = document.getElementById("editTgTagsWrap");
+  if (!wrap) return;
+  const allTags = getAllKnownTags();
+  wrap.innerHTML = allTags.map(tag => `
+    <div class="tag-chip ${editTgState.tags.includes(tag) ? 'active' : ''}" onclick="toggleEditTgTag('${tag.replace(/'/g, "\\'")}')">${tag}</div>
+  `).join("");
+}
+
+function toggleEditTgTag(tag) {
+  if (editTgState.tags.includes(tag)) {
+    editTgState.tags = editTgState.tags.filter(x => x !== tag);
+  } else {
+    editTgState.tags.push(tag);
+  }
+  renderEditTgTagsArea();
+}
+
+function saveEditedTgPost() {
+  if (!hasAdminPrivileges()) return;
+  const postId = document.getElementById("editTgPostId").value;
+  const post = appState.tgPosts.find(p => p.id === postId);
+  if (!post) return;
+
+  const url = document.getElementById("editTgUrl").value.trim();
+  const date = document.getElementById("editTgDate").value || post.date;
+  const text = document.getElementById("editTgText").value.trim();
+
+  if (!url) {
+    showToast(t("Укажите ссылку на пост", "Post havolasini kiriting"));
+    return;
+  }
+
+  const oldAuthorId = post.authorId;
+  post.url = url;
+  post.date = date;
+  post.text = text;
+  post.authorId = editTgState.authorId || post.authorId;
+  post.collaborators = [...editTgState.collaborators];
+  post.tags = [...editTgState.tags];
+
+  recordRecentTags(post.tags);
+  saveState();
+  syncSpecificTutorFolder(post.authorId);
+  if (oldAuthorId && oldAuthorId !== post.authorId) {
+    syncSpecificTutorFolder(oldAuthorId);
+  }
+
+  closeModal("editTgPostModal");
+  renderTelegramSection();
+  showToast(t("Пост обновлён", "Post yangilandi"));
 }
 
 function deleteTgPost(id, btnEl) {
@@ -4406,7 +4759,7 @@ const UZ_CONVERTER_EXCLUDED_IDS = new Set([
   "loginUsername", "loginPassword",
   "euLogin", "euPass", "nuLogin", "nuPass",
   "stPhone", "stEmpBossPhone", "profPhone", "profEmail",
-  "hemisUrlInput", "tgUrlInput", "dormRoomSearchInput"
+  "hemisUrlInput", "tgUrlInput", "editTgUrl", "dormRoomSearchInput"
 ]);
 
 function convertUzbekLatinText(str) {
