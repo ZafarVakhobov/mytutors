@@ -1543,3 +1543,103 @@ body.dark .subtab-btn.active {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==================== 1. ПЛАШКИ ВМЕСТО ОРАНЖЕВЫХ ССЫЛОК ==================== */
+.btn-link-orange {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 107, 61, 0.12);
+  color: var(--accent);
+  border: 1px solid rgba(255, 107, 61, 0.25);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+}
+
+.btn-link-orange:hover {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+}
+
+body.dark .btn-link-orange {
+  background: rgba(255, 107, 61, 0.16);
+  border-color: rgba(255, 107, 61, 0.35);
+  color: #ff8a65;
+}
+
+body.dark .btn-link-orange:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+/* ==================== 2. ЧИТАЕМОЕ ИМЯ ПРОФИЛЯ В ТЕМНОЙ ТЕМЕ ==================== */
+.user-pill {
+  color: var(--text);
+  font-family: inherit;
+}
+
+.user-name {
+  color: var(--text);
+}
+
+/* ==================== 3. КАСТОМНЫЙ СКРОЛЛБАР БЕЗ СТРЕЛОК ==================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+body.dark * {
+  scrollbar-color: #3b4254 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+body.dark ::-webkit-scrollbar-thumb {
+  background: #3b4254;
+}
+
+body.dark ::-webkit-scrollbar-thumb:hover {
+  background: #525c75;
+}
+
+/* ==================== 4. АВТОШИРИНА ВЫПАДАЮЩИХ СПИСКОВ ==================== */
+.cs-menu {
+  width: max-content;
+  min-width: 100%;
+  max-width: 320px;
+}
+
+.cs-option {
+  white-space: nowrap;
+  gap: 12px;
+}
