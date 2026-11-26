@@ -18,7 +18,7 @@
       <button type="button" class="lang-btn active" data-lang="ru" onclick="setLanguage('ru')">RU</button>
       <button type="button" class="lang-btn" data-lang="oz" onclick="setLanguage('oz')">ÖZ</button>
     </div>
-    <button type="button" class="icon-circle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Тема">
+    <button type="button" class="icon-circle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
       <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/></svg>
       <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></svg>
     </button>
@@ -82,7 +82,7 @@
 
   <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
   <div class="app-shell hidden" id="appShell">
-    <!-- Однострочная верхняя панель с центрированной навигацией -->
+    <!-- Однострочная верхняя панель -->
     <header class="topbar">
       <div class="topbar-inner">
         <div class="topbar-brand" onclick="switchTab('dashboard')">
@@ -123,32 +123,38 @@
           </button>
         </nav>
 
+        <!-- Плашка профиля с выпадающим меню -->
         <div class="topbar-right">
-          <div class="profile-dropdown-wrap" id="profileDropdownWrap">
-            <button type="button" class="user-pill" id="profilePillBtn" onclick="toggleProfileDropdown(event)">
+          <div class="user-dropdown-wrap" id="userDropdownWrap">
+            <button type="button" class="user-pill" id="userPillBtn" onclick="toggleUserDropdown(event)">
               <div class="user-avatar" id="headerUserAvatar">ЗВ</div>
               <div class="user-meta">
                 <div class="user-name" id="headerUserName">Зафар Вахобов</div>
                 <div class="user-role" id="headerUserRole">Администратор</div>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+              <svg class="user-pill-caret" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
             </button>
 
-            <div class="profile-dropdown-menu hidden" id="profileDropdownMenu">
-              <div class="dropdown-drive-status">
-                <span class="status-dot-inline"></span>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10l-6 10l-3 -5l6 -10z"/><path d="M9 15h12l-3 5h-12"/><path d="M15 15l-6 -10h6l6 10z"/></svg>
-                <span id="driveDropdownText">Google Drive: MyTutors_Root_Master</span>
+            <div class="user-dropdown-menu hidden" id="userDropdownMenu">
+              <div class="ud-drive-card">
+                <div class="ud-drive-head">
+                  <span class="status-dot static"></span>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10l-6 10l-3 -5l6 -10z"/><path d="M9 15h12l-3 5h-12"/><path d="M15 15l-6 -10h6l6 10z"/></svg>
+                  <span class="ud-drive-status" data-i18n="drive_synced">Google Drive синхронизирован</span>
+                </div>
+                <div class="ud-drive-folder" id="driveTooltip">Google Drive: MyTutors_Root_Master</div>
               </div>
 
-              <button type="button" class="dropdown-action-btn" onclick="openProfileTabFromMenu()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z"/><path d="M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 8l2 0"/><path d="M15 12l2 0"/><path d="M7 16l10 0"/></svg>
-                <span data-i18n="menu_profile_cv">Профиль и CV</span>
+              <div class="ud-divider"></div>
+
+              <button type="button" class="ud-menu-item" onclick="closeUserDropdown(); switchTab('profile')">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z"/><path d="M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M15 8l2 0"/><path d="M15 12l2 0"/><path d="M7 16l10 0"/></svg>
+                <span data-i18n="menu_edit_profile">Редактировать профиль и CV</span>
               </button>
 
-              <button type="button" class="dropdown-action-btn danger" onclick="logout()">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>
-                <span data-i18n="menu_logout">Выйти</span>
+              <button type="button" class="ud-menu-item danger" onclick="closeUserDropdown(); logout()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>
+                <span data-i18n="menu_logout">Выйти из профиля</span>
               </button>
             </div>
           </div>
@@ -198,7 +204,7 @@
             </div>
             <div class="kpi-value" id="kpiTotalPosts">0</div>
             <div class="kpi-bottom">
-              <span data-i18n="kpi_channel_label">Канал: studlifeuniv</span>
+              <span data-i18n="kpi_channel">Канал: studlifeuniv</span>
               <span data-i18n="kpi_gdoc_ready">Готово к Google Doc</span>
             </div>
           </div>
@@ -213,7 +219,7 @@
             <div class="kpi-value" id="kpiTotalVolunteers">0</div>
             <div class="kpi-bottom">
               <span id="kpiVolDirs">0 направлений</span>
-              <span data-i18n="kpi_vol_sub">Эко / Приемная / Медиа</span>
+              <span data-i18n="kpi_vol_tags">Эко / Приемная / Медиа</span>
             </div>
           </div>
 
@@ -262,7 +268,7 @@
                   <button type="button" class="pill-sm active" data-mode="housing" onclick="setDistMode('housing')" data-i18n="dist_housing">По жилью</button>
                   <button type="button" class="pill-sm" data-mode="social" onclick="setDistMode('social')" data-i18n="dist_social">По соцреестру</button>
                   <button type="button" class="pill-sm" data-mode="gender" onclick="setDistMode('gender')" data-i18n="dist_gender">По полу (М/Ж)</button>
-                  <button type="button" class="pill-sm" data-mode="employment" onclick="setDistMode('employment')" data-i18n="dist_employment">По занятости</button>
+                  <button type="button" class="pill-sm" data-mode="employment" onclick="setDistMode('employment')" data-i18n="dist_employment">По работе</button>
                   <div class="custom-select compact" id="distGroupSelectWrap"></div>
                 </div>
               </div>
@@ -301,6 +307,7 @@
           </div>
         </div>
 
+        <!-- Подвкладки раздела Студенты -->
         <div class="subtabs-row">
           <div class="subtabs-pills" id="studentSubtabs">
             <button type="button" class="subtab-btn active" data-sub="all" onclick="setStudentSubtab('all')">
@@ -320,7 +327,7 @@
               <span data-i18n="sub_volunteers">Волонтеры</span>
             </button>
             <button type="button" class="subtab-btn" data-sub="employment" onclick="setStudentSubtab('employment')">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2"/><path d="M12 12l0 .01"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z"/><path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2"/><path d="M12 12l0 .01"/><path d="M3 13a20 20 0 0 0 18 0"/></svg>
               <span data-i18n="sub_employment">Трудоустройство</span>
             </button>
             <button type="button" class="subtab-btn" data-sub="schedule" onclick="setStudentSubtab('schedule')">
@@ -329,9 +336,10 @@
             </button>
           </div>
 
+          <!-- Поле поиска комнаты справа при активной вкладке Жилье -> Общежитие -->
           <div class="room-search-box hidden" id="dormRoomSearchBox">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
-            <input type="text" id="dormRoomSearchInput" placeholder="401" oninput="renderStudentsSection()" />
+            <input type="text" id="dormRoomSearchInput" data-i18n-placeholder="ph_room_search" placeholder="Поиск комнаты № (напр. 401)" oninput="renderStudentsSection()" />
           </div>
         </div>
 
@@ -348,6 +356,7 @@
         </div>
 
         <div class="tg-layout">
+          <!-- Левая колонка: форма и лента постов -->
           <div class="tg-main">
             <div class="bento-card mb-20">
               <h3 class="card-title mb-12" data-i18n="tg_add_post">Добавить пост по ссылке</h3>
@@ -359,14 +368,18 @@
                   <span data-i18n="btn_load_post">Загрузить пост</span>
                 </button>
               </div>
-              <textarea id="tgTextInput" class="form-textarea mt-10" rows="2" data-i18n-placeholder="tg_text_placeholder" placeholder="Текст поста (подтянется автоматически через Cloudflare Worker или вставьте вручную)..."></textarea>
+              <textarea id="tgTextInput" class="form-textarea mt-10" rows="2" data-i18n-placeholder="ph_tg_text" placeholder="Текст поста (подтянется автоматически через Cloudflare Worker или вставьте вручную для предпросмотра)..."></textarea>
               <div class="tg-tags-select mt-10" id="tgNewPostTags"></div>
             </div>
 
+            <!-- Фильтр по тегам -->
             <div class="filter-pills-row mb-16" id="tgFilterTagsRow"></div>
+
+            <!-- Список постов -->
             <div class="posts-list" id="tgPostsList"></div>
           </div>
 
+          <!-- Правая колонка: конструктор отчета в Google Docs -->
           <aside class="tg-sidebar">
             <div class="bento-card sticky-card">
               <h3 class="card-title mb-8" data-i18n="report_builder">Конструктор отчета (Google Doc)</h3>
@@ -385,7 +398,9 @@
                 <div class="custom-select" id="reportTagSelectWrap"></div>
               </div>
 
-              <div class="report-summary-box" id="reportSummaryBox"></div>
+              <div class="report-summary-box" id="reportSummaryBox">
+                Найдено публикаций: <strong>0</strong>
+              </div>
 
               <button type="button" class="btn-blue w-full mt-12" onclick="exportToGoogleDoc()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M9 9l1 0"/><path d="M9 13l6 0"/><path d="M9 17l6 0"/></svg>
@@ -444,7 +459,7 @@
 
             <div class="form-grid-2">
               <div class="form-group">
-                <label class="form-label" data-i18n="lbl_fullname">Ф.И.О.</label>
+                <label class="form-label" data-i18n="lbl_fio">Ф.И.О.</label>
                 <input type="text" id="profFullName" class="form-input" oninput="syncProfileCV()" />
               </div>
               <div class="form-group">
@@ -475,11 +490,12 @@
             </div>
           </div>
 
+          <!-- Превью CV -->
           <div class="bento-card cv-sheet" id="cvPreviewSheet"></div>
         </div>
       </section>
 
-      <!-- ==================== 6. КАЛЕНДАРЬ И БЛОГ + TO-DO ==================== -->
+      <!-- ==================== 6. КАЛЕНДАРЬ И БЛОГ ==================== -->
       <section class="tab-view" id="view-calendar">
         <div class="page-header">
           <div>
@@ -489,6 +505,7 @@
         </div>
 
         <div class="cal-blog-grid">
+          <!-- Календарь -->
           <div class="bento-card">
             <div class="cal-header">
               <h3 class="card-title" id="calMonthTitle">Ноябрь 2026</h3>
@@ -505,9 +522,10 @@
             <div class="cal-weekdays" id="calWeekdays"></div>
             <div class="cal-days-grid" id="calDaysGrid"></div>
 
+            <!-- Список событий выбранного дня с кнопкой добавления справа -->
             <div class="day-events-panel">
               <div class="day-events-head">
-                <span class="day-events-title" id="selectedDayLabel"></span>
+                <span class="day-events-title" id="selectedDayLabel">ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ (0)</span>
                 <button type="button" class="btn-orange sm" onclick="openEventModal()">
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
                   <span data-i18n="btn_add_event">Добавить событие</span>
@@ -517,31 +535,37 @@
             </div>
           </div>
 
+          <!-- Свободный дневник / Мини-блог / To-Do -->
           <div class="bento-card">
             <h3 class="card-title mb-12" data-i18n="blog_title">Личный мини-блог и To-Do</h3>
 
-            <!-- Блок To-Do списка задач с чекбоксами -->
-            <div class="todo-box mb-20">
-              <div class="sub-panel-title" data-i18n="todo_heading">TO-DO RO‘YXATI / СПИСОК ЗАДАЧ</div>
-              <div class="todo-input-row">
-                <input type="text" id="todoTaskInput" class="form-input" data-i18n-placeholder="todo_placeholder" placeholder="Новая задача (например: Проверить заявления на общежитие)..." onkeydown="if(event.key==='Enter'){event.preventDefault();addTodoItem();}" />
-                <button type="button" class="btn-orange sm" onclick="addTodoItem()">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-                  <span data-i18n="btn_add_todo">Добавить</span>
-                </button>
-              </div>
-              <div id="todoListContainer" class="todo-list mt-10"></div>
+            <div class="subtabs-pills mb-14">
+              <button type="button" class="subtab-btn active" id="blogModeNoteBtn" onclick="setBlogMode('note')" data-i18n="mode_note">Заметка / Блог</button>
+              <button type="button" class="subtab-btn" id="blogModeTodoBtn" onclick="setBlogMode('todo')" data-i18n="mode_todo">Список дел (To-Do)</button>
             </div>
 
-            <!-- Блок записей мини-блога -->
-            <div class="form-group">
-              <input type="text" id="blogPostTitle" class="form-input mb-8" data-i18n-placeholder="blog_title_ph" placeholder="Заголовок заметки или идеи..." />
-              <textarea id="blogPostBody" class="form-textarea" rows="3" data-i18n-placeholder="blog_body_ph" placeholder="Запишите мысли, план работы со студентами или заметки..."></textarea>
+            <!-- Форма заметки -->
+            <div class="form-group" id="blogNoteFormWrap">
+              <input type="text" id="blogPostTitle" class="form-input mb-8" data-i18n-placeholder="ph_note_title" placeholder="Заголовок заметки или идеи..." />
+              <textarea id="blogPostBody" class="form-textarea" rows="3" data-i18n-placeholder="ph_note_body" placeholder="Запишите мысли, план работы со студентами или задачи..."></textarea>
               <button type="button" class="btn-dark mt-10" onclick="addBlogPost()">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
                 <span data-i18n="btn_save_note">Сохранить запись</span>
               </button>
             </div>
+
+            <!-- Форма To-Do -->
+            <div class="form-group hidden" id="blogTodoFormWrap">
+              <div class="todo-input-row">
+                <input type="text" id="todoTaskInput" class="form-input" data-i18n-placeholder="ph_todo_task" placeholder="Новая задача (например: Проверить общежитие №2)..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addTodoItem();}" />
+                <button type="button" class="btn-orange" onclick="addTodoItem()">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+                  <span data-i18n="btn_add_todo">Добавить</span>
+                </button>
+              </div>
+              <div id="todoItemsList" class="todo-list mt-12"></div>
+            </div>
+
             <div id="blogPostsList" class="blog-list mt-16"></div>
           </div>
         </div>
@@ -582,40 +606,40 @@
         <input type="hidden" id="editStudentId" />
         <div class="form-grid-3">
           <div class="form-group">
-            <label class="form-label" id="lblStName">Ф.И.О. студента *</label>
-            <input type="text" id="stFullName" class="form-input" placeholder="Azizbek Toshpo‘latov" />
+            <label class="form-label" data-i18n="lbl_st_fio">Ф.И.О. студента *</label>
+            <input type="text" id="stFullName" class="form-input" placeholder="Иванов Иван Иванович" />
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblStGroup">Группа *</label>
+            <label class="form-label" data-i18n="lbl_st_group">Группа *</label>
             <input type="text" id="stGroup" class="form-input" placeholder="TR-101" />
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblStCourse">Курс</label>
+            <label class="form-label" data-i18n="lbl_st_course">Курс</label>
             <div class="custom-select" id="stCourseSelectWrap"></div>
           </div>
         </div>
 
         <div class="form-grid-3">
           <div class="form-group">
-            <label class="form-label" id="lblStGender">Пол</label>
+            <label class="form-label" data-i18n="lbl_st_gender">Пол</label>
             <div class="custom-select" id="stGenderSelectWrap"></div>
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblStPhone">Телефон студента</label>
+            <label class="form-label" data-i18n="lbl_st_phone">Телефон студента</label>
             <input type="text" id="stPhone" class="form-input" placeholder="+998 90 000 00 00" />
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblStTutor">Закрепленный тютор</label>
+            <label class="form-label" data-i18n="lbl_st_tutor">Закрепленный тютор</label>
             <div class="custom-select" id="stTutorSelectWrap"></div>
           </div>
         </div>
 
         <!-- Динамический блок жилья -->
         <div class="sub-panel">
-          <div class="sub-panel-title" id="panelHousingTitle">ДАННЫЕ О ПРОЖИВАНИИ</div>
+          <div class="sub-panel-title" data-i18n="sec_housing">ДАННЫЕ О ПРОЖИВАНИИ</div>
           <div class="form-grid-2">
             <div class="form-group">
-              <label class="form-label" id="lblHousingType">Тип жилья</label>
+              <label class="form-label" data-i18n="lbl_housing_type">Тип жилья</label>
               <div class="custom-select" id="stHousingTypeWrap"></div>
             </div>
             <div id="housingDynamicFields"></div>
@@ -624,26 +648,61 @@
           <div id="modalRoommatesPreview" class="roommates-box hidden"></div>
         </div>
 
-        <!-- Динамический блок работы (Трудоустройство) -->
-        <div class="sub-panel mt-14" id="employmentPanel">
-          <div class="sub-panel-title" id="panelEmploymentTitle">РАБОТА / ТРУДОУСТРОЙСТВО</div>
+        <!-- Динамический блок: Работа / Трудоустройство -->
+        <div class="sub-panel mt-14">
+          <div class="sub-panel-title" data-i18n="sec_employment">РАБОТА И ТРУДОУСТРОЙСТВО</div>
           <div class="form-grid-2">
             <div class="form-group">
-              <label class="form-label" id="lblEmploymentStatus">Статус трудоустройства</label>
+              <label class="form-label" data-i18n="lbl_emp_status">Статус занятости</label>
               <div class="custom-select" id="stEmploymentStatusWrap"></div>
             </div>
-            <div id="employmentQuickHint" class="st-meta" style="display:flex; align-items:center;"></div>
+            <div id="employmentOrgField"></div>
           </div>
-          <div id="employmentDetailsFields" class="hidden"></div>
+          <div id="employmentExtraFields" class="hidden">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_position">Должность</label>
+                <input type="text" id="stEmpPosition" class="form-input" data-i18n-placeholder="ph_emp_position" placeholder="Например: Администратор / Официант" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_address">Адрес места работы</label>
+                <input type="text" id="stEmpAddress" class="form-input" data-i18n-placeholder="ph_emp_address" placeholder="г. Самарканд, ул. ..." />
+              </div>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_boss">Ф.И.О. руководителя</label>
+                <input type="text" id="stEmpBossName" class="form-input" data-i18n-placeholder="ph_emp_boss" placeholder="Каримов Алишер Ботирович" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_boss_phone">Номер телефона руководителя</label>
+                <input type="text" id="stEmpBossPhone" class="form-input" placeholder="+998 90 000 00 00" />
+              </div>
+            </div>
+            <div class="form-grid-3">
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_from">Время работы (с)</label>
+                <input type="time" id="stEmpTimeFrom" class="form-input" value="14:00" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_to">Время работы (до)</label>
+                <input type="time" id="stEmpTimeTo" class="form-input" value="18:00" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" data-i18n="lbl_emp_salary">Зарплата (UZS)</label>
+                <input type="number" id="stEmpSalary" class="form-input" min="0" step="50000" placeholder="2500000" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Расширенный блок: Данные о родителях и родственниках -->
         <div class="sub-panel mt-14">
           <div class="sub-panel-head">
-            <div class="sub-panel-title" id="panelFamilyTitle">ДАННЫЕ О РОДИТЕЛЯХ И РОДСТВЕННИКАХ</div>
+            <div class="sub-panel-title" data-i18n="sec_family">ДАННЫЕ О РОДИТЕЛЯХ И РОДСТВЕННИКАХ</div>
             <button type="button" class="btn-export sm" onclick="addFamilyMemberRow()">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
-              <span id="btnAddFamilyText">Добавить</span>
+              <span data-i18n="btn_add_short">Добавить</span>
             </button>
           </div>
           <div id="familyMembersContainer" class="family-rows"></div>
@@ -652,18 +711,18 @@
         <!-- Социальные категории и Волонтерство -->
         <div class="form-grid-2 mt-14">
           <div class="form-group">
-            <label class="form-label" id="lblSocialCats">Социальные категории</label>
+            <label class="form-label" data-i18n="lbl_soc_cats">Социальные категории</label>
             <div class="checkbox-chips" id="stSocialChips"></div>
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblVolunteerDir">Волонтерское направление</label>
+            <label class="form-label" data-i18n="lbl_vol_dir">Волонтерское направление</label>
             <div class="custom-select" id="stVolunteerWrap"></div>
           </div>
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" class="btn-ghost" onclick="closeModal('studentModal')" id="btnCancelStudent">Отмена</button>
-        <button type="button" class="btn-orange" onclick="saveStudent()" id="btnSaveStudent">Сохранить изменения</button>
+        <button type="button" class="btn-ghost" onclick="closeModal('studentModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveStudent()" data-i18n="btn_save_changes">Сохранить изменения</button>
       </div>
     </div>
   </div>
@@ -672,32 +731,32 @@
   <div class="modal-backdrop hidden" id="monitoringModal">
     <div class="modal-box">
       <div class="modal-head">
-        <h3 class="modal-title" id="monModalTitle">Поставить студента на мониторинг</h3>
+        <h3 class="modal-title" data-i18n="mon_modal_title">Поставить студента на мониторинг</h3>
         <button type="button" class="icon-circle-btn sm" onclick="closeModal('monitoringModal')">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label" id="lblMonStudent">Студент</label>
+          <label class="form-label" data-i18n="lbl_student">Студент</label>
           <div class="custom-select" id="monStudentSelectWrap"></div>
         </div>
         <div class="form-group">
-          <label class="form-label" id="lblMonCategory">Категория мониторинга</label>
+          <label class="form-label" data-i18n="lbl_mon_cat">Категория мониторинга</label>
           <div class="custom-select" id="monCategorySelectWrap"></div>
         </div>
         <div class="form-group hidden" id="monCustomCatWrap">
-          <label class="form-label" id="lblMonCustomCat">Укажите категорию вручную</label>
-          <input type="text" id="monCustomCategoryInput" class="form-input" />
+          <label class="form-label" data-i18n="lbl_mon_custom">Укажите категорию вручную</label>
+          <input type="text" id="monCustomCategoryInput" class="form-input" placeholder="Например: Систематические опоздания..." />
         </div>
         <div class="form-group">
-          <label class="form-label" id="lblMonNote">Первичная запись в дневнике</label>
-          <textarea id="monInitialNote" class="form-textarea" rows="3"></textarea>
+          <label class="form-label" data-i18n="lbl_mon_note">Первичная запись в дневнике</label>
+          <textarea id="monInitialNote" class="form-textarea" rows="3" placeholder="Опишите ситуацию и проведенную беседу..."></textarea>
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" class="btn-ghost" onclick="closeModal('monitoringModal')" id="btnCancelMon">Отмена</button>
-        <button type="button" class="btn-orange" onclick="saveMonitoringRecord()" id="btnSaveMon">Сохранить</button>
+        <button type="button" class="btn-ghost" onclick="closeModal('monitoringModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveMonitoringRecord()" data-i18n="btn_save">Сохранить</button>
       </div>
     </div>
   </div>
@@ -706,25 +765,25 @@
   <div class="modal-backdrop hidden" id="hemisModal">
     <div class="modal-box">
       <div class="modal-head">
-        <h3 class="modal-title" id="hemisModalTitle">Синхронизация с tyutor.hemis.uz</h3>
+        <h3 class="modal-title" data-i18n="btn_sync_hemis">Синхронизация с tyutor.hemis.uz</h3>
         <button type="button" class="icon-circle-btn sm" onclick="closeModal('hemisModal')">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
-        <p class="card-sub mb-12" id="hemisModalDesc">Вставьте список студентов из выгрузки HEMIS (каждый с новой строки в формате: <code>Ф.И.О. | Группа | Курс | Пол (М/Ж) | Телефон</code>).</p>
+        <p class="card-sub mb-12" data-i18n="hemis_desc">Вставьте список студентов из выгрузки HEMIS (каждый с новой строки в формате: Ф.И.О. | Группа | Курс | Пол (М/Ж) | Телефон) или подключите токен API HEMIS.</p>
         <div class="form-group">
-          <label class="form-label" id="lblHemisUrl">Ссылка профиля tyutor.hemis.uz</label>
+          <label class="form-label" data-i18n="lbl_hemis_url">API Токен / Ссылка профиля tyutor.hemis.uz</label>
           <input type="text" id="hemisUrlInput" class="form-input" placeholder="https://tyutor.hemis.uz/tutor/students" />
         </div>
         <div class="form-group">
-          <label class="form-label" id="lblHemisBulk">Пакетный импорт списка студентов</label>
-          <textarea id="hemisBulkText" class="form-textarea" rows="5"></textarea>
+          <label class="form-label" data-i18n="lbl_hemis_bulk">Пакетный импорт списка студентов</label>
+          <textarea id="hemisBulkText" class="form-textarea" rows="5" placeholder="Азизбек Тошпулатов | TR-101 | 1 | М | +998 90 411 22 01&#10;Нилуфар Бобоева | MH-202 | 2 | Ж | +998 90 911 77 07"></textarea>
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" class="btn-ghost" onclick="closeModal('hemisModal')" id="btnCancelHemis">Отмена</button>
-        <button type="button" class="btn-blue" onclick="runHemisImport()" id="btnRunHemis">Импортировать в базу</button>
+        <button type="button" class="btn-ghost" onclick="closeModal('hemisModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-blue" onclick="runHemisImport()" data-i18n="btn_import_db">Импортировать в базу</button>
       </div>
     </div>
   </div>
@@ -733,34 +792,34 @@
   <div class="modal-backdrop hidden" id="eventModal">
     <div class="modal-box">
       <div class="modal-head">
-        <h3 class="modal-title" id="eventModalTitle">Новое событие календаря</h3>
+        <h3 class="modal-title" data-i18n="ev_modal_title">Новое событие календаря</h3>
         <button type="button" class="icon-circle-btn sm" onclick="closeModal('eventModal')">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label" id="lblEvTitle">Название события</label>
-          <input type="text" id="evTitle" class="form-input" />
+          <label class="form-label" data-i18n="lbl_ev_title">Название события</label>
+          <input type="text" id="evTitle" class="form-input" placeholder="Кураторский час в группе TR-101" />
         </div>
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label" id="lblEvTime">Время</label>
+            <label class="form-label" data-i18n="lbl_ev_time">Время</label>
             <input type="time" id="evTime" class="form-input" value="14:00" />
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblEvColor">Цветовая метка</label>
+            <label class="form-label" data-i18n="lbl_ev_color">Цветовая метка</label>
             <div class="custom-select" id="evColorSelectWrap"></div>
           </div>
         </div>
         <div class="form-group">
-          <label class="form-label" id="lblEvDesc">Описание / Место проведения</label>
-          <textarea id="evDesc" class="form-textarea" rows="2"></textarea>
+          <label class="form-label" data-i18n="lbl_ev_desc">Описание / Место проведения</label>
+          <textarea id="evDesc" class="form-textarea" rows="2" placeholder="Аудитория 204, главный корпус..."></textarea>
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" class="btn-ghost" onclick="closeModal('eventModal')" id="btnCancelEvent">Отмена</button>
-        <button type="button" class="btn-orange" onclick="saveCalendarEvent()" id="btnSaveEvent">Сохранить событие</button>
+        <button type="button" class="btn-ghost" onclick="closeModal('eventModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveCalendarEvent()" data-i18n="btn_save_event">Сохранить событие</button>
       </div>
     </div>
   </div>
@@ -769,40 +828,40 @@
   <div class="modal-backdrop hidden" id="newUserModal">
     <div class="modal-box">
       <div class="modal-head">
-        <h3 class="modal-title" id="newUserModalTitle">Открыть новый профиль</h3>
+        <h3 class="modal-title" data-i18n="btn_new_user">Открыть новый профиль</h3>
         <button type="button" class="icon-circle-btn sm" onclick="closeModal('newUserModal')">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
         </button>
       </div>
       <div class="modal-body">
         <div class="form-group">
-          <label class="form-label" id="lblNuName">Ф.И.О. сотрудника</label>
-          <input type="text" id="nuName" class="form-input" />
+          <label class="form-label" data-i18n="lbl_nu_name">Ф.И.О. сотрудника</label>
+          <input type="text" id="nuName" class="form-input" placeholder="А. Каримов" />
         </div>
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label" id="lblNuLogin">Логин</label>
-            <input type="text" id="nuLogin" class="form-input" />
+            <label class="form-label" data-i18n="lbl_nu_login">Логин</label>
+            <input type="text" id="nuLogin" class="form-input" placeholder="tutor13" />
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblNuPass">Пароль</label>
-            <input type="text" id="nuPass" class="form-input" />
+            <label class="form-label" data-i18n="lbl_nu_pass">Пароль</label>
+            <input type="text" id="nuPass" class="form-input" placeholder="t132026" />
           </div>
         </div>
         <div class="form-grid-2">
           <div class="form-group">
-            <label class="form-label" id="lblNuRole">Роль</label>
+            <label class="form-label" data-i18n="lbl_nu_role">Роль</label>
             <div class="custom-select" id="nuRoleWrap"></div>
           </div>
           <div class="form-group">
-            <label class="form-label" id="lblNuGroups">Закрепленные группы</label>
-            <input type="text" id="nuGroups" class="form-input" />
+            <label class="form-label" data-i18n="lbl_nu_groups">Закрепленные группы</label>
+            <input type="text" id="nuGroups" class="form-input" placeholder="TR-401, TR-402" />
           </div>
         </div>
       </div>
       <div class="modal-foot">
-        <button type="button" class="btn-ghost" onclick="closeModal('newUserModal')" id="btnCancelNu">Отмена</button>
-        <button type="button" class="btn-orange" onclick="createNewUser()" id="btnCreateNu">Создать кабинет</button>
+        <button type="button" class="btn-ghost" onclick="closeModal('newUserModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="createNewUser()" data-i18n="btn_create_cabinet">Создать кабинет</button>
       </div>
     </div>
   </div>
