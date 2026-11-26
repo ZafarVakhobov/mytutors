@@ -159,7 +159,7 @@ const I18N = {
     pass_label: "PAROL",
     login_btn: "Kiriş",
     nav_dashboard: "Umumiy köriniş",
-    nav_students: "Talabalar va HEMIS",
+    nav_students: "Talabalar",
     nav_telegram: "Telegram va Hisobotlar",
     nav_diaries: "Kundaliklar",
     nav_profile: "Profil va CV",
@@ -174,7 +174,7 @@ const I18N = {
     kpi_channel: "Kanal: studlifeuniv",
     kpi_gdoc_ready: "Google Doc uşun tayyor",
     kpi_volunteers: "VOLONTYORLAR",
-    kpi_vol_tags: "Eko / Qabul / Media",
+    kpi_vol_tags: "Volontyorlik yönalişlari",
     kpi_monitoring: "MONITORING / IJTIMOIY REESTR",
     chart_activity_title: "Postlar va tadbirlar faolligi",
     chart_activity_sub: "Oylar böyiça naşrlar va tarbiyaviy işlar dinamikasi",
@@ -1240,7 +1240,37 @@ function renderDashboard() {
     renderDashboard();
   });
 
-  const uniqueGroups = [...new Set(scopedStudents.map(s => s.group).filter(Boolean))];
+  const invalidGroupLabels = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+  const parseUserGroups = (u) => {
+    if (!u || !u.groups) return [];
+    return String(u.groups)
+      .split(",")
+      .map(g => g.trim())
+      .filter(g => g && !invalidGroupLabels.has(g));
+  };
+
+  let uniqueGroups = [];
+  if (isTutorOnly()) {
+    // Тютор видит только свои группы из раздела «Пользователи»
+    uniqueGroups = [...new Set(parseUserGroups(currentUser))];
+  } else if (dashFilters.tutor !== "all") {
+    // При выборе конкретного тютора — только группы этого тютора
+    const selectedTutor = appState.users.find(u => u.id === dashFilters.tutor);
+    uniqueGroups = [...new Set(parseUserGroups(selectedTutor))];
+  } else {
+    // При «Все тюторы» — все группы всех тюторов
+    const allSet = new Set();
+    appState.users.filter(u => u.role === "tutor").forEach(tr => {
+      parseUserGroups(tr).forEach(g => allSet.add(g));
+    });
+    uniqueGroups = [...allSet].sort((a, b) => a.localeCompare(b));
+  }
+
+  // Автосброс выбранной группы, если её нет у нового выбранного тютора
+  if (dashFilters.group !== "all" && !uniqueGroups.includes(dashFilters.group)) {
+    dashFilters.group = "all";
+  }
+
   const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
     .concat(uniqueGroups.map(g => ({ value: g, label: g })));
   renderCustomSelect("filterGroupWrap", groupOpts, dashFilters.group, (val) => {
