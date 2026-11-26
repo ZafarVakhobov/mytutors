@@ -93,7 +93,7 @@ const I18N = {
     lbl_st_phone: "Телефон студента",
     lbl_st_tutor: "Закрепленный тютор",
     lbl_st_study_form: "Форма обучения",
-    lbl_st_passport: "Серия и № паспорта",
+    lbl_st_passport: "Паспортные данные",
     lbl_st_pinfl: "ПИНФЛ (JŞŞIR)",
     lbl_st_hemis_id: "HEMIS ID",
     sec_origin: "ДАННЫЕ О ПРОИСХОЖДЕНИИ",
@@ -238,7 +238,7 @@ const I18N = {
     lbl_st_phone: "Talaba telefoni",
     lbl_st_tutor: "Biriktirilgan tyutor",
     lbl_st_study_form: "Ta’lim şakli",
-    lbl_st_passport: "Pasport seriyasi va raqami",
+    lbl_st_passport: "Pasport ma’lumotlari",
     lbl_st_pinfl: "JŞŞIR (PINFL)",
     lbl_st_hemis_id: "HEMIS ID",
     sec_origin: "KELIB ÇIQIŞI (HUDUD)",
@@ -359,6 +359,114 @@ const UZ_REGIONS = [
   "Toşkent şahri",
   "Xorazm viloyati"
 ];
+
+let regionSearchQuery = "";
+let _cachedCountries = null;
+
+// Загружаем точный международный справочник стран (ISO-3166) без опечаток
+function getWorldCountriesList() {
+  if (_cachedCountries) return _cachedCountries;
+  const isoCodes = [
+    "AF","AL","DZ","AD","AO","AR","AM","AU","AT","AZ","BH","BD","BY","BE","BO","BA","BR","BG",
+    "KH","CM","CA","CL","CN","CO","CR","HR","CU","CY","CZ","DK","DO","EC","EG","EE","ET","FI",
+    "FR","GE","DE","GH","GR","GT","HN","HU","IS","IN","ID","IR","IQ","IE","IL","IT","JP","JO",
+    "KZ","KE","KW","KG","LA","LV","LB","LY","LT","LU","MY","MV","MT","MX","MD","MC","MN","ME",
+    "MA","MM","NP","NL","NZ","NG","KP","MK","NO","OM","PK","PS","PA","PY","PE","PH","PL","PT",
+    "QA","RO","RU","SA","SN","RS","SG","SK","SI","ZA","KR","ES","LK","SD","SE","CH","SY","TW",
+    "TJ","TZ","TH","TN","TR","TM","UA","AE","GB","US","UY","VE","VN","YE","ZM","ZW"
+  ];
+  try {
+    const dnUz = new Intl.DisplayNames(["uz-Latn"], { type: "region" });
+    const dnRu = new Intl.DisplayNames(["ru"], { type: "region" });
+    const dnEn = new Intl.DisplayNames(["en"], { type: "region" });
+    _cachedCountries = isoCodes.map(code => {
+      const uz = convertUzbekLatinText(dnUz.of(code) || code);
+      const ru = dnRu.of(code) || uz;
+      const en = dnEn.of(code) || uz;
+      return { value: uz, label: uz, search: `${uz} ${ru} ${en}`.toLowerCase() };
+    }).sort((a, b) => a.label.localeCompare(b.label));
+  } catch (e) {
+    _cachedCountries = [
+      { value: "Xitoy", label: "Xitoy", search: "xitoy китай china" },
+      { value: "Hindiston", label: "Hindiston", search: "hindiston индия india" },
+      { value: "Rossiya", label: "Rossiya", search: "rossiya россия russia" },
+      { value: "Qozoğiston", label: "Qozoğiston", search: "qozoğiston казахстан kazakhstan" },
+      { value: "Tojikiston", label: "Tojikiston", search: "tojikiston таджикистан tajikistan" },
+      { value: "Qirğiziston", label: "Qirğiziston", search: "qirğiziston кыргызстан kyrgyzstan" },
+      { value: "Turkmaniston", label: "Turkmaniston", search: "turkmaniston туркменистан turkmenistan" },
+      { value: "Turkiya", label: "Turkiya", search: "turkiya турция turkey" }
+    ];
+  }
+  return _cachedCountries;
+}
+
+function renderStudentRegionSelect() {
+  const wrap = document.getElementById("stRegionSelectWrap");
+  if (!wrap) return;
+  const currentLabel = modalStudentState.region || t("Выберите регион или страну...", "Hudud yoki davlatni tanlang...");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('stRegionSelectWrap'); setTimeout(() => { const i = document.getElementById('regionSearchInput'); if(i) i.focus(); }, 30);">
+      <span>${currentLabel}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" style="padding: 8px;" onclick="event.stopPropagation()">
+      <input type="text" id="regionSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск области или страны (напр. Xitoy, Hindiston)...", "Viloyat yoki davlat qidiriş (masalan: Xitoy, Hindiston)...")}" value="${regionSearchQuery}" oninput="renderRegionOptionsList()" />
+      <div id="regionOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  renderRegionOptionsList();
+}
+
+function renderRegionOptionsList() {
+  const listEl = document.getElementById("regionOptionsList");
+  const inp = document.getElementById("regionSearchInput");
+  if (!listEl) return;
+
+  regionSearchQuery = inp ? inp.value : "";
+  const q = regionSearchQuery.trim().toLowerCase();
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>';
+
+  const uzMatches = q
+    ? UZ_REGIONS.filter(r => r.toLowerCase().includes(q))
+    : UZ_REGIONS;
+
+  const countries = getWorldCountriesList();
+  const countryMatches = q
+    ? countries.filter(c => c.search.includes(q))
+    : countries;
+
+  let html = "";
+  if (uzMatches.length) {
+    html += `<div class="cs-divider-label">${t("Узбекистан", "Özbekiston")}</div>`;
+    html += uzMatches.map(r => `
+      <div class="cs-option ${modalStudentState.region === r ? 'selected' : ''}" onclick="selectStudentRegion('${r.replace(/'/g, "\\'")}')">
+        <span>${r}</span>
+        ${modalStudentState.region === r ? checkSvg : ''}
+      </div>
+    `).join("");
+  }
+
+  if (countryMatches.length) {
+    html += `<div class="cs-divider-label">${t("Зарубежные страны", "Xorijiy davlatlar")}</div>`;
+    html += countryMatches.slice(0, q ? 20 : 15).map(c => `
+      <div class="cs-option ${modalStudentState.region === c.value ? 'selected' : ''}" onclick="selectStudentRegion('${c.value.replace(/'/g, "\\'")}')">
+        <span>${c.label}</span>
+        ${modalStudentState.region === c.value ? checkSvg : ''}
+      </div>
+    `).join("");
+  }
+
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function selectStudentRegion(val) {
+  modalStudentState.region = val;
+  regionSearchQuery = "";
+  const wrap = document.getElementById("stRegionSelectWrap");
+  if (wrap) wrap.classList.remove("open");
+  renderStudentRegionSelect();
+}
 
 const VOLUNTEER_DIRECTIONS = [
   { value: "Не состоит", ru: "Не состоит", oz: "A’zo emas" },
@@ -1195,7 +1303,7 @@ function renderCharts() {
     series = SOCIAL_CATEGORIES.map(cat => students.filter(s => (s.social || []).includes(cat.value)).length);
   } else if (distChartMode === "employment") {
     labels = currentLang === "oz"
-      ? ["Iş bilan band (Trudoustroen)", "Işlamaydi (Band emas)"]
+      ? ["Iş bilan band", "Işlamaydi"]
       : ["Трудоустроенные", "Не трудоустроенные"];
     series = [
       students.filter(s => s.employed === true).length,
@@ -1222,7 +1330,8 @@ function renderCharts() {
     });
     colors = ["#94a3b8", "#10b981", "#2563eb", "#7c3aed", "#ff6b3d", "#f59e0b", "#ec4899", "#06b6d4"];
   } else if (distChartMode === "region") {
-    const activeRegions = UZ_REGIONS.filter(r => students.some(s => s.region === r));
+    const allRegions = [...new Set([...UZ_REGIONS, ...students.map(s => s.region).filter(Boolean)])];
+    const activeRegions = allRegions.filter(r => students.some(s => s.region === r));
     const unspecifiedCount = students.filter(s => !s.region).length;
     labels = [...activeRegions];
     series = activeRegions.map(r => students.filter(s => s.region === r).length);
@@ -1892,13 +2001,8 @@ function openStudentModal(studentId = null) {
 
   renderHousingTypeSelector(st);
 
-  const regionOpts = [{ value: "", label: t("Выберите регион...", "Hududni tanlang...") }]
-    .concat(UZ_REGIONS.map(r => ({ value: r, label: r })));
-  const onRegionChange = (v) => {
-    modalStudentState.region = v;
-    renderCustomSelect("stRegionSelectWrap", regionOpts, v, onRegionChange);
-  };
-  renderCustomSelect("stRegionSelectWrap", regionOpts, modalStudentState.region, onRegionChange);
+  regionSearchQuery = "";
+  renderStudentRegionSelect();
 
   renderEmploymentSelector(st);
 
