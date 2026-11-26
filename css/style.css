@@ -44,12 +44,6 @@ body {
   min-height: 100vh;
 }
 
-button,
-input,
-select,
-textarea {
-  font-family: inherit;
-}
 .hidden { display: none !important; }
 .mt-6 { margin-top: 6px; }
 .mt-10 { margin-top: 10px; }
@@ -796,7 +790,6 @@ body.dark .pill-sm.active { background: var(--accent); }
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding-bottom:15px;
 }
 
 .subtab-btn {
@@ -974,12 +967,17 @@ body.dark .subtab-btn.active {
 }
 
 .tg-input-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 165px auto;
   gap: 10px;
-  flex-wrap: wrap;
+  align-items: center;
 }
 
-.tg-input-row .form-input:first-child { flex: 1; min-width: 220px; }
+.tg-input-row .form-input,
+.tg-input-row .btn-orange {
+  height: 44px;
+  white-space: nowrap;
+}
 
 .tg-tags-select, .filter-pills-row, .checkbox-chips {
   display: flex;
@@ -1551,7 +1549,15 @@ body.dark .subtab-btn.active {
 }
 
 
-/* ==================== 1. ПЛАШКИ ВМЕСТО ОРАНЖЕВЫХ ССЫЛОК ==================== */
+/* ==================== ШРИФТ ONEST ДЛЯ КНОПОК И ПОЛЕЙ ==================== */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+/* ==================== ПЛАШКИ ВМЕСТО ОРАНЖЕВЫХ ССЫЛОК ==================== */
 .btn-link-orange {
   display: inline-flex;
   align-items: center;
@@ -1586,17 +1592,13 @@ body.dark .btn-link-orange:hover {
   color: #ffffff;
 }
 
-/* ==================== 2. ЧИТАЕМОЕ ИМЯ ПРОФИЛЯ В ТЕМНОЙ ТЕМЕ ==================== */
-.user-pill {
-  color: var(--text);
-  font-family: inherit;
-}
-
+/* ==================== ЧИТАЕМОЕ ИМЯ ПРОФИЛЯ В ТЕМНОЙ ТЕМЕ ==================== */
+.user-pill,
 .user-name {
   color: var(--text);
 }
 
-/* ==================== 3. КАСТОМНЫЙ СКРОЛЛБАР БЕЗ СТРЕЛОК ==================== */
+/* ==================== КАСТОМНЫЙ СКРОЛЛБАР БЕЗ СТРЕЛОК ==================== */
 * {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 transparent;
@@ -1638,7 +1640,7 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   background: #525c75;
 }
 
-/* ==================== 4. АВТОШИРИНА ВЫПАДАЮЩИХ СПИСКОВ ==================== */
+/* ==================== АВТОШИРИНА ВЫПАДАЮЩИХ СПИСКОВ ==================== */
 .cs-menu {
   width: max-content;
   min-width: 100%;
@@ -1648,4 +1650,167 @@ body.dark ::-webkit-scrollbar-thumb:hover {
 .cs-option {
   white-space: nowrap;
   gap: 12px;
+}
+
+/* ==================== КАСТОМНЫЕ ТЕГИ И ПОИСК ПО ТЕГАМ ==================== */
+.tag-chip.custom-tag-btn {
+  border-style: dashed;
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(255, 107, 61, 0.06);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.tag-chip.custom-tag-btn:hover {
+  background: rgba(255, 107, 61, 0.14);
+}
+
+.custom-tag-inline-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.custom-tag-input {
+  width: 190px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 107, 61, 0.12);
+}
+
+.tag-autocomplete-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 220px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 6px;
+  box-shadow: var(--shadow-md);
+  z-index: 350;
+}
+
+.tag-ac-item {
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tag-ac-item:hover {
+  background: var(--surface-alt);
+  color: var(--accent);
+}
+
+.tag-ac-item.create-new {
+  color: var(--accent);
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+/* Выпадающий список всех тегов в фильтре постов */
+.tg-all-tags-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.tg-all-tags-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.tg-all-tags-trigger:hover,
+.tg-all-tags-dropdown.open .tg-all-tags-trigger {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.tg-all-tags-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 250px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: var(--shadow-md);
+  z-index: 350;
+  display: none;
+}
+
+.tg-all-tags-dropdown.open .tg-all-tags-menu {
+  display: block;
+  animation: popIn 0.15s ease;
+}
+
+.tg-tag-search-input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+  margin-bottom: 6px;
+}
+
+.tg-tag-search-input:focus {
+  border-color: var(--accent);
+}
+
+.tg-tag-search-list {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cs-divider-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 6px 10px 3px;
+}
+
+@media (max-width: 720px) {
+  .tg-input-row {
+    grid-template-columns: 1fr;
+  }
+  .tg-input-row .btn-orange {
+    width: 100%;
+  }
 }
