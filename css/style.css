@@ -1874,3 +1874,61 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   height: 15px;
   cursor: pointer;
 }
+
+
+/* ==================== ВЫПАДАЮЩЕЕ МЕНЮ РОЛЕЙ ВВЕРХ И ЧЕКБОКС ПРАВ ==================== */
+#nuRoleWrap .cs-menu,
+#euRoleWrap .cs-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+  max-height: 230px;
+  overflow-y: auto;
+  min-width: 100%;
+  width: max-content;
+  max-width: 280px;
+}
+
+.perm-checkbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.perm-checkbox-card:hover {
+  border-color: var(--accent);
+}
+
+.perm-checkbox-card input[type="checkbox"] {
+  margin-top: 2px;
+  width: 17px;
+  height: 17px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.perm-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.25;
+}
+
+.perm-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  line-height: 1.35;
+}
+
+.badge-pill.partial-admin {
+  background: rgba(255, 107, 61, 0.14);
+  color: var(--accent);
+  margin-left: 6px;
+}
