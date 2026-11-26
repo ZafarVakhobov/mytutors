@@ -2038,3 +2038,38 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   font-size: 13px;
   color: var(--text);
 }
+
+
+/* ==================== СЕТКА АВТОРА И КОЛЛАБОРАЦИИ + РЕДАКТИРОВАНИЕ ПОСТА ==================== */
+.tg-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.tg-meta-grid.has-author {
+  grid-template-columns: 1fr 1.35fr;
+}
+
+#tgAuthorSelectWrap .cs-menu,
+#editTgAuthorWrap .cs-menu,
+#editTgCollabWrap .cs-menu {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+  padding: 8px;
+}
+
+.post-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 720px) {
+  .tg-meta-grid.has-author {
+    grid-template-columns: 1fr;
+  }
+}
