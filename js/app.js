@@ -423,7 +423,9 @@ function sanitizeAppState(rawObj) {
     blogPosts: deduplicateById(base.blogPosts || []),
     todos: deduplicateById(base.todos || []),
     customTags: Array.isArray(base.customTags) ? [...new Set(base.customTags.filter(Boolean))] : [],
-    recentTags: Array.isArray(base.recentTags) ? [...new Set(base.recentTags.filter(Boolean))] : []
+    recentTags: Array.isArray(base.recentTags) ? [...new Set(base.recentTags.filter(Boolean))] : [],
+    customVolunteers: Array.isArray(base.customVolunteers) ? [...new Set(base.customVolunteers.filter(Boolean))] : [],
+    customSocialCategories: Array.isArray(base.customSocialCategories) ? [...new Set(base.customSocialCategories.filter(Boolean))] : []
   };
 }
 
@@ -452,7 +454,9 @@ function buildPayloadForCurrentUser() {
       blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
       todos: appState.todos.filter(td => td.userId === currentUser.id),
       customTags: appState.customTags || [],
-      recentTags: appState.recentTags || []
+      recentTags: appState.recentTags || [],
+      customVolunteers: appState.customVolunteers || [],
+      customSocialCategories: appState.customSocialCategories || []
     };
   }
   // Для админа/руководства: сохраняем их личные записи (календарь, блог, todo, посты без привязки к тютору)
@@ -467,7 +471,9 @@ function buildPayloadForCurrentUser() {
     blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
     todos: appState.todos.filter(td => td.userId === currentUser.id),
     customTags: appState.customTags || [],
-    recentTags: appState.recentTags || []
+    recentTags: appState.recentTags || [],
+    customVolunteers: appState.customVolunteers || [],
+    customSocialCategories: appState.customSocialCategories || []
   };
 }
 
@@ -572,6 +578,11 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest(".custom-tag-inline-wrap")) {
     const ac = document.getElementById("customTagAutocomplete");
     if (ac) ac.classList.add("hidden");
+    const sac = document.getElementById("customSocialAutocomplete");
+    if (sac) sac.classList.add("hidden");
+  }
+  if (!e.target.closest(".social-other-dropdown")) {
+    document.querySelectorAll(".social-other-dropdown.open").forEach(el => el.classList.remove("open"));
   }
 });
 
@@ -672,7 +683,9 @@ async function loadFromGoogleDrive() {
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
           todos: (incoming.todos || []).filter(td => td.userId === currentUser.id),
           customTags: incoming.customTags || appState.customTags || [],
-          recentTags: incoming.recentTags || appState.recentTags || []
+          recentTags: incoming.recentTags || appState.recentTags || [],
+          customVolunteers: incoming.customVolunteers || appState.customVolunteers || [],
+          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || []
         });
       } else {
         // Админ/руководство получает объединенный и дедуплицированный реестр по всем папкам
@@ -687,7 +700,9 @@ async function loadFromGoogleDrive() {
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
           todos: (incoming.todos || []).filter(td => td.userId === currentUser.id),
           customTags: incoming.customTags || appState.customTags || [],
-          recentTags: incoming.recentTags || appState.recentTags || []
+          recentTags: incoming.recentTags || appState.recentTags || [],
+          customVolunteers: incoming.customVolunteers || appState.customVolunteers || [],
+          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || []
         });
       }
 
@@ -1559,6 +1574,7 @@ let modalStudentState = {
   studyForm: "contract",
   housingType: "dorm",
   volunteer: "Не состоит",
+  selectedSocial: [],
   employed: "no"
 };
 
@@ -1675,18 +1691,14 @@ function openStudentModal(studentId = null) {
       ];
   renderFamilyMembersRows();
 
-  // Социальные чипы
-  const activeSoc = st && Array.isArray(st.social) ? st.social : [];
-  document.getElementById("stSocialChips").innerHTML = SOCIAL_CATEGORIES.map(cat => `
-    <div class="tag-chip ${activeSoc.includes(cat.value) ? 'active' : ''}" data-val="${cat.value}" onclick="this.classList.toggle('active')">${currentLang === "oz" ? cat.oz : cat.ru}</div>
-  `).join("");
+  // Социальные категории (мультивыбор + кастомные + «Другие категории» если > 5)
+  modalStudentState.selectedSocial = st && Array.isArray(st.social) ? [...st.social] : [];
+  isCustomSocialInputOpen = false;
+  renderStudentSocialArea();
 
-  const volOpts = VOLUNTEER_DIRECTIONS.map(v => ({ value: v.value, label: currentLang === "oz" ? v.oz : v.ru }));
-  const onVolChange = (v) => {
-    modalStudentState.volunteer = v;
-    renderCustomSelect("stVolunteerWrap", volOpts, v, onVolChange);
-  };
-  renderCustomSelect("stVolunteerWrap", volOpts, modalStudentState.volunteer, onVolChange);
+  // Волонтерское направление (drop-up + автопоиск + добавление своего направления)
+  volSearchQuery = "";
+  renderStudentVolunteerSelect();
 
   document.getElementById("studentModal").classList.remove("hidden");
 }
@@ -1859,7 +1871,7 @@ function saveStudent() {
 
   const editId = document.getElementById("editStudentId").value;
   const oldStudent = editId ? appState.students.find(s => s.id === editId) : null;
-  const social = [...document.querySelectorAll("#stSocialChips .tag-chip.active")].map(el => el.dataset.val || el.textContent);
+  const social = [...new Set(modalStudentState.selectedSocial || [])];
   const isEmployed = modalStudentState.employed === "yes";
 
   const record = {
@@ -3372,6 +3384,360 @@ function deleteUserAccount(userId, btnEl) {
 function closeModal(id) {
   document.getElementById(id).classList.add("hidden");
 }
+
+
+// ==================== КАСТОМНЫЕ НАПРАВЛЕНИЯ ВОЛОНТЕРСТВА (DROP-UP + ПОИСК) ====================
+let volSearchQuery = "";
+
+function getAllVolunteerDirections() {
+  const baseVals = VOLUNTEER_DIRECTIONS.map(v => v.value);
+  const extras = new Set(appState.customVolunteers || []);
+  (appState.students || []).forEach(s => {
+    if (s.volunteer && !baseVals.includes(s.volunteer)) extras.add(s.volunteer);
+  });
+  return [
+    ...VOLUNTEER_DIRECTIONS.map(v => ({ value: v.value, label: currentLang === "oz" ? v.oz : v.ru })),
+    ...[...extras].map(v => ({ value: v, label: v }))
+  ];
+}
+
+function renderStudentVolunteerSelect() {
+  const wrap = document.getElementById("stVolunteerWrap");
+  if (!wrap) return;
+  wrap.classList.add("drop-up");
+
+  const allDirs = getAllVolunteerDirections();
+  const current = allDirs.find(d => d.value === modalStudentState.volunteer) || { value: modalStudentState.volunteer, label: modalStudentState.volunteer };
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('stVolunteerWrap'); setTimeout(() => { const i = document.getElementById('volSearchInput'); if(i) i.focus(); }, 30);">
+      <span>${current.label}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6 -6l6 6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="volSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск или новое направление...", "Qidiriş yoki yangi yönaliş...")}" value="${volSearchQuery}" oninput="renderVolunteerOptionsList()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addOrSelectVolunteer(this.value);}" />
+      <div id="volOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  renderVolunteerOptionsList();
+}
+
+function renderVolunteerOptionsList() {
+  const listEl = document.getElementById("volOptionsList");
+  const inp = document.getElementById("volSearchInput");
+  if (!listEl) return;
+
+  volSearchQuery = inp ? inp.value : "";
+  const q = volSearchQuery.trim().toLowerCase();
+  const allDirs = getAllVolunteerDirections();
+  const matched = q
+    ? allDirs.filter(d => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q))
+    : allDirs;
+
+  const exactExists = allDirs.some(d => d.label.toLowerCase() === q || d.value.toLowerCase() === q);
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>';
+
+  let html = matched.map(d => `
+    <div class="cs-option ${modalStudentState.volunteer === d.value ? 'selected' : ''}" onclick="selectVolunteerDirection('${d.value.replace(/'/g, "\\'")}')">
+      <span>${d.label}</span>
+      ${modalStudentState.volunteer === d.value ? checkSvg : ''}
+    </div>
+  `).join("");
+
+  if (volSearchQuery.trim() && !exactExists) {
+    const cleanNew = volSearchQuery.trim();
+    html += `
+      <div class="tag-ac-item create-new" onclick="addOrSelectVolunteer('${cleanNew.replace(/'/g, "\\'")}')">
+        <span>+ ${t("Добавить направление", "Yangi yönaliş qöşiş")}: <strong>${cleanNew}</strong></span>
+      </div>
+    `;
+  }
+
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function selectVolunteerDirection(val) {
+  modalStudentState.volunteer = val;
+  volSearchQuery = "";
+  const wrap = document.getElementById("stVolunteerWrap");
+  if (wrap) wrap.classList.remove("open");
+  renderStudentVolunteerSelect();
+}
+
+function addOrSelectVolunteer(rawVal) {
+  const clean = convertUzbekLatinText(String(rawVal || "").trim());
+  if (!clean) return;
+  const allDirs = getAllVolunteerDirections();
+  const existing = allDirs.find(d => d.label.toLowerCase() === clean.toLowerCase() || d.value.toLowerCase() === clean.toLowerCase());
+
+  if (existing) {
+    selectVolunteerDirection(existing.value);
+    return;
+  }
+
+  appState.customVolunteers = [clean, ...(appState.customVolunteers || [])];
+  saveState();
+  selectVolunteerDirection(clean);
+  showToast(`${t("Добавлено направление волонтерства", "Yangi volontyorlik yönalişi qöşildi")}: ${clean}`);
+}
+
+// ==================== КАСТОМНЫЕ СОЦИАЛЬНЫЕ КАТЕГОРИИ (МУЛЬТИВЫБОР + «ДРУГИЕ КАТЕГОРИИ») ====================
+let isCustomSocialInputOpen = false;
+let socialOtherSearchQuery = "";
+
+function getAllSocialCategories() {
+  const baseVals = SOCIAL_CATEGORIES.map(c => c.value);
+  const extras = new Set(appState.customSocialCategories || []);
+  (appState.students || []).forEach(s => {
+    (s.social || []).forEach(c => {
+      if (c && !baseVals.includes(c)) extras.add(c);
+    });
+  });
+  return [
+    ...SOCIAL_CATEGORIES.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru })),
+    ...[...extras].map(c => ({ value: c, label: c }))
+  ];
+}
+
+function toggleStudentSocialCategory(val) {
+  const arr = modalStudentState.selectedSocial || [];
+  if (arr.includes(val)) {
+    modalStudentState.selectedSocial = arr.filter(x => x !== val);
+  } else {
+    modalStudentState.selectedSocial = [...arr, val];
+  }
+  renderStudentSocialArea();
+}
+
+function openCustomSocialInput() {
+  isCustomSocialInputOpen = true;
+  renderStudentSocialArea();
+  const inp = document.getElementById("customSocialInput");
+  if (inp) {
+    inp.focus();
+    updateCustomSocialAutocomplete();
+  }
+}
+
+function closeCustomSocialInput() {
+  isCustomSocialInputOpen = false;
+  renderStudentSocialArea();
+}
+
+function addOrSelectCustomSocial(rawVal) {
+  const clean = convertUzbekLatinText(String(rawVal || "").trim());
+  if (!clean) return;
+
+  const allCats = getAllSocialCategories();
+  const existing = allCats.find(c => c.label.toLowerCase() === clean.toLowerCase() || c.value.toLowerCase() === clean.toLowerCase());
+  const finalVal = existing ? existing.value : clean;
+
+  if (!existing) {
+    appState.customSocialCategories = [clean, ...(appState.customSocialCategories || [])];
+    saveState();
+  }
+
+  if (!(modalStudentState.selectedSocial || []).includes(finalVal)) {
+    modalStudentState.selectedSocial = [...(modalStudentState.selectedSocial || []), finalVal];
+  }
+
+  isCustomSocialInputOpen = false;
+  renderStudentSocialArea();
+}
+
+function updateCustomSocialAutocomplete() {
+  const inp = document.getElementById("customSocialInput");
+  const menu = document.getElementById("customSocialAutocomplete");
+  if (!inp || !menu) return;
+
+  const q = inp.value.trim().toLowerCase();
+  const allCats = getAllSocialCategories();
+  const matches = q
+    ? allCats.filter(c => c.label.toLowerCase().includes(q) || c.value.toLowerCase().includes(q))
+    : allCats.slice(0, 6);
+
+  const exactExists = allCats.some(c => c.label.toLowerCase() === q || c.value.toLowerCase() === q);
+
+  let html = matches.slice(0, 6).map(c => `
+    <div class="tag-ac-item" onmousedown="event.preventDefault(); addOrSelectCustomSocial('${c.value.replace(/'/g, "\\'")}')">
+      <span>${c.label}</span>
+      ${(modalStudentState.selectedSocial || []).includes(c.value) ? '<span style="color:var(--accent)">✓</span>' : ''}
+    </div>
+  `).join("");
+
+  if (inp.value.trim() && !exactExists) {
+    const cleanNew = inp.value.trim();
+    html += `
+      <div class="tag-ac-item create-new" onmousedown="event.preventDefault(); addOrSelectCustomSocial('${cleanNew.replace(/'/g, "\\'")}')">
+        <span>+ ${t("Добавить категорию", "Yangi toifa qöşiş")}: <strong>${cleanNew}</strong></span>
+      </div>
+    `;
+  }
+
+  if (!html) {
+    menu.classList.add("hidden");
+  } else {
+    menu.innerHTML = html;
+    menu.classList.remove("hidden");
+  }
+}
+
+function toggleOtherSocialDropdown(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById("socialOtherDropdown");
+  if (!dd) return;
+  const wasOpen = dd.classList.contains("open");
+  document.querySelectorAll(".social-other-dropdown.open").forEach(el => el.classList.remove("open"));
+  if (!wasOpen) {
+    dd.classList.add("open");
+    const inp = document.getElementById("socialOtherSearchInput");
+    if (inp) {
+      inp.value = socialOtherSearchQuery;
+      inp.focus();
+      renderOtherSocialList();
+    }
+  }
+}
+
+function renderOtherSocialList() {
+  const listEl = document.getElementById("socialOtherList");
+  const inp = document.getElementById("socialOtherSearchInput");
+  if (!listEl) return;
+
+  socialOtherSearchQuery = inp ? inp.value : "";
+  const q = socialOtherSearchQuery.trim().toLowerCase();
+  const allCats = getAllSocialCategories();
+  const extraCats = allCats.slice(5);
+  const filtered = q
+    ? extraCats.filter(c => c.label.toLowerCase().includes(q) || c.value.toLowerCase().includes(q))
+    : extraCats;
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Категории не найдены", "Toifalar topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(c => {
+    const checked = (modalStudentState.selectedSocial || []).includes(c.value);
+    return `
+      <label class="social-check-option">
+        <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleStudentSocialCategory('${c.value.replace(/'/g, "\\'")}')" />
+        <span>${c.label}</span>
+      </label>
+    `;
+  }).join("");
+}
+
+function renderStudentSocialArea() {
+  const wrap = document.getElementById("stSocialChips");
+  if (!wrap) return;
+
+  const allCats = getAllSocialCategories();
+  const first5 = allCats.slice(0, 5);
+  const extraCats = allCats.slice(5);
+  const selected = modalStudentState.selectedSocial || [];
+  const selectedExtraCount = extraCats.filter(c => selected.includes(c.value)).length;
+
+  let html = first5.map(cat => `
+    <div class="tag-chip ${selected.includes(cat.value) ? 'active' : ''}" data-val="${cat.value}" onclick="toggleStudentSocialCategory('${cat.value.replace(/'/g, "\\'")}')">${cat.label}</div>
+  `).join("");
+
+  if (extraCats.length > 0) {
+    html += `
+      <div class="social-other-dropdown drop-up" id="socialOtherDropdown">
+        <button type="button" class="tg-all-tags-trigger" onclick="toggleOtherSocialDropdown(event)">
+          <span>${t("Другие категории", "Boşqa toifalar")}${selectedExtraCount ? ` (${selectedExtraCount})` : ""}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 15l6 -6l6 6"/></svg>
+        </button>
+        <div class="tg-all-tags-menu" onclick="event.stopPropagation()">
+          <input type="text" id="socialOtherSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск категории...", "Toifa qidiriş...")}" oninput="renderOtherSocialList()" />
+          <div id="socialOtherList" class="tg-tag-search-list"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  html += isCustomSocialInputOpen
+    ? `
+      <div class="custom-tag-inline-wrap">
+        <input type="text" id="customSocialInput" class="custom-tag-input" placeholder="${t("Новая категория...", "Yangi toifa...")}" oninput="updateCustomSocialAutocomplete()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addOrSelectCustomSocial(this.value);} else if(event.key==='Escape'){closeCustomSocialInput();}" />
+        <button type="button" class="tag-chip custom-tag-btn" onclick="addOrSelectCustomSocial(document.getElementById('customSocialInput').value)">+</button>
+        <div id="customSocialAutocomplete" class="tag-autocomplete-menu hidden" style="top:auto; bottom:calc(100% + 6px);"></div>
+      </div>
+    `
+    : `
+      <button type="button" class="tag-chip custom-tag-btn" onclick="openCustomSocialInput()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+        <span>${t("Своя категория", "Öz toifam")}</span>
+      </button>
+    `;
+
+  wrap.innerHTML = html;
+}
+
+// ==================== АВТОКОНВЕРТАЦИЯ НОВОГО УЗБЕКСКОГО ЛАТИНСКОГО АЛФАВИТА ====================
+const UZ_CONVERTER_EXCLUDED_IDS = new Set([
+  "stGroup", "euGroups", "nuGroups",
+  "stEmpOrg",
+  "loginUsername", "loginPassword",
+  "euLogin", "euPass", "nuLogin", "nuPass",
+  "stPhone", "stEmpBossPhone", "profPhone", "profEmail",
+  "hemisUrlInput", "tgUrlInput", "dormRoomSearchInput"
+]);
+
+function convertUzbekLatinText(str) {
+  if (!str || typeof str !== "string") return str;
+
+  // 1. Временно защищаем имя Ishoq (и любые формы: Ishoqbek, Ishoqjon, Ishoqxon, Ishoqov и т.д.)
+  const placeholders = [];
+  let text = str.replace(/\b(ishoq[a-zA-Z'‘’`]*)/gi, (match) => {
+    const token = `__ISHOQ_GUARD_${placeholders.length}__`;
+    placeholders.push(match);
+    return token;
+  });
+
+  // 2. Конвертация o'/o`/o‘/o’ и g'/g`/g‘/g’ -> ö / Ö и ğ / Ğ
+  text = text.replace(/O['`‘’ʻʼ]/g, "Ö").replace(/o['`‘’ʻʼ]/g, "ö");
+  text = text.replace(/G['`‘’ʻʼ]/g, "Ğ").replace(/g['`‘’ʻʼ]/g, "ğ");
+
+  // 3. Конвертация sh/Sh/SH -> ş/Ş и ch/Ch/CH -> ç/Ç
+  text = text.replace(/SH/g, "Ş").replace(/Sh/g, "Ş").replace(/sh/g, "ş");
+  text = text.replace(/CH/g, "Ç").replace(/Ch/g, "Ç").replace(/ch/g, "ç");
+
+  // 4. Возвращаем защищенные формы Ishoq обратно
+  text = text.replace(/__ISHOQ_GUARD_(\d+)__/g, (_, idx) => placeholders[Number(idx)] || "");
+  return text;
+}
+
+function shouldAutoConvertField(el) {
+  if (!el) return false;
+  const tag = (el.tagName || "").toUpperCase();
+  if (tag !== "INPUT" && tag !== "TEXTAREA") return false;
+  if (tag === "INPUT") {
+    const type = (el.type || "text").toLowerCase();
+    if (type !== "text" && type !== "search") return false;
+  }
+  if (el.id && UZ_CONVERTER_EXCLUDED_IDS.has(el.id)) return false;
+  if (el.dataset && el.dataset.noUzConvert === "1") return false;
+  return true;
+}
+
+document.addEventListener("input", (e) => {
+  const el = e.target;
+  if (!shouldAutoConvertField(el)) return;
+  const oldVal = el.value;
+  const newVal = convertUzbekLatinText(oldVal);
+  if (newVal !== oldVal) {
+    const start = el.selectionStart;
+    const diff = oldVal.length - newVal.length;
+    el.value = newVal;
+    if (typeof start === "number") {
+      const nextPos = Math.max(0, start - diff);
+      el.setSelectionRange(nextPos, nextPos);
+    }
+  }
+}, true);
+
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", restoreSession);
