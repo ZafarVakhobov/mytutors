@@ -336,9 +336,18 @@ const VOLUNTEER_DIRECTIONS = [
   { value: "Культурно-массовый сектор", ru: "Культурно-массовый сектор", oz: "Madaniy-ommaviy sektor" }
 ];
 
+
+function getStudentVolunteers(s) {
+  if (!s) return [];
+  const raw = Array.isArray(s.volunteer)
+    ? s.volunteer
+    : (Array.isArray(s.volunteers) ? s.volunteers : (s.volunteer ? [s.volunteer] : []));
+  return [...new Set(raw.map(v => String(v || "").trim()).filter(v => v && v !== "Не состоит"))];
+}
+
 const MONITORING_CATEGORIES = [
   { value: "Курение", ru: "Курение", oz: "Çekiş" },
-  { value: "Хиджаб", ru: "Хиджаб", oz: "Hijob" },
+  { value: "Хиджаб", ru: "Хиджаб", oz: "Römolli" },
   { value: "Борода", ru: "Борода", oz: "Soqol" },
   { value: "Прогулы", ru: "Прогулы", oz: "Dars qoldiriş" },
   { value: "Другое...", ru: "Другое...", oz: "Boşqa..." }
@@ -1048,8 +1057,10 @@ function renderDashboard() {
     ? appState.tgPosts.filter(p => p.authorId === currentUser.id)
     : (dashFilters.tutor !== "all" ? appState.tgPosts.filter(p => p.authorId === dashFilters.tutor) : appState.tgPosts);
 
-  const volunteers = filtered.filter(s => s.volunteer && s.volunteer !== "Не состоит");
-  const volDirsCount = new Set(volunteers.map(v => v.volunteer)).size;
+  const volunteers = filtered.filter(s => getStudentVolunteers(s).length > 0);
+  const volDirsSet = new Set();
+  volunteers.forEach(s => getStudentVolunteers(s).forEach(d => volDirsSet.add(d)));
+  const volDirsCount = volDirsSet.size;
 
   const activeMon = appState.monitoring.filter(m => {
     if (m.status !== "active") return false;
@@ -1152,7 +1163,7 @@ function renderCharts() {
     series = SOCIAL_CATEGORIES.map(cat => students.filter(s => (s.social || []).includes(cat.value)).length);
   } else if (distChartMode === "employment") {
     labels = currentLang === "oz"
-      ? ["Iş bilan band", "Işlamaydi"]
+      ? ["Iş bilan band (Trudoustroen)", "Işlamaydi (Band emas)"]
       : ["Трудоустроенные", "Не трудоустроенные"];
     series = [
       students.filter(s => s.employed === true).length,
@@ -1172,9 +1183,9 @@ function renderCharts() {
     labels = allDirs.map(d => d.label);
     series = allDirs.map(d => {
       if (d.value === "Не состоит") {
-        return students.filter(s => !s.volunteer || s.volunteer === "Не состоит").length;
+        return students.filter(s => getStudentVolunteers(s).length === 0).length;
       }
-      return students.filter(s => s.volunteer === d.value).length;
+      return students.filter(s => getStudentVolunteers(s).includes(d.value)).length;
     });
     colors = ["#94a3b8", "#10b981", "#2563eb", "#7c3aed", "#ff6b3d", "#f59e0b", "#ec4899", "#06b6d4"];
   }
@@ -1473,7 +1484,7 @@ function renderStudentsSection() {
   }
 
   if (activeStudentSubtab === "volunteers") {
-    const vols = students.filter(s => s.volunteer && s.volunteer !== "Не состоит");
+    const vols = students.filter(s => getStudentVolunteers(s).length > 0);
     const activeDirs = getAllVolunteerDirections().filter(d => d.value !== "Не состоит");
     const first5Dirs = activeDirs.slice(0, 5);
     const extraDirs = activeDirs.slice(5);
@@ -1483,17 +1494,17 @@ function renderStudentsSection() {
 
     let list = vols;
     if (activeVolunteerFilter !== "all") {
-      list = vols.filter(s => s.volunteer === activeVolunteerFilter);
+      list = vols.filter(s => getStudentVolunteers(s).includes(activeVolunteerFilter));
     }
 
     const filterButtons = `
       <div class="subtabs-pills mb-16">
         <button type="button" class="subtab-btn ${activeVolunteerFilter === 'all' ? 'active' : ''}" onclick="setVolunteerFilter('all')">${t("Все", "Barçasi")} (${vols.length})</button>
         ${first5Dirs.map(d => {
-          const cnt = vols.filter(s => s.volunteer === d.value).length;
-          return `<button type="button" class="subtab-btn ${activeVolunteerFilter === d.value ? 'active' : ''}" onclick="setVolunteerFilter('${d.value.replace(/'/g, "\'")}')">${d.label} (${cnt})</button>`;
+          const cnt = vols.filter(s => getStudentVolunteers(s).includes(d.value)).length;
+          return `<button type="button" class="subtab-btn ${activeVolunteerFilter === d.value ? 'active' : ''}" onclick="setVolunteerFilter('${d.value.replace(/'/g, "\\'")}')">${d.label} (${cnt})</button>`;
         }).join("")}
-        ${activeExtraObj ? `<button type="button" class="subtab-btn active" onclick="setVolunteerFilter('${activeExtraObj.value.replace(/'/g, "\'")}')">${activeExtraObj.label} (${vols.filter(s => s.volunteer === activeExtraObj.value).length})</button>` : ""}
+        ${activeExtraObj ? `<button type="button" class="subtab-btn active" onclick="setVolunteerFilter('${activeExtraObj.value.replace(/'/g, "\\'")}')">${activeExtraObj.label} (${vols.filter(s => getStudentVolunteers(s).includes(activeExtraObj.value)).length})</button>` : ""}
         ${extraDirs.length > 0 ? `
           <div class="tg-all-tags-dropdown" id="volOtherDirsDropdown">
             <button type="button" class="tg-all-tags-trigger" onclick="toggleVolOtherDirsDropdown(event)">
@@ -1528,23 +1539,24 @@ function renderStudentsSection() {
     area.innerHTML = `
       ${filterButtons}
       <div class="cards-grid-3">
-        ${list.map(s => `
-          <div class="student-card">
-            <div>
-              <div class="st-card-top">
-                <div>
-                  <div class="st-name">${s.name}</div>
-                  <div class="st-meta">${s.group} • ${s.course} ${t("курс", "kurs")}</div>
+        ${list.map(s => {
+          const dirs = getStudentVolunteers(s);
+          return `
+            <div class="student-card">
+              <div>
+                <div class="st-name">${s.name}</div>
+                <div class="st-meta mb-12">${s.group} • ${s.course} ${t("курс", "kurs")}</div>
+                <div class="checkbox-chips">
+                  ${dirs.map(v => `<span class="badge-pill rel">${getLabelFromDict(VOLUNTEER_DIRECTIONS, v)}</span>`).join("")}
                 </div>
-                <span class="badge-pill rel">${getLabelFromDict(VOLUNTEER_DIRECTIONS, s.volunteer)}</span>
+              </div>
+              <div class="st-card-actions">
+                <span class="st-meta">${s.phone || ""}</span>
+                <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
               </div>
             </div>
-            <div class="st-card-actions">
-              <span class="st-meta">${s.phone || ""}</span>
-              <button type="button" class="btn-link-orange" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
-            </div>
-          </div>
-        `).join("")}
+          `;
+        }).join("")}
       </div>
     `;
     return;
@@ -1674,7 +1686,7 @@ function renderVolFilterSearchList() {
   volFilterSearchQuery = inp ? inp.value : "";
   const q = volFilterSearchQuery.trim().toLowerCase();
   const students = getRoleScopedStudents();
-  const vols = students.filter(s => s.volunteer && s.volunteer !== "Не состоит");
+  const vols = students.filter(s => getStudentVolunteers(s).length > 0);
   const extraDirs = getAllVolunteerDirections().filter(d => d.value !== "Не состоит").slice(5);
   const filtered = q
     ? extraDirs.filter(d => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q))
@@ -1686,7 +1698,7 @@ function renderVolFilterSearchList() {
   }
 
   listEl.innerHTML = filtered.map(d => {
-    const cnt = vols.filter(s => s.volunteer === d.value).length;
+    const cnt = vols.filter(s => getStudentVolunteers(s).includes(d.value)).length;
     return `
       <div class="cs-option ${activeVolunteerFilter === d.value ? 'selected' : ''}" onclick="setVolunteerFilter('${d.value.replace(/'/g, "\'")}')">
         <span>${d.label} (${cnt})</span>
@@ -1717,7 +1729,7 @@ let modalStudentState = {
   tutorId: "",
   studyForm: "contract",
   housingType: "dorm",
-  volunteer: "Не состоит",
+  volunteers: [],
   selectedSocial: [],
   employed: "no"
 };
@@ -1779,7 +1791,7 @@ function openStudentModal(studentId = null) {
     tutorId: defaultTutorId,
     studyForm: st && st.studyForm ? st.studyForm : "contract",
     housingType: st ? st.housingType : "dorm",
-    volunteer: st ? (st.volunteer || "Не состоит") : "Не состоит",
+    volunteers: st ? getStudentVolunteers(st) : [],
     employed: st && st.employed ? "yes" : "no"
   };
 
@@ -2044,7 +2056,7 @@ function saveStudent() {
     empSalary: isEmployed ? document.getElementById("stEmpSalary").value.trim() : "",
     family: tempFamilyMembers,
     social,
-    volunteer: modalStudentState.volunteer
+    volunteer: [...new Set(modalStudentState.volunteers || [])]
   };
 
   if (editId) {
@@ -2115,7 +2127,7 @@ function runHemisImport() {
         room: "", address: "", landlord: "", relativeHost: "",
         employed: false, empOrg: "", empPosition: "", empAddress: "",
         empBossName: "", empBossPhone: "", empTimeFrom: "", empTimeTo: "", empSalary: "",
-        family: [], social: [], volunteer: "Не состоит"
+        family: [], social: [], volunteer: []
       });
       added++;
     }
@@ -3618,14 +3630,16 @@ function closeModal(id) {
 }
 
 
-// ==================== КАСТОМНЫЕ НАПРАВЛЕНИЯ ВОЛОНТЕРСТВА (DROP-UP + ПОИСК) ====================
+// ==================== КАСТОМНЫЕ НАПРАВЛЕНИЯ ВОЛОНТЕРСТВА (DROP-UP + МУЛЬТИВЫБОР + ПОИСК) ====================
 let volSearchQuery = "";
 
 function getAllVolunteerDirections() {
   const baseVals = VOLUNTEER_DIRECTIONS.map(v => v.value);
   const extras = new Set(appState.customVolunteers || []);
   (appState.students || []).forEach(s => {
-    if (s.volunteer && !baseVals.includes(s.volunteer)) extras.add(s.volunteer);
+    getStudentVolunteers(s).forEach(v => {
+      if (!baseVals.includes(v)) extras.add(v);
+    });
   });
   return [
     ...VOLUNTEER_DIRECTIONS.map(v => ({ value: v.value, label: currentLang === "oz" ? v.oz : v.ru })),
@@ -3633,24 +3647,41 @@ function getAllVolunteerDirections() {
   ];
 }
 
-function renderStudentVolunteerSelect() {
+function formatVolunteerTriggerLabel(selectedArr, allDirs) {
+  if (!selectedArr || !selectedArr.length) {
+    return t("Не состоит", "A’zo emas");
+  }
+  const labels = selectedArr.map(val => {
+    const found = allDirs.find(d => d.value === val);
+    return found ? found.label : val;
+  });
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]}, ${labels[1]}`;
+  return `${labels[0]}, ${labels[1]} (+${labels.length - 2})`;
+}
+
+function renderStudentVolunteerSelect(keepOpen = false) {
   const wrap = document.getElementById("stVolunteerWrap");
   if (!wrap) return;
   wrap.classList.add("drop-up");
 
+  const wasOpen = keepOpen || wrap.classList.contains("open");
   const allDirs = getAllVolunteerDirections();
-  const current = allDirs.find(d => d.value === modalStudentState.volunteer) || { value: modalStudentState.volunteer, label: modalStudentState.volunteer };
+  const selected = modalStudentState.volunteers || [];
+  const triggerText = formatVolunteerTriggerLabel(selected, allDirs);
 
   wrap.innerHTML = `
     <div class="cs-trigger" onclick="toggleCustomSelect('stVolunteerWrap'); setTimeout(() => { const i = document.getElementById('volSearchInput'); if(i) i.focus(); }, 30);">
-      <span>${current.label}</span>
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6 -6l6 6"/></svg>
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${triggerText}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 15l6 -6l6 6"/></svg>
     </div>
     <div class="cs-menu" onclick="event.stopPropagation()">
       <input type="text" id="volSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск или новое направление...", "Qidiriş yoki yangi yönaliş...")}" value="${volSearchQuery}" oninput="renderVolunteerOptionsList()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addOrSelectVolunteer(this.value);}" />
       <div id="volOptionsList" class="tg-tag-search-list"></div>
     </div>
   `;
+
+  if (wasOpen) wrap.classList.add("open");
   renderVolunteerOptionsList();
 }
 
@@ -3662,19 +3693,32 @@ function renderVolunteerOptionsList() {
   volSearchQuery = inp ? inp.value : "";
   const q = volSearchQuery.trim().toLowerCase();
   const allDirs = getAllVolunteerDirections();
+  const selected = modalStudentState.volunteers || [];
+
   const matched = q
     ? allDirs.filter(d => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q))
     : allDirs;
 
   const exactExists = allDirs.some(d => d.label.toLowerCase() === q || d.value.toLowerCase() === q);
-  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>';
 
-  let html = matched.map(d => `
-    <div class="cs-option ${modalStudentState.volunteer === d.value ? 'selected' : ''}" onclick="selectVolunteerDirection('${d.value.replace(/'/g, "\\'")}')">
-      <span>${d.label}</span>
-      ${modalStudentState.volunteer === d.value ? checkSvg : ''}
-    </div>
-  `).join("");
+  let html = matched.map(d => {
+    if (d.value === "Не состоит") {
+      const isNone = selected.length === 0;
+      return `
+        <div class="cs-option ${isNone ? 'selected' : ''}" onclick="clearVolunteerDirections()">
+          <span>${d.label}</span>
+          ${isNone ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>' : ''}
+        </div>
+      `;
+    }
+    const isChecked = selected.includes(d.value);
+    return `
+      <label class="social-check-option">
+        <input type="checkbox" ${isChecked ? "checked" : ""} onchange="toggleVolunteerDirection('${d.value.replace(/'/g, "\\'")}')" />
+        <span>${d.label}</span>
+      </label>
+    `;
+  }).join("");
 
   if (volSearchQuery.trim() && !exactExists) {
     const cleanNew = volSearchQuery.trim();
@@ -3688,12 +3732,26 @@ function renderVolunteerOptionsList() {
   listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
 }
 
-function selectVolunteerDirection(val) {
-  modalStudentState.volunteer = val;
+function clearVolunteerDirections() {
+  modalStudentState.volunteers = [];
   volSearchQuery = "";
   const wrap = document.getElementById("stVolunteerWrap");
   if (wrap) wrap.classList.remove("open");
-  renderStudentVolunteerSelect();
+  renderStudentVolunteerSelect(false);
+}
+
+function toggleVolunteerDirection(val) {
+  if (!val || val === "Не состоит") {
+    clearVolunteerDirections();
+    return;
+  }
+  const current = modalStudentState.volunteers || [];
+  if (current.includes(val)) {
+    modalStudentState.volunteers = current.filter(x => x !== val);
+  } else {
+    modalStudentState.volunteers = [...current, val];
+  }
+  renderStudentVolunteerSelect(true);
 }
 
 function addOrSelectVolunteer(rawVal) {
@@ -3703,13 +3761,25 @@ function addOrSelectVolunteer(rawVal) {
   const existing = allDirs.find(d => d.label.toLowerCase() === clean.toLowerCase() || d.value.toLowerCase() === clean.toLowerCase());
 
   if (existing) {
-    selectVolunteerDirection(existing.value);
+    if (existing.value === "Не состоит") {
+      clearVolunteerDirections();
+      return;
+    }
+    if (!(modalStudentState.volunteers || []).includes(existing.value)) {
+      modalStudentState.volunteers = [...(modalStudentState.volunteers || []), existing.value];
+    }
+    volSearchQuery = "";
+    renderStudentVolunteerSelect(true);
     return;
   }
 
   appState.customVolunteers = [clean, ...(appState.customVolunteers || [])];
+  if (!(modalStudentState.volunteers || []).includes(clean)) {
+    modalStudentState.volunteers = [...(modalStudentState.volunteers || []), clean];
+  }
+  volSearchQuery = "";
   saveState();
-  selectVolunteerDirection(clean);
+  renderStudentVolunteerSelect(true);
   showToast(`${t("Добавлено направление волонтерства", "Yangi volontyorlik yönalişi qöşildi")}: ${clean}`);
 }
 
