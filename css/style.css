@@ -3718,6 +3718,7 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   border-top: 1px solid var(--border);
 }
 
+
 /* ==================== ВЫПАДАЮЩИЙ СПИСОК ГРУПП ТЮТОРА (ТАБЛИЦА И МОДАЛКИ) ==================== */
 .tutor-groups-cell {
   display: inline-flex;
@@ -3844,7 +3845,62 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   color: #ffffff;
 }
 
-/* Фикс: чтобы поле ввода новой группы не пряталось под шапкой модального окна */
+
+/* Фикс высоты списка и кнопка редактирования названия группы */
 .user-groups-editor-dd .tg-tag-search-list {
   max-height: 120px;
+}
+
+.user-group-item-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.user-group-edit-btn,
+.user-group-save-btn {
+  border: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+
+.user-group-edit-btn {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--blue);
+}
+
+.user-group-edit-btn:hover {
+  background: var(--blue);
+  color: #ffffff;
+}
+
+.user-group-save-btn {
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--emerald);
+}
+
+.user-group-save-btn:hover {
+  background: var(--emerald);
+  color: #ffffff;
+}
+
+.user-group-inline-edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 3px 7px;
+  border-radius: 7px;
+  border: 1px solid var(--accent);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
 }
