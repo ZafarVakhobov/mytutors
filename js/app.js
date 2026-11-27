@@ -8542,8 +8542,13 @@ function renderChatMessageBubble(m, scopeType, scopeId) {
   let contentHtml = "";
 
   if (m.replyTo) {
+    const hasRefId = Boolean(m.replyTo.id);
+    const safeRefId = hasRefId ? String(m.replyTo.id).replace(/'/g, "\'") : "";
+    const clickAttr = hasRefId
+      ? `onclick="event.stopPropagation(); scrollToChatMessage('${safeRefId}')" title="${t("Перейти к сообщению", "Xabarga ötiş")}"`
+      : "";
     contentHtml += `
-      <div class="chat-reply-quote">
+      <div class="chat-reply-quote ${hasRefId ? 'clickable' : ''}" ${clickAttr}>
         <div class="chat-reply-quote-author">${m.replyTo.senderName || ""}</div>
         <div class="chat-reply-quote-text">${m.replyTo.text || t("Вложение", "Fayl")}</div>
       </div>
@@ -8614,7 +8619,7 @@ function renderChatMessageBubble(m, scopeType, scopeId) {
   `;
 
   const hoverActions = isMine
-    ? `<div class="chat-msg-hover-actions">${editBtn}${delBtn}</div>`
+    ? `<div class="chat-msg-hover-actions">${replyBtn}${editBtn}${delBtn}</div>`
     : `<div class="chat-msg-hover-actions">${replyBtn}</div>`;
 
   const bubbleHtml = `
@@ -8628,10 +8633,30 @@ function renderChatMessageBubble(m, scopeType, scopeId) {
   `;
 
   return `
-    <div class="chat-msg-row ${isMine ? 'mine' : 'theirs'}">
+    <div class="chat-msg-row ${isMine ? 'mine' : 'theirs'}" data-msg-id="${m.id}">
       ${isMine ? hoverActions + bubbleHtml : bubbleHtml + hoverActions}
     </div>
   `;
+}
+
+function scrollToChatMessage(msgId) {
+  if (!msgId) return;
+  const body = document.getElementById("chatDrawerBody");
+  if (!body) return;
+  const escapedId = (window.CSS && typeof CSS.escape === "function") ? CSS.escape(msgId) : String(msgId).replace(/"/g, '\"');
+  const target = body.querySelector(`.chat-msg-row[data-msg-id="${escapedId}"]`);
+  if (!target) {
+    showToast(t("Исходное сообщение не найдено или было удалено", "Asl xabar topilmadi yoki öçirilgan"));
+    return;
+  }
+  target.scrollIntoView({ behavior: "smooth", block: "center" });
+  target.classList.remove("chat-msg-highlight");
+  void target.offsetWidth;
+  target.classList.add("chat-msg-highlight");
+  clearTimeout(target._hlTimer);
+  target._hlTimer = setTimeout(() => {
+    target.classList.remove("chat-msg-highlight");
+  }, 1700);
 }
 
 function getChatMessagesContainer(scopeType, scopeId) {
