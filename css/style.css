@@ -708,7 +708,8 @@ body.dark .pill-sm.active { background: var(--accent); }
 /* Кастомные выпадающие списки */
 .custom-select {
   position: relative;
-  }
+  min-width: 155px;
+}
 
 .custom-select.compact { min-width: 135px; }
 
@@ -3302,4 +3303,47 @@ body.dark .cal-task-open-btn.completed {
   font-weight: 700;
   color: var(--accent);
   margin-bottom: 3px;
+}
+
+
+/* ==================== ДОЛГ ПО КОНТРАКТУ И ЗАПИСИ ПО ОБЩЕЖИТИЮ ==================== */
+.mon-debt-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 11px;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.22);
+  font-size: 12px;
+  color: var(--danger);
+}
+
+.dorm-res-group-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.dorm-res-line {
+  font-size: 13px;
+  margin-bottom: 3px;
+}
+
+.dorm-check-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  padding: 8px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .dorm-check-grid {
+    grid-template-columns: 1fr;
+  }
 }
