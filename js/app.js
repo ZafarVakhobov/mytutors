@@ -215,7 +215,7 @@ const I18N = {
   },
   oz: {
     auth_title: "Kabinetga kiriş",
-    auth_desc: "Yagona tyutorlar platformasi.",
+    auth_desc: "HEMIS va Google Drive bilan sinxronlaşgan yagona tyutorlar platformasi.",
     login_label: "PROFIL LOGINI",
     pass_label: "PAROL",
     login_btn: "Kiriş",
@@ -319,7 +319,7 @@ const I18N = {
     btn_print_cv: "Çop etiş / PDF CV",
     profile_form_title: "Xodim / tyutor anketasi",
     upload_photo: "Rasm yuklaş",
-    photo_hint: "JPG / PNG",
+    photo_hint: "JPG / PNG • Google Drive papkasiga saqlanadi",
     lbl_fio: "F.I.Ş.",
     lbl_position: "Lavozim",
     lbl_dept: "Fakultet / Bölim",
@@ -7032,6 +7032,8 @@ function renderTutorGroupsTableCell(u) {
   `;
 }
 
+let editingGroupInline = { mode: null, index: -1 };
+
 function renderUserGroupsEditor(mode, keepOpen = false) {
   const isNew = mode === "new";
   const wrapId = isNew ? "nuGroupsControlWrap" : "euGroupsControlWrap";
@@ -7043,6 +7045,7 @@ function renderUserGroupsEditor(mode, keepOpen = false) {
 
   // Если групп пока нет — обычное текстовое поле; при добавлении первой сразу превращается в выпадающий список
   if (!list.length) {
+    editingGroupInline = { mode: null, index: -1 };
     wrap.innerHTML = `
       <div class="user-groups-empty-row">
         <input type="text" id="${inpId}" class="form-input" data-no-uz-convert="1" placeholder="TR-401, TR-402" onkeydown="if(event.key==='Enter'){event.preventDefault(); addGroupToUserEditor('${mode}');}" />
@@ -7059,6 +7062,9 @@ function renderUserGroupsEditor(mode, keepOpen = false) {
   const existingDd = document.getElementById(ddId);
   const wasOpen = keepOpen || (existingDd && existingDd.classList.contains("open"));
 
+  const editIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>';
+  const checkIconSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5l10 -10"/></svg>';
+
   wrap.innerHTML = `
     <div class="custom-select drop-up user-groups-editor-dd ${wasOpen ? 'open' : ''}" id="${ddId}">
       <div class="cs-trigger" onclick="toggleCustomSelect('${ddId}'); setTimeout(() => { const i = document.getElementById('${inpId}'); if(i) i.focus(); }, 30);">
@@ -7071,16 +7077,70 @@ function renderUserGroupsEditor(mode, keepOpen = false) {
           <button type="button" class="user-groups-add-btn" onclick="addGroupToUserEditor('${mode}')" title="${t("Добавить группу", "Guruh qöşiş")}">+</button>
         </div>
         <div class="tg-tag-search-list">
-          ${list.map(g => `
-            <div class="tutor-groups-dd-item">
-              <span>${g}</span>
-              <button type="button" class="user-group-del-btn" onclick="removeGroupFromUserEditor('${mode}', '${g.replace(/'/g, "\'")}')" title="${t("Удалить", "Öçiriş")}">×</button>
-            </div>
-          `).join("")}
+          ${list.map((g, idx) => {
+            const isEditing = editingGroupInline.mode === mode && editingGroupInline.index === idx;
+            if (isEditing) {
+              const editInpId = `editGroupInp_${mode}_${idx}`;
+              return `
+                <div class="tutor-groups-dd-item editing">
+                  <input type="text" id="${editInpId}" class="user-group-inline-edit-input" data-no-uz-convert="1" value="${g.replace(/"/g, '&quot;')}" onkeydown="if(event.key==='Enter'){event.preventDefault(); saveEditedGroupInEditor('${mode}', ${idx});} else if(event.key==='Escape'){cancelEditGroupInEditor('${mode}');}" />
+                  <div class="user-group-item-actions">
+                    <button type="button" class="user-group-save-btn" onclick="saveEditedGroupInEditor('${mode}', ${idx})" title="${t("Сохранить", "Saqlaş")}">${checkIconSvg}</button>
+                    <button type="button" class="user-group-del-btn" onclick="cancelEditGroupInEditor('${mode}')" title="${t("Отмена", "Bekor qiliş")}">×</button>
+                  </div>
+                </div>
+              `;
+            }
+            return `
+              <div class="tutor-groups-dd-item">
+                <span>${g}</span>
+                <div class="user-group-item-actions">
+                  <button type="button" class="user-group-edit-btn" onclick="startEditGroupInEditor('${mode}', ${idx})" title="${t("Редактировать", "Tahrirlaş")}">${editIconSvg}</button>
+                  <button type="button" class="user-group-del-btn" onclick="removeGroupFromUserEditor('${mode}', '${g.replace(/'/g, "\'")}')" title="${t("Удалить", "Öçiriş")}">×</button>
+                </div>
+              </div>
+            `;
+          }).join("")}
         </div>
       </div>
     </div>
   `;
+}
+
+function startEditGroupInEditor(mode, idx) {
+  editingGroupInline = { mode, index: idx };
+  renderUserGroupsEditor(mode, true);
+  setTimeout(() => {
+    const inp = document.getElementById(`editGroupInp_${mode}_${idx}`);
+    if (inp) {
+      inp.focus();
+      inp.select();
+    }
+  }, 20);
+}
+
+function cancelEditGroupInEditor(mode) {
+  editingGroupInline = { mode: null, index: -1 };
+  renderUserGroupsEditor(mode, true);
+}
+
+function saveEditedGroupInEditor(mode, idx) {
+  const inp = document.getElementById(`editGroupInp_${mode}_${idx}`);
+  if (!inp) return;
+  const newName = inp.value.trim();
+  if (!newName) {
+    cancelEditGroupInEditor(mode);
+    return;
+  }
+  const list = mode === "new" ? newUserGroupsList : editingUserGroupsList;
+  const duplicate = list.some((g, i) => i !== idx && g.toLowerCase() === newName.toLowerCase());
+  if (duplicate) {
+    showToast(t("Такая группа уже есть в списке", "Bu guruh röyxatda allaqaçon bor"));
+    return;
+  }
+  list[idx] = newName;
+  editingGroupInline = { mode: null, index: -1 };
+  renderUserGroupsEditor(mode, true);
 }
 
 function addGroupToUserEditor(mode) {
@@ -7104,6 +7164,7 @@ function addGroupToUserEditor(mode) {
 }
 
 function removeGroupFromUserEditor(mode, groupName) {
+  editingGroupInline = { mode: null, index: -1 };
   if (mode === "new") {
     newUserGroupsList = newUserGroupsList.filter(g => g !== groupName);
   } else {
