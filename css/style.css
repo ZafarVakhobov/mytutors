@@ -3209,3 +3209,42 @@ body.dark .cal-task-open-btn.completed {
   border-color: #10b981;
   color: #ffffff;
 }
+
+
+/* ==================== СКРЫТИЕ ПАРОЛЯ И ИКОНКА ГЛАЗА В АДМИНКЕ ==================== */
+.pass-mask-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 148px;
+}
+
+.pass-mask-input {
+  width: 100%;
+  padding: 6px 34px 6px 10px !important;
+  font-size: 13px;
+  cursor: default;
+}
+
+.pass-eye-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+
+.pass-eye-btn:hover {
+  color: var(--accent);
+  background: var(--surface);
+}
