@@ -215,7 +215,7 @@ const I18N = {
   },
   oz: {
     auth_title: "Kabinetga kiriş",
-    auth_desc: "HEMIS va Google Drive bilan sinxronlaşgan yagona tyutorlar platformasi.",
+    auth_desc: "Yagona tyutorlar platformasi.",
     login_label: "PROFIL LOGINI",
     pass_label: "PAROL",
     login_btn: "Kiriş",
@@ -319,7 +319,7 @@ const I18N = {
     btn_print_cv: "Çop etiş / PDF CV",
     profile_form_title: "Xodim / tyutor anketasi",
     upload_photo: "Rasm yuklaş",
-    photo_hint: "JPG / PNG • Google Drive papkasiga saqlanadi",
+    photo_hint: "JPG / PNG",
     lbl_fio: "F.I.Ş.",
     lbl_position: "Lavozim",
     lbl_dept: "Fakultet / Bölim",
@@ -6992,9 +6992,126 @@ function deleteBlogPost(id, btnEl) {
 // ==================== 7. АДМИНИСТРИРОВАНИЕ ПРОФИЛЕЙ И ПАРОЛЕЙ ====================
 let newUserRole = "tutor";
 let newUserCourse = "1";
+let newUserGroupsList = [];
 let editingUserId = null;
 let editingUserRole = "tutor";
 let editingUserCourse = "1";
+let editingUserGroupsList = [];
+
+function parseTutorGroupsArray(rawStr) {
+  const invalid = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+  return [...new Set(
+    String(rawStr || "")
+      .split(",")
+      .map(g => g.trim())
+      .filter(g => g && !invalid.has(g))
+  )];
+}
+
+function renderTutorGroupsTableCell(u) {
+  if (u.role !== "tutor") return '<span class="st-meta">—</span>';
+  const courseBadge = u.course ? `<span class="badge-pill">${u.course} ${t("курс", "kurs")}</span>` : "";
+  const groups = parseTutorGroupsArray(u.groups);
+  if (!groups.length) {
+    return `<div class="tutor-groups-cell">${courseBadge}<span class="st-meta">${t("Не назначены", "Biriktirilmagan")}</span></div>`;
+  }
+  const ddId = `tblTutorGroupsDd_${u.id}`;
+  return `
+    <div class="tutor-groups-cell">
+      ${courseBadge}
+      <div class="custom-select tutor-groups-dd" id="${ddId}">
+        <div class="cs-trigger" onclick="toggleCustomSelect('${ddId}')">
+          <span>${t("Группы", "Guruhlar")} (${groups.length})</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+        </div>
+        <div class="cs-menu" onclick="event.stopPropagation()">
+          ${groups.map(g => `<div class="tutor-groups-dd-item"><span>${g}</span></div>`).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderUserGroupsEditor(mode, keepOpen = false) {
+  const isNew = mode === "new";
+  const wrapId = isNew ? "nuGroupsControlWrap" : "euGroupsControlWrap";
+  const ddId = isNew ? "nuGroupsDdWrap" : "euGroupsDdWrap";
+  const inpId = isNew ? "nuGroupsInlineInput" : "euGroupsInlineInput";
+  const list = isNew ? newUserGroupsList : editingUserGroupsList;
+  const wrap = document.getElementById(wrapId);
+  if (!wrap) return;
+
+  // Если групп пока нет — обычное текстовое поле; при добавлении первой сразу превращается в выпадающий список
+  if (!list.length) {
+    wrap.innerHTML = `
+      <div class="user-groups-empty-row">
+        <input type="text" id="${inpId}" class="form-input" data-no-uz-convert="1" placeholder="TR-401, TR-402" onkeydown="if(event.key==='Enter'){event.preventDefault(); addGroupToUserEditor('${mode}');}" />
+        <button type="button" class="user-groups-add-btn" onclick="addGroupToUserEditor('${mode}')" title="${t("Добавить группу", "Guruh qöşiş")}">+</button>
+      </div>
+    `;
+    return;
+  }
+
+  const label = list.length <= 2
+    ? list.join(", ")
+    : `${list[0]}, ${list[1]} (+${list.length - 2})`;
+
+  const existingDd = document.getElementById(ddId);
+  const wasOpen = keepOpen || (existingDd && existingDd.classList.contains("open"));
+
+  wrap.innerHTML = `
+    <div class="custom-select drop-up user-groups-editor-dd ${wasOpen ? 'open' : ''}" id="${ddId}">
+      <div class="cs-trigger" onclick="toggleCustomSelect('${ddId}'); setTimeout(() => { const i = document.getElementById('${inpId}'); if(i) i.focus(); }, 30);">
+        <span>${label}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6 -6l6 6"/></svg>
+      </div>
+      <div class="cs-menu" onclick="event.stopPropagation()">
+        <div class="user-groups-inline-add">
+          <input type="text" id="${inpId}" class="tg-tag-search-input" data-no-uz-convert="1" placeholder="${t("Новая группа (напр. TH-125)...", "Yangi guruh (masalan: TH-125)...")}" onkeydown="if(event.key==='Enter'){event.preventDefault(); addGroupToUserEditor('${mode}');}" />
+          <button type="button" class="user-groups-add-btn" onclick="addGroupToUserEditor('${mode}')" title="${t("Добавить группу", "Guruh qöşiş")}">+</button>
+        </div>
+        <div class="tg-tag-search-list">
+          ${list.map(g => `
+            <div class="tutor-groups-dd-item">
+              <span>${g}</span>
+              <button type="button" class="user-group-del-btn" onclick="removeGroupFromUserEditor('${mode}', '${g.replace(/'/g, "\'")}')" title="${t("Удалить", "Öçiriş")}">×</button>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function addGroupToUserEditor(mode) {
+  const isNew = mode === "new";
+  const inpId = isNew ? "nuGroupsInlineInput" : "euGroupsInlineInput";
+  const inp = document.getElementById(inpId);
+  if (!inp) return;
+  const parts = parseTutorGroupsArray(inp.value);
+  if (!parts.length) return;
+
+  const list = isNew ? newUserGroupsList : editingUserGroupsList;
+  parts.forEach(g => {
+    if (!list.includes(g)) list.push(g);
+  });
+
+  renderUserGroupsEditor(mode, true);
+  setTimeout(() => {
+    const nextInp = document.getElementById(inpId);
+    if (nextInp) nextInp.focus();
+  }, 20);
+}
+
+function removeGroupFromUserEditor(mode, groupName) {
+  if (mode === "new") {
+    newUserGroupsList = newUserGroupsList.filter(g => g !== groupName);
+  } else {
+    editingUserGroupsList = editingUserGroupsList.filter(g => g !== groupName);
+  }
+  const list = mode === "new" ? newUserGroupsList : editingUserGroupsList;
+  renderUserGroupsEditor(mode, list.length > 0);
+}
 
 function getCourseOptions() {
   return [
@@ -7103,7 +7220,7 @@ function ensureEditUserModal() {
             </div>
             <div class="form-group" id="euGroupsGroup">
               <label class="form-label">${t("Закрепленные группы", "Biriktirilgan guruhlar")}</label>
-              <input type="text" id="euGroups" class="form-input" placeholder="TR-401, TR-402" />
+              <div id="euGroupsControlWrap"></div>
             </div>
           </div>
 
@@ -7140,7 +7257,8 @@ function openEditUserModal(userId) {
   editingUserCourse = u.course ? String(u.course) : "1";
 
   document.getElementById("euName").value = u.name || "";
-  document.getElementById("euGroups").value = (u.role === "tutor" && u.groups !== "Все группы") ? (u.groups || "") : "";
+  editingUserGroupsList = u.role === "tutor" ? parseTutorGroupsArray(u.groups) : [];
+  renderUserGroupsEditor("edit", false);
   document.getElementById("euLogin").value = u.login || "";
   document.getElementById("euPass").value = u.pass || "";
   document.getElementById("euPartialAdmin").checked = !!u.partialAdmin;
@@ -7177,8 +7295,14 @@ function saveEditedUser() {
 
   const name = document.getElementById("euName").value.trim();
   const role = editingUserRole;
+  const pendingEuInp = document.getElementById("euGroupsInlineInput");
+  if (pendingEuInp && pendingEuInp.value.trim()) {
+    parseTutorGroupsArray(pendingEuInp.value).forEach(g => {
+      if (!editingUserGroupsList.includes(g)) editingUserGroupsList.push(g);
+    });
+  }
   const groups = role === "tutor"
-    ? (document.getElementById("euGroups").value.trim() || t("Не назначены", "Biriktirilmagan"))
+    ? (editingUserGroupsList.length ? editingUserGroupsList.join(", ") : t("Не назначены", "Biriktirilmagan"))
     : "Все группы";
   const login = document.getElementById("euLogin").value.trim();
   const pass = document.getElementById("euPass").value.trim();
@@ -7389,7 +7513,7 @@ function renderUsersAdminTableRows() {
             <span>${localizeRoleTitle(u.role, u.roleTitle)}</span>
             ${u.partialAdmin && u.role !== "admin" ? `<span class="badge-pill partial-admin">${t("Част. админ", "Qisman admin")}</span>` : ""}
           </td>
-          <td>${u.role === "tutor" ? `${u.course ? `<span class="badge-pill" style="margin-right:6px;">${u.course} ${t("курс", "kurs")}</span>` : ""}${u.groups || "—"}` : `<span class="st-meta">—</span>`}</td>
+          <td>${renderTutorGroupsTableCell(u)}</td>
           <td><code>${u.login}</code></td>
           <td>
             <div class="pass-mask-wrap">
@@ -7442,7 +7566,8 @@ function openNewUserModal() {
   document.getElementById("nuName").value = "";
   document.getElementById("nuLogin").value = "";
   document.getElementById("nuPass").value = "";
-  document.getElementById("nuGroups").value = "";
+  newUserGroupsList = [];
+  renderUserGroupsEditor("new", false);
   const paCheck = document.getElementById("nuPartialAdmin");
   if (paCheck) paCheck.checked = false;
 
@@ -7469,8 +7594,14 @@ function createNewUser() {
   const name = document.getElementById("nuName").value.trim();
   const login = document.getElementById("nuLogin").value.trim();
   const pass = document.getElementById("nuPass").value.trim();
+  const pendingNuInp = document.getElementById("nuGroupsInlineInput");
+  if (pendingNuInp && pendingNuInp.value.trim()) {
+    parseTutorGroupsArray(pendingNuInp.value).forEach(g => {
+      if (!newUserGroupsList.includes(g)) newUserGroupsList.push(g);
+    });
+  }
   const groups = newUserRole === "tutor"
-    ? (document.getElementById("nuGroups").value.trim() || t("Не назначены", "Biriktirilmagan"))
+    ? (newUserGroupsList.length ? newUserGroupsList.join(", ") : t("Не назначены", "Biriktirilmagan"))
     : "Все группы";
   const partialAdmin = newUserRole !== "admin" && !!document.getElementById("nuPartialAdmin")?.checked;
 
