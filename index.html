@@ -271,6 +271,7 @@
                   <button type="button" class="pill-sm" data-mode="studyForm" onclick="setDistMode('studyForm')" data-i18n="dist_study_form">По форме обучения</button>
                   <button type="button" class="pill-sm" data-mode="volunteers" onclick="setDistMode('volunteers')" data-i18n="dist_volunteers">По волонтерству</button>
                   <button type="button" class="pill-sm" data-mode="region" onclick="setDistMode('region')" data-i18n="dist_region">По регионам</button>
+                  <button type="button" class="pill-sm" data-mode="marital" onclick="setDistMode('marital')" data-i18n="dist_marital">Семейный статус</button>
                 </div>
               </div>
               <div class="export-btns">
@@ -619,6 +620,20 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="editStudentId" />
+        <div class="photo-upload-row mb-16 st-photo-upload-bar">
+          <div class="profile-photo-preview st-photo-preview" id="stPhotoPreview">ST</div>
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <label class="btn-export cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2"/><path d="M7 9l5 -5l5 5"/><path d="M12 4l0 12"/></svg>
+                <span data-i18n="upload_st_photo">Загрузить фото студента</span>
+                <input type="file" id="stPhotoInput" accept="image/*" hidden onchange="handleStudentPhotoUpload(event)" />
+              </label>
+              <button type="button" id="stPhotoRemoveBtn" class="btn-ghost sm hidden" onclick="removeStudentPhoto()" data-i18n="remove_photo">Удалить фото</button>
+            </div>
+            <span class="st-meta" data-i18n="st_photo_hint">JPG / PNG • Сохраняется в карточке студента</span>
+          </div>
+        </div>
         <div class="form-grid-3">
           <div class="form-group">
             <label class="form-label" data-i18n="lbl_st_fio">Ф.И.О. студента *</label>
@@ -739,6 +754,33 @@
           </div>
         </div>
 
+        <!-- Семейный статус студента -->
+        <div class="sub-panel mt-14">
+          <div class="sub-panel-title" data-i18n="sec_marital">СЕМЕЙНЫЙ СТАТУС</div>
+          <div class="form-grid-2">
+            <div class="form-group" style="margin-bottom:0;">
+              <label class="form-label" data-i18n="lbl_marital_status">Семейное положение</label>
+              <div class="custom-select" id="stMaritalStatusWrap"></div>
+            </div>
+          </div>
+          <div id="maritalExtraFields" class="hidden mt-12">
+            <div class="form-grid-3">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" data-i18n="lbl_spouse_name">Ф.И.О. супруга(и)</label>
+                <input type="text" id="stSpouseName" class="form-input" placeholder="Ф.И.О." />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" data-i18n="lbl_spouse_birth">Дата рождения супруга(и)</label>
+                <input type="date" id="stSpouseBirth" class="form-input" />
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label" data-i18n="lbl_children_count">Количество детей</label>
+                <input type="number" id="stChildrenCount" class="form-input" min="0" max="20" placeholder="0" />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Расширенный блок: Данные о родителях и родственниках -->
         <div class="sub-panel mt-14">
           <div class="sub-panel-head">
@@ -798,6 +840,12 @@
         <div class="form-group hidden" id="monCustomCatWrap">
           <label class="form-label" data-i18n="lbl_mon_custom">Укажите категорию вручную</label>
           <input type="text" id="monCustomCategoryInput" class="form-input" placeholder="Например: Систематические опоздания..." />
+        </div>
+        <div class="form-group hidden" id="monPartnerWrap">
+          <label class="form-label" data-i18n="lbl_mon_partner">Поиск второй половинки (студент)</label>
+          <input type="text" id="monPartnerSearchInput" class="form-input" data-i18n-placeholder="ph_mon_partner_search" placeholder="Введите Ф.И.О. или группу студента..." oninput="renderMonPartnerSearchResults()" />
+          <div id="monPartnerResultsList" class="mon-partner-results hidden"></div>
+          <div id="monPartnerInfoCard" class="mon-partner-card hidden"></div>
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_mon_note">Первичная запись в дневнике</label>
