@@ -3102,3 +3102,110 @@ body.dark .chat-msg-bubble.mine {
   cursor: pointer;
   padding: 0 2px;
 }
+
+
+/* ==================== СИНХРОНИЗАЦИЯ ЗАДАНИЙ ЧАТА С КАЛЕНДАРЕМ ==================== */
+.day-event-row.cal-task-row {
+  gap: 12px;
+  border-radius: 12px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.day-event-row.cal-task-row.completed {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.28);
+}
+
+.cal-task-head-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.cal-task-done-icon {
+  display: inline-flex;
+  align-items: center;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.cal-task-title-btn {
+  border: none;
+  background: transparent;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.16s ease;
+}
+
+.cal-task-title-btn:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.cal-task-title-btn.done {
+  color: #059669;
+}
+
+body.dark .cal-task-title-btn.done {
+  color: #34d399;
+}
+
+.cal-task-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.16);
+  color: #059669;
+}
+
+body.dark .cal-task-status-badge {
+  color: #34d399;
+}
+
+.cal-task-open-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+}
+
+.cal-task-open-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.cal-task-open-btn.completed {
+  border-color: rgba(16, 185, 129, 0.35);
+  color: #059669;
+}
+
+body.dark .cal-task-open-btn.completed {
+  color: #34d399;
+}
+
+.cal-task-open-btn.completed:hover {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+}
