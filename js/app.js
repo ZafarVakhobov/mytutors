@@ -6846,6 +6846,8 @@ function openNotificationTarget(notifId) {
 let chatHubPollTimer = null;
 let chatHubLastHash = "";
 let chatHubSyncInFlight = false;
+let chatHubSaveInFlight = 0;
+let chatHubSyncVersion = 0;
 
 function syncChatHubToCloud() {
   if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
@@ -6855,6 +6857,9 @@ function syncChatHubToCloud() {
     notifications: appState.notifications || []
   };
   chatHubLastHash = JSON.stringify(hubPayload);
+  chatHubSyncVersion++;
+  chatHubSaveInFlight++;
+
   fetch(APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -6862,18 +6867,35 @@ function syncChatHubToCloud() {
       action: "saveChatHub",
       hub: hubPayload
     })
-  }).catch(() => {});
+  })
+    .catch(() => {})
+    .finally(() => {
+      chatHubSaveInFlight = Math.max(0, chatHubSaveInFlight - 1);
+    });
 }
 
 async function loadChatHubFromCloud() {
-  if (!currentUser || chatHubSyncInFlight || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (
+    !currentUser ||
+    chatHubSyncInFlight ||
+    chatHubSaveInFlight > 0 ||
+    typeof APPS_SCRIPT_URL === "undefined" ||
+    !APPS_SCRIPT_URL.includes("/exec")
+  ) return;
+
   chatHubSyncInFlight = true;
+  const reqVersion = chatHubSyncVersion;
+
   try {
     const res = await fetch(`${APPS_SCRIPT_URL}?action=getChatHub&t=${Date.now()}`, {
       method: "GET",
       redirect: "follow"
     });
     const json = await res.json();
+
+    // Если во время загрузки пользователь отправил новое сообщение — игнорируем устаревший ответ
+    if (reqVersion !== chatHubSyncVersion || chatHubSaveInFlight > 0) return;
+
     if (json && json.status === "ok" && json.hub) {
       const incomingHub = {
         chats: deduplicateById(json.hub.chats || []),
@@ -6906,7 +6928,7 @@ function startChatHubPolling() {
   stopChatHubPolling();
   loadChatHubFromCloud();
   chatHubPollTimer = setInterval(() => {
-    if (currentUser && !document.hidden) {
+    if (currentUser && !document.hidden && chatHubSaveInFlight === 0) {
       loadChatHubFromCloud();
     }
   }, 10000);
