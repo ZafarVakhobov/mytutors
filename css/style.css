@@ -3434,3 +3434,286 @@ body.dark .cal-task-open-btn.completed {
   color: rgba(255, 255, 255, 0.85);
   margin-top: 3px;
 }
+
+
+/* ==================== ОНЛАЙН-СТАТУС (МЕРЦАЮЩАЯ ЗЕЛЕНАЯ ТОЧКА) И ПЛАШКИ РОЛЕЙ ==================== */
+.online-pulse-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: onlinePulseGreen 1.5s infinite;
+  flex-shrink: 0;
+}
+
+@keyframes onlinePulseGreen {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 5px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.user-role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  vertical-align: middle;
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  background: rgba(37, 99, 235, 0.08);
+  color: #2563eb;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+button.user-role-pill,
+.user-role-pill.clickable {
+  cursor: pointer;
+}
+
+.user-role-pill.role-tutor {
+  background: rgba(37, 99, 235, 0.08);
+  border-color: rgba(37, 99, 235, 0.24);
+  color: #2563eb;
+}
+.user-role-pill.role-tutor.clickable:hover,
+.user-role-pill.role-tutor.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.user-role-pill.role-admin {
+  background: rgba(255, 107, 61, 0.1);
+  border-color: rgba(255, 107, 61, 0.28);
+  color: #e84e0f;
+}
+.user-role-pill.role-admin.clickable:hover,
+.user-role-pill.role-admin.active {
+  background: #ff6b3d;
+  border-color: #ff6b3d;
+  color: #ffffff;
+}
+
+.user-role-pill.role-management {
+  background: rgba(124, 58, 237, 0.09);
+  border-color: rgba(124, 58, 237, 0.25);
+  color: #7c3aed;
+}
+.user-role-pill.role-management.clickable:hover,
+.user-role-pill.role-management.active {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+.user-role-pill.role-psychologist {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.28);
+  color: #059669;
+}
+.user-role-pill.role-psychologist.clickable:hover,
+.user-role-pill.role-psychologist.active {
+  background: #059669;
+  border-color: #059669;
+  color: #ffffff;
+}
+
+.user-role-pill.role-inspector {
+  background: rgba(217, 119, 6, 0.1);
+  border-color: rgba(217, 119, 6, 0.28);
+  color: #b45309;
+}
+.user-role-pill.role-inspector.clickable:hover,
+.user-role-pill.role-inspector.active {
+  background: #d97706;
+  border-color: #d97706;
+  color: #ffffff;
+}
+
+.user-role-pill.role-womens_council {
+  background: rgba(219, 39, 119, 0.09);
+  border-color: rgba(219, 39, 119, 0.26);
+  color: #be185d;
+}
+.user-role-pill.role-womens_council.clickable:hover,
+.user-role-pill.role-womens_council.active {
+  background: #db2777;
+  border-color: #db2777;
+  color: #ffffff;
+}
+
+body.dark .user-role-pill.role-tutor { color: #60a5fa; }
+body.dark .user-role-pill.role-admin { color: #ff8a65; }
+body.dark .user-role-pill.role-management { color: #a78bfa; }
+body.dark .user-role-pill.role-psychologist { color: #34d399; }
+body.dark .user-role-pill.role-inspector { color: #fbbf24; }
+body.dark .user-role-pill.role-womens_council { color: #f472b6; }
+
+/* Внутри собственных зеленых сообщений чата плашка упоминания остается контрастной */
+.chat-msg-bubble.mine .user-role-pill {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ==================== ДЕЙСТВИЯ НАД СООБЩЕНИЯМИ В ЧАТЕ (EDIT / DELETE / REPLY) ==================== */
+.chat-msg-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.chat-msg-row.mine {
+  justify-content: flex-end;
+}
+
+.chat-msg-row.theirs {
+  justify-content: flex-start;
+}
+
+.chat-msg-hover-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  flex-shrink: 0;
+  margin-bottom: 4px;
+}
+
+.chat-msg-row:hover .chat-msg-hover-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.chat-msg-act-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-msg-act-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--surface-alt);
+}
+
+.chat-msg-act-btn.danger:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.chat-reply-quote {
+  border-left: 3px solid var(--accent);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  padding: 5px 8px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+.chat-msg-bubble.mine .chat-reply-quote {
+  border-left-color: #ffffff;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.chat-reply-quote-author {
+  font-weight: 700;
+  margin-bottom: 1px;
+}
+
+.chat-reply-quote-text {
+  opacity: 0.85;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.chat-edited-tag {
+  font-size: 10px;
+  opacity: 0.7;
+  font-style: italic;
+  margin-left: 4px;
+}
+
+/* Панель контекста (Ответ / Редактирование) над полем ввода чата */
+.chat-context-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 11px;
+  margin-bottom: 8px;
+  border-radius: 11px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  font-size: 12px;
+}
+
+.chat-context-bar-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.chat-context-bar-title {
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 11px;
+}
+
+.chat-context-bar-sub {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Всплывающее окно @-упоминаний над полем ввода */
+.chat-mention-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 12px;
+  right: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 10px;
+  box-shadow: var(--shadow-md);
+  z-index: 1260;
+  animation: popIn 0.14s ease;
+}
+
+.chat-mention-list {
+  max-height: 190px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 6px 0 8px;
+}
+
+.chat-mention-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
