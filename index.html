@@ -431,6 +431,7 @@
           <div class="subtabs-pills">
             <button type="button" class="subtab-btn active" id="diaryTabMonitoring" onclick="setDiarySubtab('monitoring')" data-i18n="tab_monitoring">Мониторинг студентов</button>
             <button type="button" class="subtab-btn" id="diaryTabParents" onclick="setDiarySubtab('parents')" data-i18n="tab_parents">Работа с родителями</button>
+            <button type="button" class="subtab-btn" id="diaryTabDorm" onclick="setDiarySubtab('dorm')" data-i18n="tab_dorm_logs">Записи по общежитию</button>
           </div>
         </div>
 
@@ -841,6 +842,10 @@
           <div id="monPartnerResultsList" class="mon-partner-results hidden"></div>
           <div id="monPartnerInfoCard" class="mon-partner-card hidden"></div>
         </div>
+        <div class="form-group hidden" id="monDebtWrap">
+          <label class="form-label" data-i18n="lbl_mon_debt">Сумма долга по контракту (UZS)</label>
+          <input type="number" id="monDebtAmountInput" class="form-input" min="0" step="50000" placeholder="Например: 3500000" />
+        </div>
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_mon_note">Первичная запись в дневнике</label>
           <textarea id="monInitialNote" class="form-textarea" rows="3" placeholder="Опишите ситуацию и проведенную беседу..."></textarea>
@@ -849,6 +854,69 @@
       <div class="modal-foot">
         <button type="button" class="btn-ghost" onclick="closeModal('monitoringModal')" data-i18n="btn_cancel">Отмена</button>
         <button type="button" class="btn-orange" onclick="saveMonitoringRecord()" data-i18n="btn_save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ЗАПИСЬ ПО ОБЩЕЖИТИЮ -->
+  <div class="modal-backdrop hidden" id="dormDiaryModal">
+    <div class="modal-box lg">
+      <div class="modal-head">
+        <h3 class="modal-title" data-i18n="dorm_modal_title">Фиксация изучения комнаты общежития</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('dormDiaryModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl_dorm_room">Комната общежития *</label>
+            <div class="custom-select" id="dormRoomSelectWrap"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="lbl_dorm_date">Дата проверки</label>
+            <input type="date" id="dormDateInput" class="form-input" />
+          </div>
+        </div>
+
+        <div id="dormResidentsPreview" class="sub-panel mb-14 hidden"></div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="lbl_dorm_cat">Категория проверки *</label>
+          <div class="custom-select" id="dormCategorySelectWrap"></div>
+        </div>
+
+        <!-- Динамические поля в зависимости от категории проверки -->
+        <div class="form-group hidden" id="dormProblemResidentsWrap">
+          <label class="form-label" data-i18n="lbl_dorm_problem_res">Выберите жильцов (мультивыбор)</label>
+          <div id="dormProblemResidentsList" class="dorm-check-grid"></div>
+        </div>
+
+        <div class="form-group hidden" id="dormRelocationWrap">
+          <label class="form-label" data-i18n="lbl_dorm_relocation">Желаемая комната / комментарий по переселению</label>
+          <input type="text" id="dormRelocationInput" class="form-input" data-i18n-placeholder="ph_dorm_relocation" placeholder="Например: Комната 305 или причина переселения..." />
+        </div>
+
+        <div class="form-group hidden" id="dormCollabWrap">
+          <label class="form-label" data-i18n="lbl_dorm_collab">Совместная работа (участники беседы)</label>
+          <div class="custom-select" id="dormCollabSelectWrap"></div>
+        </div>
+
+        <div class="form-group hidden" id="dormConflictWrap">
+          <label class="form-label" data-i18n="lbl_dorm_conflict">Конфликт со студентом (поиск по всей базе)</label>
+          <input type="text" id="dormConflictSearchInput" class="form-input" data-i18n-placeholder="ph_mon_partner_search" placeholder="Введите Ф.И.О. или группу студента..." oninput="renderDormConflictSearchResults()" />
+          <div id="dormConflictResultsList" class="mon-partner-results hidden"></div>
+          <div id="dormConflictInfoCard" class="mon-partner-card hidden"></div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" data-i18n="lbl_dorm_notes">Текст дневника проверки *</label>
+          <textarea id="dormNotesInput" class="form-textarea" rows="3" style="min-height:100px;" data-i18n-placeholder="ph_dorm_notes" placeholder="Опишите результаты проверки, замечания и принятые меры..."></textarea>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('dormDiaryModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveDormLog()" data-i18n="btn_save">Сохранить</button>
       </div>
     </div>
   </div>
