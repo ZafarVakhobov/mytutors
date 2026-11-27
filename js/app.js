@@ -1149,9 +1149,31 @@ function buildPayloadForCurrentUser() {
   };
 }
 
+function safeSaveLocalState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  } catch (e) {
+    // Если localStorage переполнен тяжелыми вложениями чата, сохраняем облегченную копию без dataUrl
+    try {
+      const lite = {
+        ...appState,
+        chats: (appState.chats || []).map(c => ({
+          ...c,
+          messages: (c.messages || []).slice(-40).map(m => ({
+            ...m,
+            images: [],
+            files: []
+          }))
+        }))
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(lite));
+    } catch (_) {}
+  }
+}
+
 function saveState(skipCloudSync = false) {
   appState = sanitizeAppState(appState);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+  safeSaveLocalState();
 
   if (!skipCloudSync && currentUser && APPS_SCRIPT_URL.includes("/exec")) {
     const scopedData = buildPayloadForCurrentUser();
@@ -9572,8 +9594,25 @@ function triggerChatFilePicker(kind) {
   }
 }
 
+function compressChatImageDataUrl(dataUrl, callback) {
+  const img = new Image();
+  img.onload = () => {
+    const maxSide = 1024;
+    const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(img.width * scale));
+    canvas.height = Math.max(1, Math.round(img.height * scale));
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    callback(canvas.toDataURL("image/jpeg", 0.72));
+  };
+  img.onerror = () => callback(dataUrl);
+  img.src = dataUrl;
+}
+
 function handleChatFileSelected(e, kind) {
   const picked = Array.from(e.target.files || []);
+  e.target.value = "";
   if (!picked.length) return;
 
   const bucket = kind === "image" ? chatPendingAttachments.images : chatPendingAttachments.files;
@@ -9588,15 +9627,31 @@ function handleChatFileSelected(e, kind) {
     showToast(t("Добавлены первые 10 вложений (лимит)", "Faqat birinçi 10 ta fayl qöşildi (limit)"));
   }
 
+  const MAX_DOC_BYTES = 2 * 1024 * 1024; // 2 МБ на документ для стабильной синхронизации через Apps Script
   toRead.forEach(file => {
+    if (kind === "file" && file.size > MAX_DOC_BYTES) {
+      showToast(t(`Файл «${file.name}» больше 2 МБ — сожмите его перед отправкой`, `«${file.name}» fayli 2 MB dan katta — yuborişdan oldin siqing`));
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
-      bucket.push({
-        type: kind,
-        name: file.name,
-        dataUrl: reader.result
-      });
-      renderPendingAttachBar();
+      if (kind === "image") {
+        compressChatImageDataUrl(reader.result, (compressedUrl) => {
+          bucket.push({
+            type: kind,
+            name: file.name,
+            dataUrl: compressedUrl
+          });
+          renderPendingAttachBar();
+        });
+      } else {
+        bucket.push({
+          type: kind,
+          name: file.name,
+          dataUrl: reader.result
+        });
+        renderPendingAttachBar();
+      }
     };
     reader.readAsDataURL(file);
   });
@@ -9854,8 +9909,71 @@ let chatHubSyncInFlight = false;
 let chatHubSaveInFlight = 0;
 let chatHubSyncVersion = 0;
 
+let chatHubSaveQueued = false;
+
+function mergeMessagesLists(localMsgs = [], remoteMsgs = []) {
+  const byId = new Map();
+  [...remoteMsgs, ...localMsgs].forEach(m => {
+    if (!m || !m.id) return;
+    const prev = byId.get(m.id);
+    if (!prev) {
+      byId.set(m.id, m);
+    } else {
+      // Объединяем голоса в опросах и берем более свежую правку текста
+      const merged = { ...prev, ...m };
+      if (prev.poll && m.poll && Array.isArray(prev.poll.options) && Array.isArray(m.poll.options)) {
+        merged.poll = {
+          ...m.poll,
+          options: m.poll.options.map((opt, idx) => {
+            const pVotes = (prev.poll.options[idx] && prev.poll.options[idx].votes) || [];
+            const mVotes = opt.votes || [];
+            return { ...opt, votes: [...new Set([...pVotes, ...mVotes])] };
+          })
+        };
+      }
+      byId.set(m.id, merged);
+    }
+  });
+  return [...byId.values()].sort((a, b) => (Number(a.ts) || 0) - (Number(b.ts) || 0));
+}
+
+function mergeChatHubs(localHub, remoteHub) {
+  const mergeCollection = (localArr = [], remoteArr = []) => {
+    const map = new Map();
+    remoteArr.forEach(item => { if (item && item.id) map.set(item.id, item); });
+    localArr.forEach(item => {
+      if (!item || !item.id) return;
+      const remote = map.get(item.id);
+      if (!remote) {
+        map.set(item.id, item);
+      } else {
+        const merged = { ...remote, ...item };
+        if (Array.isArray(remote.messages) || Array.isArray(item.messages)) {
+          merged.messages = mergeMessagesLists(item.messages || [], remote.messages || []);
+        }
+        if (remote.lastActivity || item.lastActivity) {
+          merged.lastActivity = Math.max(Number(remote.lastActivity) || 0, Number(item.lastActivity) || 0);
+        }
+        map.set(item.id, merged);
+      }
+    });
+    return [...map.values()];
+  };
+
+  return {
+    chats: mergeCollection(localHub.chats, remoteHub.chats),
+    tasks: mergeCollection(localHub.tasks, remoteHub.tasks),
+    notifications: deduplicateById([...(remoteHub.notifications || []), ...(localHub.notifications || [])]).slice(0, 150)
+  };
+}
+
 function syncChatHubToCloud() {
-  if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (!currentUser || !sessionToken || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (chatHubSaveInFlight > 0) {
+    chatHubSaveQueued = true;
+    return;
+  }
+
   const hubPayload = {
     chats: appState.chats || [],
     tasks: appState.tasks || [],
@@ -9874,9 +9992,25 @@ function syncChatHubToCloud() {
       hub: hubPayload
     })
   })
-    .catch(() => {})
+    .then(res => res.json())
+    .then(json => {
+      if (json && json.status === "unauthorized") {
+        handleSessionExpired();
+      } else if (json && json.status !== "ok") {
+        console.warn("Ошибка сохранения чата:", json);
+        showToast(t("Не удалось синхронизировать сообщение с сервером", "Xabarni server bilan sinxronlab bölmadi"));
+      }
+    })
+    .catch((err) => {
+      console.warn("Сетевая ошибка сохранения чата:", err);
+      showToast(t("Ошибка сети при отправке сообщения", "Xabar yuborişda tarmoq xatoligi"));
+    })
     .finally(() => {
       chatHubSaveInFlight = Math.max(0, chatHubSaveInFlight - 1);
+      if (chatHubSaveQueued) {
+        chatHubSaveQueued = false;
+        syncChatHubToCloud();
+      }
     });
 }
 
@@ -9937,7 +10071,7 @@ async function loadChatHubFromCloud() {
         appState.chats = incomingHub.chats;
         appState.tasks = incomingHub.tasks;
         appState.notifications = incomingHub.notifications;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        safeSaveLocalState();
 
         updateChatIndicators();
         if (chatDrawerOpen) {
