@@ -2103,3 +2103,70 @@ body.dark ::-webkit-scrollbar-thumb:hover {
 #stTutorSelectWrap .cs-option {
   white-space: nowrap;
 }
+
+
+/* ==================== КУРС ТЮТОРА В ПРОФИЛЕ И ГРУППЫ В ПОСТАХ TELEGRAM ==================== */
+.user-role-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.user-role-row.is-tutor {
+  grid-template-columns: 1fr 0.72fr 1.28fr;
+}
+
+.user-role-row .custom-select {
+  min-width: 0;
+}
+
+#nuCourseWrap .cs-menu,
+#euCourseWrap .cs-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+  max-height: 210px;
+  overflow-y: auto;
+  min-width: 100%;
+}
+
+.tg-meta-grid.has-groups {
+  grid-template-columns: 1fr 1.25fr;
+}
+
+.tg-meta-grid.has-author.has-groups {
+  grid-template-columns: 1fr 1fr 1.2fr;
+}
+
+.tg-meta-grid .custom-select {
+  min-width: 0;
+}
+
+#tgGroupsSelectWrap .cs-menu,
+#editTgGroupsWrap .cs-menu {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+  padding: 8px;
+}
+
+.badge-pill.clickable-tag {
+  border: 1px solid rgba(37, 99, 235, 0.22);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+
+.badge-pill.clickable-tag:hover,
+.badge-pill.clickable-tag.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+}
+
+@media (max-width: 720px) {
+  .user-role-row.is-tutor,
+  .tg-meta-grid.has-groups,
+  .tg-meta-grid.has-author.has-groups {
+    grid-template-columns: 1fr;
+  }
+}
