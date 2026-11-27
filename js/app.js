@@ -5201,6 +5201,8 @@ function deleteParentMeeting(id, btnEl) {
 let dormListFilters = { search: "", tutors: [], rooms: [], categories: [], dateFrom: "", dateTo: "" };
 let dormModalState = {
   room: "",
+  roomSearch: "",
+  roomTutorFilter: "all",
   category: "Санитарно-гигиеническая ситуация",
   problemResidents: [],
   collaborators: [],
@@ -5208,8 +5210,11 @@ let dormModalState = {
   conflictStudentId: ""
 };
 
-function getAvailableDormRoomsForCurrentUser() {
-  const scoped = getRoleScopedStudents();
+function getAvailableDormRoomsForCurrentUser(tutorFilterId = "all") {
+  let scoped = getRoleScopedStudents();
+  if (!isTutorOnly() && tutorFilterId && tutorFilterId !== "all") {
+    scoped = scoped.filter(s => s.tutorId === tutorFilterId);
+  }
   const roomSet = new Set();
   scoped.forEach(s => {
     if (s.housingType === "dorm" && s.room && String(s.room).trim()) {
@@ -5217,6 +5222,96 @@ function getAvailableDormRoomsForCurrentUser() {
     }
   });
   return [...roomSet].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+function renderDormRoomSelect(keepOpen = false) {
+  const wrap = document.getElementById("dormRoomSelectWrap");
+  if (!wrap) return;
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+  const currentLabel = dormModalState.room
+    ? `${t("Комната №", "Xona №")} ${dormModalState.room}`
+    : t("Выберите комнату...", "Xonani tanlang...");
+
+  const tutors = (appState.users || []).filter(u => u.role === "tutor");
+  const tutorSelectHtml = hasAdminPrivileges() ? `
+    <select id="dormRoomTutorFilterSelect" class="tg-tag-search-input" style="cursor:pointer;" onchange="onDormRoomTutorFilterChange(this.value)">
+      <option value="all" ${dormModalState.roomTutorFilter === "all" ? "selected" : ""}>${t("Все тюторы", "Barça tyutorlar")}</option>
+      ${tutors.map(tr => `<option value="${tr.id}" ${dormModalState.roomTutorFilter === tr.id ? "selected" : ""}>${tr.name}</option>`).join("")}
+    </select>
+  ` : "";
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('dormRoomSelectWrap'); setTimeout(() => { const i = document.getElementById('dormRoomSearchInputDropdown'); if(i) i.focus(); }, 30);">
+      <span>${currentLabel}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" style="max-height:none; overflow:visible; min-width:100%; width:max-content; max-width:340px; padding:8px;" onclick="event.stopPropagation()">
+      <input type="text" id="dormRoomSearchInputDropdown" class="tg-tag-search-input" placeholder="${t("Номер комнаты или Ф.И.О. студента...", "Xona raqami yoki talaba F.I.Ş....")}" value="${(dormModalState.roomSearch || "").replace(/"/g, '&quot;')}" oninput="onDormRoomDropdownSearch(this.value)" />
+      ${tutorSelectHtml}
+      <div id="dormRoomOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+
+  if (wasOpen) wrap.classList.add("open");
+  renderDormRoomOptionsList();
+}
+
+function onDormRoomDropdownSearch(val) {
+  dormModalState.roomSearch = val || "";
+  renderDormRoomOptionsList();
+}
+
+function onDormRoomTutorFilterChange(tutorId) {
+  dormModalState.roomTutorFilter = tutorId || "all";
+  renderDormRoomOptionsList();
+}
+
+function renderDormRoomOptionsList() {
+  const listEl = document.getElementById("dormRoomOptionsList");
+  if (!listEl) return;
+
+  const rooms = getAvailableDormRoomsForCurrentUser(dormModalState.roomTutorFilter);
+  const q = (dormModalState.roomSearch || "").trim().toLowerCase();
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M5 12l5 5l10 -10"/></svg>';
+
+  const filtered = rooms.filter(r => {
+    if (!q) return true;
+    if (String(r).toLowerCase().includes(q)) return true;
+    const split = getDormRoomResidentsSplit(r);
+    const studentsToSearch = isTutorOnly() ? split.mine : split.all;
+    return studentsToSearch.some(s => (s.name || "").toLowerCase().includes(q));
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Комнаты не найдены", "Xonalar topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(r => {
+    const split = getDormRoomResidentsSplit(r);
+    const previewStudents = isTutorOnly() ? split.mine : split.all;
+    const namesShort = previewStudents.map(s => s.name).slice(0, 2).join(", ") + (previewStudents.length > 2 ? ` (+${previewStudents.length - 2})` : "");
+    return `
+      <div class="cs-option ${String(dormModalState.room) === String(r) ? 'selected' : ''}" style="align-items:flex-start;" onclick="selectDormModalRoom('${String(r).replace(/'/g, "\'")}')">
+        <div style="min-width:0; flex:1;">
+          <div style="font-weight:700;">${t("Комната №", "Xona №")} ${r}</div>
+          ${namesShort ? `<div class="st-meta" style="white-space:normal; font-size:11px; line-height:1.25;">${namesShort}</div>` : ""}
+        </div>
+        ${String(dormModalState.room) === String(r) ? checkSvg : ''}
+      </div>
+    `;
+  }).join("");
+}
+
+function selectDormModalRoom(roomNum) {
+  dormModalState.room = roomNum;
+  dormModalState.roomSearch = "";
+  dormModalState.problemResidents = [];
+  const wrap = document.getElementById("dormRoomSelectWrap");
+  if (wrap) wrap.classList.remove("open");
+  renderDormRoomSelect(false);
+  renderDormModalResidentsPreview();
+  renderDormProblemResidentsCheckboxes();
 }
 
 function getDormRoomResidentsSplit(roomNum) {
@@ -5242,6 +5337,8 @@ function openDormLogModal() {
 
   dormModalState = {
     room: rooms[0],
+    roomSearch: "",
+    roomTutorFilter: "all",
     category: DORM_CHECK_CATEGORIES[0].value,
     problemResidents: [],
     collaborators: [],
@@ -5258,15 +5355,7 @@ function openDormLogModal() {
   const cCard = document.getElementById("dormConflictInfoCard");
   if (cCard) { cCard.innerHTML = ""; cCard.classList.add("hidden"); }
 
-  const roomOpts = rooms.map(r => ({ value: r, label: `${t("Комната №", "Xona №")} ${r}` }));
-  const onRoomChange = (v) => {
-    dormModalState.room = v;
-    dormModalState.problemResidents = [];
-    renderCustomSelect("dormRoomSelectWrap", roomOpts, v, onRoomChange);
-    renderDormModalResidentsPreview();
-    renderDormProblemResidentsCheckboxes();
-  };
-  renderCustomSelect("dormRoomSelectWrap", roomOpts, dormModalState.room, onRoomChange);
+  renderDormRoomSelect(false);
 
   const availCats = DORM_CHECK_CATEGORIES.filter(c => !c.adminOnly || hasAdminPrivileges());
   const catOpts = availCats.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
@@ -6909,7 +6998,6 @@ function updateCustomSocialAutocomplete() {
       ${(modalStudentState.selectedSocial || []).includes(c.value) ? '<span style="color:var(--accent)">✓</span>' : ''}
     </div>
   `).join("");
-
   if (inp.value.trim() && !exactExists) {
     const cleanNew = inp.value.trim();
     html += `
