@@ -770,10 +770,7 @@ function buildPayloadForCurrentUser() {
       customTags: appState.customTags || [],
       recentTags: appState.recentTags || [],
       customVolunteers: appState.customVolunteers || [],
-      customSocialCategories: appState.customSocialCategories || [],
-      chats: appState.chats || [],
-      tasks: appState.tasks || [],
-      notifications: appState.notifications || []
+      customSocialCategories: appState.customSocialCategories || []
     };
   }
   // Для админа/руководства: сохраняем их личные записи (календарь, блог, todo, посты без привязки к тютору)
@@ -790,10 +787,7 @@ function buildPayloadForCurrentUser() {
     customTags: appState.customTags || [],
     recentTags: appState.recentTags || [],
     customVolunteers: appState.customVolunteers || [],
-    customSocialCategories: appState.customSocialCategories || [],
-    chats: appState.chats || [],
-    tasks: appState.tasks || [],
-    notifications: appState.notifications || []
+    customSocialCategories: appState.customSocialCategories || []
   };
 }
 
@@ -1015,7 +1009,10 @@ async function loadFromGoogleDrive() {
           customTags: incoming.customTags || appState.customTags || [],
           recentTags: incoming.recentTags || appState.recentTags || [],
           customVolunteers: incoming.customVolunteers || appState.customVolunteers || [],
-          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || []
+          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || [],
+          chats: appState.chats || [],
+          tasks: appState.tasks || [],
+          notifications: appState.notifications || []
         });
       } else {
         // Админ/руководство получает объединенный и дедуплицированный реестр по всем папкам
@@ -1032,7 +1029,10 @@ async function loadFromGoogleDrive() {
           customTags: incoming.customTags || appState.customTags || [],
           recentTags: incoming.recentTags || appState.recentTags || [],
           customVolunteers: incoming.customVolunteers || appState.customVolunteers || [],
-          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || []
+          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || [],
+          chats: appState.chats || [],
+          tasks: appState.tasks || [],
+          notifications: appState.notifications || []
         });
       }
 
@@ -1108,6 +1108,7 @@ async function handleLogin(e) {
   loadProfileForm();
   switchTab("dashboard");
   loadFromGoogleDrive();
+  startChatHubPolling();
 }
 
 function logout() {
@@ -1115,6 +1116,7 @@ function logout() {
   localStorage.removeItem(SESSION_USER_KEY);
   document.getElementById("appShell").classList.add("hidden");
   const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.add("hidden");
+  stopChatHubPolling();
   toggleChatDrawer(false);
   document.getElementById("authScreen").classList.remove("hidden");
   document.getElementById("loginPassword").value = "";
@@ -1152,6 +1154,7 @@ function restoreSession() {
   if (typeof loadFromGoogleDrive === "function") {
     loadFromGoogleDrive();
   }
+  startChatHubPolling();
 }
 
 function updateHeaderAndGreeting() {
@@ -1997,6 +2000,7 @@ function renderStudentsSection() {
     `;
   }
 }
+
 
 
 // ==================== ПОИСК И ФИЛЬТРЫ ВО ВКЛАДКЕ «ВСЕ СТУДЕНТЫ» ====================
@@ -6367,7 +6371,8 @@ function confirmCreateChat() {
     activeChatTabId = newGroup.id;
   }
 
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   closeModal("chatCreateModal");
   renderChatDrawer();
 }
@@ -6376,7 +6381,8 @@ function deleteChatById(chatId, btnEl) {
   askConfirmDelete(btnEl, () => {
     appState.chats = (appState.chats || []).filter(c => c.id !== chatId);
     if (activeChatTabId === chatId) activeChatTabId = "tasks";
-    saveState();
+    saveState(true);
+  syncChatHubToCloud();
     renderChatDrawer();
     showToast(t("Чат удален", "Çat öçirildi"));
   });
@@ -6490,7 +6496,8 @@ function saveNewTask() {
 
   appState.tasks.unshift(newTask);
   addSystemNotification(taskDraftAssignees, `${currentUser.name} ${t("назначил(а) новое задание", "yangi vazifa biriktirdi")}: «${title}»`, "task", newTask.id);
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   closeModal("chatTaskModal");
   activeChatTabId = "tasks";
   activeTasksSubtab = "active";
@@ -6502,7 +6509,8 @@ function toggleTaskTodoItem(taskId, todoIdx) {
   const task = (appState.tasks || []).find(tk => tk.id === taskId);
   if (!task || !task.todos || !task.todos[todoIdx]) return;
   task.todos[todoIdx].done = !task.todos[todoIdx].done;
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   renderChatDrawerBody();
 }
 
@@ -6511,7 +6519,8 @@ function markTaskCompleted(taskId) {
   if (!task || task.authorId !== currentUser.id) return;
   task.status = "completed";
   addSystemNotification(task.assignees, `${currentUser.name} ${t("отметил(а) задание выполненным", "vazifani bajarildi deb belgiladi")}: «${task.title}»`, "task", task.id);
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   activeTaskDiscussionId = null;
   activeTasksSubtab = "completed";
   renderChatDrawer();
@@ -6641,7 +6650,8 @@ function voteInChatPoll(scopeType, scopeId, msgId, optIdx) {
     });
     opt.votes.push(currentUser.id);
   }
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   renderChatDrawerBody();
 }
 
@@ -6674,7 +6684,8 @@ function sendChatMessage(pollObj = null) {
   if (inp) inp.value = "";
   chatPendingAttachment = null;
   renderPendingAttachBar();
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   renderChatDrawerBody();
 }
 
@@ -6703,7 +6714,8 @@ function openNotificationTarget(notifId) {
   const n = (appState.notifications || []).find(x => x.id === notifId);
   if (!n) return;
   n.read = true;
-  saveState();
+  saveState(true);
+  syncChatHubToCloud();
   const dd = document.getElementById("chatNotifDropdown");
   if (dd) dd.classList.add("hidden");
 
@@ -6715,4 +6727,82 @@ function openNotificationTarget(notifId) {
     activeTaskDiscussionId = null;
   }
   renderChatDrawer();
+}
+
+
+// ==================== ОБЩАЯ СИНХРОНИЗАЦИЯ ЧАТОВ, ЗАДАНИЙ И УВЕДОМЛЕНИЙ (GOOGLE DRIVE) ====================
+let chatHubPollTimer = null;
+let chatHubLastHash = "";
+let chatHubSyncInFlight = false;
+
+function syncChatHubToCloud() {
+  if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  const hubPayload = {
+    chats: appState.chats || [],
+    tasks: appState.tasks || [],
+    notifications: appState.notifications || []
+  };
+  chatHubLastHash = JSON.stringify(hubPayload);
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({
+      action: "saveChatHub",
+      hub: hubPayload
+    })
+  }).catch(() => {});
+}
+
+async function loadChatHubFromCloud() {
+  if (!currentUser || chatHubSyncInFlight || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  chatHubSyncInFlight = true;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getChatHub&t=${Date.now()}`, {
+      method: "GET",
+      redirect: "follow"
+    });
+    const json = await res.json();
+    if (json && json.status === "ok" && json.hub) {
+      const incomingHub = {
+        chats: deduplicateById(json.hub.chats || []),
+        tasks: deduplicateById(json.hub.tasks || []),
+        notifications: deduplicateById(json.hub.notifications || [])
+      };
+      const nextHash = JSON.stringify(incomingHub);
+      if (nextHash !== chatHubLastHash) {
+        chatHubLastHash = nextHash;
+        appState.chats = incomingHub.chats;
+        appState.tasks = incomingHub.tasks;
+        appState.notifications = incomingHub.notifications;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+
+        updateChatIndicators();
+        if (chatDrawerOpen) {
+          renderChatTabsBar();
+          renderChatDrawerBody();
+        }
+      }
+    }
+  } catch (err) {
+    // Тихо игнорируем временные сетевые сбои при фоновом опросе
+  } finally {
+    chatHubSyncInFlight = false;
+  }
+}
+
+function startChatHubPolling() {
+  stopChatHubPolling();
+  loadChatHubFromCloud();
+  chatHubPollTimer = setInterval(() => {
+    if (currentUser && !document.hidden) {
+      loadChatHubFromCloud();
+    }
+  }, 10000);
+}
+
+function stopChatHubPolling() {
+  if (chatHubPollTimer) {
+    clearInterval(chatHubPollTimer);
+    chatHubPollTimer = null;
+  }
 }
