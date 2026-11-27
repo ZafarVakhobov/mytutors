@@ -3904,3 +3904,18 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   font-weight: 600;
   outline: none;
 }
+
+/* Фикс: чтобы выпадающий список ролей и курсов не обрезался шапкой модального окна */
+#nuRoleWrap .cs-menu,
+#euRoleWrap .cs-menu,
+#nuCourseWrap .cs-menu,
+#euCourseWrap .cs-menu {
+  max-height: 168px;
+}
+
+#nuRoleWrap .cs-option,
+#euRoleWrap .cs-option,
+#nuCourseWrap .cs-option,
+#euCourseWrap .cs-option {
+  padding: 6px 10px;
+}
