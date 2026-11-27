@@ -2085,14 +2085,35 @@ function openStudentModal(studentId = null) {
   };
   renderCustomSelect("stGenderSelectWrap", genderOptions, modalStudentState.gender, onGenderChange);
 
-  const tutors = appState.users.filter(u => u.role === "tutor");
-  const tutorOpts = tutors.map(tr => ({ value: tr.id, label: tr.name }));
-  const onTutorChange = (v) => {
-    modalStudentState.tutorId = v;
-    renderCustomSelect("stTutorSelectWrap", tutorOpts, v, onTutorChange);
-    renderStudentGroupSelect(v, "");
-  };
-  renderCustomSelect("stTutorSelectWrap", tutorOpts, modalStudentState.tutorId, onTutorChange);
+  const tutorWrap = document.getElementById("stTutorSelectWrap");
+  const canSelectTutor = hasAdminPrivileges();
+
+  if (isTutorOnly()) {
+    modalStudentState.tutorId = currentUser.id;
+  }
+
+  if (canSelectTutor) {
+    if (tutorWrap) tutorWrap.classList.remove("disabled");
+    const tutors = appState.users.filter(u => u.role === "tutor");
+    const tutorOpts = tutors.map(tr => ({ value: tr.id, label: tr.name }));
+    const onTutorChange = (v) => {
+      modalStudentState.tutorId = v;
+      renderCustomSelect("stTutorSelectWrap", tutorOpts, v, onTutorChange);
+      renderStudentGroupSelect(v, "");
+    };
+    renderCustomSelect("stTutorSelectWrap", tutorOpts, modalStudentState.tutorId, onTutorChange);
+  } else {
+    const lockedUser = appState.users.find(u => u.id === modalStudentState.tutorId) || currentUser;
+    const lockedName = lockedUser ? lockedUser.name : "—";
+    if (tutorWrap) {
+      tutorWrap.classList.add("disabled");
+      tutorWrap.innerHTML = `
+        <div class="cs-trigger">
+          <span>${lockedName}</span>
+        </div>
+      `;
+    }
+  }
 
   const studyFormOpts = STUDY_FORMS.map(f => ({ value: f.value, label: currentLang === "oz" ? f.oz : f.ru }));
   const onStudyFormChange = (v) => {
