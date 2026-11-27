@@ -985,6 +985,194 @@
     <img id="lightboxImg" src="" alt="Preview" onclick="event.stopPropagation()" />
   </div>
 
+
+  <!-- ФИКСИРОВАННАЯ КНОПКА ЧАТА И ЗАДАНИЙ (В ПРАВОМ НИЖНЕМ УГЛУ) -->
+  <div class="floating-chat-launcher hidden" id="floatingChatLauncher">
+    <button type="button" class="chat-launcher-btn" id="chatLauncherBtn" onclick="toggleChatDrawer(true)">
+      <span class="chat-pulse-dot hidden" id="chatLauncherPulse"></span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10"/><path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2"/></svg>
+      <span class="chat-launcher-label" data-i18n="chat_btn_label">Чат и Задания</span>
+      <span class="chat-launcher-badge hidden" id="chatLauncherBadge">0</span>
+    </button>
+  </div>
+
+  <!-- ВЫДВИЖНОЕ ОКНО ЧАТОВ И ЗАДАНИЙ (СВАЙП СПРАВА НАЛЕВО) -->
+  <div class="chat-drawer-backdrop hidden" id="chatDrawerBackdrop" onclick="toggleChatDrawer(false)"></div>
+  <aside class="chat-drawer" id="chatDrawer" aria-hidden="true">
+    <!-- Верхняя шапка окна чата -->
+    <div class="chat-drawer-header">
+      <div class="chat-tabs-bar" id="chatTabsBar"></div>
+      <div class="chat-header-controls">
+        <button type="button" class="icon-circle-btn sm" id="chatNewBtn" onclick="openChatCreateModal()" title="Новый чат / Группа">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+        </button>
+        <div class="chat-notif-wrap" id="chatNotifWrap">
+          <button type="button" class="icon-circle-btn sm" id="chatNotifBtn" onclick="toggleChatNotifications(event)" title="Уведомления">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
+            <span class="chat-notif-count hidden" id="chatNotifCount">0</span>
+          </button>
+          <div class="chat-notif-dropdown hidden" id="chatNotifDropdown" onclick="event.stopPropagation()"></div>
+        </div>
+        <button type="button" class="icon-circle-btn sm" onclick="toggleChatDrawer(false)" title="Закрыть">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Основная область окна чата / заданий -->
+    <div class="chat-drawer-body" id="chatDrawerBody"></div>
+
+    <!-- Панель ввода сообщения (для чатов и обсуждения задачи) -->
+    <div class="chat-composer hidden" id="chatComposer">
+      <div class="chat-pending-attach hidden" id="chatPendingAttach"></div>
+      <div class="chat-composer-row">
+        <div class="chat-attach-wrap" id="chatAttachWrap">
+          <button type="button" class="chat-tool-btn" onclick="toggleChatAttachMenu(event)" title="Прикрепить">
+            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"/></svg>
+          </button>
+          <div class="chat-attach-menu hidden" id="chatAttachMenu" onclick="event.stopPropagation()">
+            <button type="button" class="chat-attach-item" onclick="triggerChatFilePicker('image')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>
+              <span data-i18n="chat_att_photo">Фото / Изображение</span>
+            </button>
+            <button type="button" class="chat-attach-item" onclick="triggerChatFilePicker('file')">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/></svg>
+              <span data-i18n="chat_att_file">Документ / Файл</span>
+            </button>
+            <button type="button" class="chat-attach-item" onclick="openChatPollModal()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2"/><path d="M9 3m0 2a2 2 0 0 1 2 -2h2a2 2 0 0 1 2 2v0a2 2 0 0 1 -2 2h-2a2 2 0 0 1 -2 -2z"/><path d="M9 12l.01 0"/><path d="M13 12l2 0"/><path d="M9 16l.01 0"/><path d="M13 16l2 0"/></svg>
+              <span data-i18n="chat_att_poll">Создать опрос</span>
+            </button>
+          </div>
+          <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatFileSelected(event, 'image')" />
+          <input type="file" id="chatDocInput" class="hidden" onchange="handleChatFileSelected(event, 'file')" />
+        </div>
+
+        <input type="text" id="chatMessageInput" class="chat-text-input" data-i18n-placeholder="chat_ph_msg" placeholder="Сообщение..." onkeydown="if(event.key==='Enter'){event.preventDefault(); sendChatMessage();}" />
+
+        <div class="chat-emoji-wrap" id="chatEmojiWrap">
+          <button type="button" class="chat-tool-btn" onclick="toggleChatEmojiPicker(event)" title="Эмодзи">
+            <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 10l.01 0"/><path d="M15 10l.01 0"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>
+          </button>
+          <div class="chat-emoji-popover hidden" id="chatEmojiPopover" onclick="event.stopPropagation()"></div>
+        </div>
+
+        <button type="button" class="chat-send-btn" onclick="sendChatMessage()" title="Отправить">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l11 -11"/><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5"/></svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- МОДАЛЬНОЕ ОКНО: НОВЫЙ ЧАТ / ГРУППА -->
+  <div class="modal-backdrop hidden" id="chatCreateModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title" data-i18n="chat_new_modal_title">Новый чат или группа</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('chatCreateModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="subtabs-pills mb-14" style="padding-bottom:0;">
+          <button type="button" class="subtab-btn active" id="chatCreateDirectBtn" onclick="setChatCreateMode('direct')" data-i18n="chat_mode_direct">Личный чат</button>
+          <button type="button" class="subtab-btn" id="chatCreateGroupBtn" onclick="setChatCreateMode('group')" data-i18n="chat_mode_group">Создать группу</button>
+        </div>
+        <div class="form-group hidden" id="chatGroupNameWrap">
+          <label class="form-label" data-i18n="chat_lbl_group_name">Название группы</label>
+          <input type="text" id="chatNewGroupName" class="form-input" placeholder="Например: Тюторы 1 курса" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="chat_lbl_members">Выберите собеседников</label>
+          <input type="text" id="chatMemberSearch" class="form-input mb-8" placeholder="Поиск пользователя..." oninput="renderChatCreateMembersList()" />
+          <div class="chat-members-list" id="chatCreateMembersList"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('chatCreateModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="confirmCreateChat()" data-i18n="chat_btn_create">Создать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: НОВОЕ ЗАДАНИЕ (ТОЛЬКО РУКОВОДСТВО / АДМИН) -->
+  <div class="modal-backdrop hidden" id="chatTaskModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title" data-i18n="task_modal_title">Новое задание</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('chatTaskModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" data-i18n="task_lbl_title">Наименование задачи *</label>
+          <input type="text" id="taskTitleInput" class="form-input" placeholder="Например: Проверить посещаемость в общежитии" />
+        </div>
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="task_lbl_deadline">Дедлайн</label>
+            <input type="datetime-local" id="taskDeadlineInput" class="form-input" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" data-i18n="task_lbl_priority">Важность (цвет)</label>
+            <div class="custom-select" id="taskColorSelectWrap"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="task_lbl_assignees">Исполнители (мультивыбор) *</label>
+          <div class="custom-select" id="taskAssigneesWrap"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="task_lbl_todos">Пункты задачи (To-Do)</label>
+          <div class="todo-input-row">
+            <input type="text" id="taskTodoDraftInput" class="form-input" placeholder="Добавить пункт..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addDraftTaskTodo();}" />
+            <button type="button" class="btn-export" onclick="addDraftTaskTodo()">+</button>
+          </div>
+          <div id="taskDraftTodosList" class="todo-list mt-10"></div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('chatTaskModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="saveNewTask()" data-i18n="task_btn_assign">Назначить задание</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: СОЗДАНИЕ ОПРОСА В ЧАТЕ -->
+  <div class="modal-backdrop hidden" id="chatPollModal">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title" data-i18n="poll_modal_title">Создать опрос</h3>
+        <button type="button" class="icon-circle-btn sm" onclick="closeModal('chatPollModal')">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" data-i18n="poll_lbl_question">Вопрос *</label>
+          <input type="text" id="pollQuestionInput" class="form-input" placeholder="Задайте вопрос..." />
+        </div>
+        <div class="form-group">
+          <label class="form-label" data-i18n="poll_lbl_options">Варианты ответа</label>
+          <div id="pollOptionsInputs"></div>
+          <button type="button" class="btn-export sm mt-6" onclick="addPollOptionInput()">+ <span data-i18n="poll_btn_add_opt">Добавить вариант</span></button>
+        </div>
+        <label class="perm-checkbox-card">
+          <input type="checkbox" id="pollMultipleCheck" />
+          <div>
+            <div class="perm-title" data-i18n="poll_lbl_multi">Несколько вариантов ответа</div>
+            <div class="perm-desc" data-i18n="poll_desc_multi">Участники смогут выбрать сразу несколько пунктов</div>
+          </div>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button type="button" class="btn-ghost" onclick="closeModal('chatPollModal')" data-i18n="btn_cancel">Отмена</button>
+        <button type="button" class="btn-orange" onclick="submitChatPoll()" data-i18n="poll_btn_send">Отправить опрос</button>
+      </div>
+    </div>
+  </div>
+
   <!-- УВЕДОМЛЕНИЕ TOAST -->
   <div class="toast-msg hidden" id="toastMsg"></div>
 
