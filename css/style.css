@@ -3248,3 +3248,59 @@ body.dark .cal-task-open-btn.completed {
   color: var(--accent);
   background: var(--surface);
 }
+
+
+/* ==================== ФОТО СТУДЕНТА И ПОИСК ВТОРОЙ ПОЛОВИНКИ В МОНИТОРИНГЕ ==================== */
+.st-photo-upload-bar {
+  padding: 12px 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.st-photo-preview {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  font-size: 19px;
+}
+
+.mon-partner-results {
+  margin-top: 6px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  max-height: 190px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.mon-partner-opt {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+
+.mon-partner-opt:last-child {
+  border-bottom: none;
+}
+
+.mon-partner-opt:hover {
+  background: var(--surface-alt);
+}
+
+.mon-partner-card {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 107, 61, 0.08);
+  border: 1px solid rgba(255, 107, 61, 0.25);
+}
+
+.mon-partner-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
