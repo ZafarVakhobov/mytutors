@@ -232,7 +232,7 @@ const I18N = {
     sec_marital: "OILAVIY HOLATI",
     lbl_marital_status: "Oilaviy holati",
     lbl_spouse_name: "Turmuş örtoğining F.I.Ş.",
-    lbl_spouse_birth: "Turmuş örtoğining tuğilgan sanasi",
+    lbl_spouse_birth: "Tuğilgan sanasi",
     lbl_children_count: "Farzandlar soni",
     lbl_mon_partner: "Ikkinçi yarmini qidiriş (talaba)",
     ph_mon_partner_search: "Talabaning F.I.Ş. yoki guruhini kiriting...",
@@ -1459,15 +1459,29 @@ function renderDashboard() {
   document.getElementById("kpiOnControl").textContent = `${t("На контроле", "Nazoratda")}: ${activeMon.length}`;
   document.getElementById("kpiSocCats").textContent = `${t("Соц. категории", "Ijtimoiy toifa")}: ${socStudents.length}`;
 
+  renderDistModeSelect();
   renderCharts();
+}
+
+function renderDistModeSelect() {
+  const opts = [
+    { value: "housing", label: t("По жилью", "Turar joy böyiça") },
+    { value: "social", label: t("По соцреестру", "Ijtimoiy reestr") },
+    { value: "employment", label: t("По работе", "Iş bilan bandlik") },
+    { value: "studyForm", label: t("По форме обучения", "Ta’lim şakli böyiça") },
+    { value: "volunteers", label: t("По волонтерству", "Volontyorlik böyiça") },
+    { value: "region", label: t("По регионам", "Hududlar böyiça") },
+    { value: "marital", label: t("Семейный статус", "Oilaviy holati") }
+  ];
+  renderCustomSelect("distModeSelectWrap", opts, distChartMode, (val) => {
+    setDistMode(val);
+  });
 }
 
 function setDistMode(mode) {
   distChartMode = mode;
   distSelectedGroup = "all";
-  document.querySelectorAll("#distModeTabs .pill-sm").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.mode === mode);
-  });
+  renderDistModeSelect();
   renderCharts();
 }
 
@@ -2984,7 +2998,6 @@ let tgGroupsSearchQuery = "";
 let selectedPostCollabs = []; // [{ type: "user", id, name } | { type: "custom", name }]
 let tgCollabSearchQuery = "";
 let activeTgAuthorFilter = "all";
-
 let editTgState = {
   id: "",
   authorId: "",
@@ -4984,7 +4997,6 @@ function addMonitoringEntry(recId) {
     showToast(t("Введите текст заметки", "Qayd matnini kiriting"));
     return;
   }
-
   const autoPositive = /сбрил|сняла|бросил|устранен|oldirdi|yeçdi|taşladi/i.test(text);
   const isPositive = check.checked || autoPositive;
 
@@ -5984,7 +5996,6 @@ function openNewUserModal() {
   updateNewUserRoleVisibility();
   document.getElementById("newUserModal").classList.remove("hidden");
 }
-
 function createNewUser() {
   if (!isFullAdmin()) return;
   const name = document.getElementById("nuName").value.trim();
