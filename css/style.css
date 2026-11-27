@@ -3717,3 +3717,129 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   padding-top: 6px;
   border-top: 1px solid var(--border);
 }
+
+/* ==================== ВЫПАДАЮЩИЙ СПИСОК ГРУПП ТЮТОРА (ТАБЛИЦА И МОДАЛКИ) ==================== */
+.tutor-groups-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.tutor-groups-dd {
+  min-width: 132px !important;
+  width: auto;
+}
+
+.tutor-groups-dd .cs-trigger {
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 999px;
+  background: var(--surface-alt);
+}
+
+.tutor-groups-dd .cs-menu {
+  min-width: 170px;
+  max-width: 240px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.tutor-groups-dd-item {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tutor-groups-dd-item:hover {
+  background: var(--surface-alt);
+}
+
+.user-groups-empty-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-groups-add-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.16s ease;
+}
+
+.user-groups-add-btn:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.user-groups-editor-dd .cs-menu {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: auto;
+  right: 0;
+  min-width: 240px;
+  max-width: 300px;
+  max-height: none;
+  overflow: visible;
+  padding: 8px;
+}
+
+.user-groups-inline-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.user-groups-inline-add .tg-tag-search-input {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.user-groups-inline-add .user-groups-add-btn {
+  width: 31px;
+  height: 31px;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.user-group-del-btn {
+  border: none;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger);
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.user-group-del-btn:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
