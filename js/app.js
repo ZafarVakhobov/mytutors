@@ -1559,6 +1559,14 @@ function formatSalaryUZS(val) {
   return `${num.toLocaleString("ru-RU")} UZS`;
 }
 
+function formatPhoneTgLink(phone) {
+  const raw = String(phone || "").trim();
+  if (!raw) return "—";
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return raw;
+  return `<a href="https://t.me/+${digits}" target="_blank" rel="noopener noreferrer" class="phone-tg-link" title="${t("Открыть в Telegram", "Telegram da oçiş")}">${raw}</a>`;
+}
+
 function renderStudentsSection() {
   const area = document.getElementById("studentsContentArea");
   const students = getRoleScopedStudents();
@@ -2163,7 +2171,7 @@ function renderStudentsAllTable() {
                   <td>${formatHousingBadge(s)}</td>
                   <td>${empBadge}</td>
                   <td>${tutorCellHtml}</td>
-                  <td>${s.phone || "—"}</td>
+                  <td>${formatPhoneTgLink(s.phone)}</td>
                   <td style="text-align:right; white-space:nowrap;">
                     <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
                     ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
