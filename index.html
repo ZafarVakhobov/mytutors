@@ -1044,8 +1044,8 @@
               <span data-i18n="chat_att_poll">Создать опрос</span>
             </button>
           </div>
-          <input type="file" id="chatImageInput" accept="image/*" class="hidden" onchange="handleChatFileSelected(event, 'image')" />
-          <input type="file" id="chatDocInput" class="hidden" onchange="handleChatFileSelected(event, 'file')" />
+          <input type="file" id="chatImageInput" accept="image/*" multiple class="hidden" onchange="handleChatFileSelected(event, 'image')" />
+          <input type="file" id="chatDocInput" multiple class="hidden" onchange="handleChatFileSelected(event, 'file')" />
         </div>
 
         <input type="text" id="chatMessageInput" class="chat-text-input" data-i18n-placeholder="chat_ph_msg" placeholder="Сообщение..." onkeydown="if(event.key==='Enter'){event.preventDefault(); sendChatMessage();}" />
