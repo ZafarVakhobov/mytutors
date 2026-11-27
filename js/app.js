@@ -741,6 +741,45 @@ function canDeleteData(ownerId) {
   return false;
 }
 
+
+// ==================== ОНЛАЙН-СТАТУС И РОЛЕВЫЕ ПЛАШКИ ПОЛЬЗОВАТЕЛЕЙ ====================
+let onlineUserIds = new Set();
+
+function isUserOnline(userId) {
+  if (!userId) return false;
+  if (currentUser && userId === currentUser.id) return true;
+  return onlineUserIds.has(userId);
+}
+
+function renderOnlineDotHtml(userId) {
+  return isUserOnline(userId) ? '<span class="online-pulse-dot" title="Online"></span>' : '';
+}
+
+function renderUserBadgeHtml(userOrId, opts = {}) {
+  const user = typeof userOrId === "string"
+    ? (appState.users || []).find(u => u.id === userOrId)
+    : userOrId;
+  if (!user) {
+    const fallback = opts.fallback || "—";
+    return `<span class="st-meta">${fallback}</span>`;
+  }
+  const role = user.role || "tutor";
+  const dot = renderOnlineDotHtml(user.id);
+  const extraCls = [
+    "user-role-pill",
+    `role-${role}`,
+    opts.clickable ? "clickable" : "",
+    opts.active ? "active" : "",
+    opts.extraClass || ""
+  ].filter(Boolean).join(" ");
+  const label = opts.prefix ? `${opts.prefix}${user.name}` : user.name;
+  const titleAttr = opts.title ? ` title="${String(opts.title).replace(/"/g, '&quot;')}"` : "";
+  if (opts.onclick) {
+    return `<button type="button" class="${extraCls}" onclick="${opts.onclick}"${titleAttr}>${dot}<span>${label}</span></button>`;
+  }
+  return `<span class="${extraCls}"${titleAttr}>${dot}<span>${label}</span></span>`;
+}
+
 // ==================== СОСТОЯНИЕ И СИНХРОНИЗАЦИЯ БЕЗ ДУБЛИКАТОВ ====================
 let appState = loadState();
 let currentUser = null;
@@ -1277,7 +1316,7 @@ function updateHeaderAndGreeting() {
       ? `<img src="${currentUser.photo}" alt="Avatar" />`
       : initials;
   }
-  document.getElementById("headerUserName").textContent = currentUser.name;
+  document.getElementById("headerUserName").innerHTML = `${renderOnlineDotHtml(currentUser.id)} ${currentUser.name}`;
   document.getElementById("headerUserRole").textContent = localizeRoleTitle(currentUser.role, currentUser.roleTitle);
   document.getElementById("driveTooltip").textContent = `Google Drive: ${currentUser.driveFolder}`;
 
@@ -2399,8 +2438,8 @@ function renderStudentsAllTable() {
               const isTutorActive = studentListFilters.tutors.includes(s.tutorId);
               const tutorCellHtml = tutor
                 ? (isTutorOnly()
-                    ? `<span>${tutor.name}</span>`
-                    : `<button type="button" class="tutor-table-btn ${isTutorActive ? 'active' : ''}" onclick="filterStudentsByTutorClick('${tutor.id}')" title="${t("Фильтровать по этому тютору", "Uşbu tyutor böyiça filtrlash")}">${tutor.name}</button>`)
+                    ? renderUserBadgeHtml(tutor)
+                    : renderUserBadgeHtml(tutor, { clickable: true, active: isTutorActive, onclick: `filterStudentsByTutorClick('${tutor.id}')`, title: t("Фильтровать по этому тютору", "Uşbu tyutor böyiça filtrlash") }))
                 : "—";
               return `
                 <tr>
@@ -3718,7 +3757,9 @@ function renderTelegramSection() {
           if (c.type === "user") {
             const uObj = appState.users.find(u => u.id === c.id);
             const displayName = uObj ? uObj.name : c.name;
-            return `<button type="button" class="collab-pill clickable ${activeTgAuthorFilter === c.id ? 'active' : ''}" onclick="setTgAuthorFilter('${c.id}')">${displayName}</button>`;
+            return uObj
+              ? renderUserBadgeHtml(uObj, { clickable: true, active: activeTgAuthorFilter === c.id, onclick: `setTgAuthorFilter('${c.id}')` })
+              : `<button type="button" class="collab-pill clickable ${activeTgAuthorFilter === c.id ? 'active' : ''}" onclick="setTgAuthorFilter('${c.id}')">${displayName}</button>`;
           }
           return `<span class="collab-pill custom-static">${c.name}</span>`;
         }).join("")}
@@ -3750,7 +3791,7 @@ function renderTelegramSection() {
           <div class="post-collab-bar">
             <span>${t("Автор:", "Muallif:")}</span>
             ${authorUser
-              ? `<button type="button" class="collab-pill clickable ${activeTgAuthorFilter === authorUser.id ? 'active' : ''}" onclick="setTgAuthorFilter('${authorUser.id}')">${authorName}</button>`
+              ? renderUserBadgeHtml(authorUser, { clickable: true, active: activeTgAuthorFilter === authorUser.id, onclick: `setTgAuthorFilter('${authorUser.id}')` })
               : `<span class="collab-pill custom-static">${authorName}</span>`}
             ${collabsHtml}
           </div>
@@ -4673,7 +4714,7 @@ function renderMonitoringCardsList() {
             <div class="st-card-top">
               <div>
                 <div class="st-name">${st ? st.name : rec.studentName}</div>
-                <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : ""}</div>
+                <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${renderUserBadgeHtml(tutor)}</div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, rec.category)}</span>
@@ -5963,7 +6004,7 @@ function renderDormLogsList() {
                     <div class="diary-entry-date" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
                       <span>${ent.date}${ent.time ? ` ${ent.time}` : ""}</span>
                       <span class="badge-pill" style="font-size:10px; padding:2px 8px;">${getLabelFromDict(DORM_CHECK_CATEGORIES, ent.category)}</span>
-                      ${entAuthor ? `<span>• ${entAuthor.name}</span>` : ""}
+                      ${entAuthor ? renderUserBadgeHtml(entAuthor) : ""}
                     </div>
                     ${(ent.problemResidents || []).length ? `<div class="mon-debt-badge mb-8"><span>${t("Жильцы по вопросу", "Muammoli xonadoşlar")}:</span> <strong>${ent.problemResidents.join(", ")}</strong></div>` : ""}
                     ${ent.relocationNote ? `<div class="mon-debt-badge mb-8"><span>${t("Переселение", "Köçiriş")}:</span> <strong>${ent.relocationNote}</strong></div>` : ""}
@@ -6473,7 +6514,7 @@ function renderRentLogsList() {
             <div class="st-card-top">
               <div>
                 <div class="st-name">${r.studentName} <span class="st-meta" style="font-weight:500;">(${r.studentGroup || ""})</span></div>
-                <div class="st-meta">${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : "—"} • ${t("Записей", "Qaydlar")}: ${entries.length}</div>
+                <div class="st-meta">${t("Тютор", "Tyutor")}: ${renderUserBadgeHtml(tutor)} • ${t("Записей", "Qaydlar")}: ${entries.length}</div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 ${canDeleteData(r.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteRentLog('${r.id}', this)" title="${t("Удалить дневник", "Kundalikni öçiriş")}">
@@ -6495,7 +6536,7 @@ function renderRentLogsList() {
                     <div class="diary-entry-date" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
                       <span>${ent.date}${ent.time ? ` ${ent.time}` : ""}</span>
                       <span class="badge-pill rent" style="font-size:10px; padding:2px 8px;">${getLabelFromDict(DORM_CHECK_CATEGORIES, ent.category)}</span>
-                      ${entAuthor ? `<span>• ${entAuthor.name}</span>` : ""}
+                      ${entAuthor ? renderUserBadgeHtml(entAuthor) : ""}
                     </div>
                     ${ent.relocationNote ? `<div class="mon-debt-badge mb-8"><span>${t("Переселение", "Köçiriş")}:</span> <strong>${ent.relocationNote}</strong></div>` : ""}
                     ${(ent.collaborators || []).length ? `<div class="st-meta mb-8"><strong>${t("Совместно с", "Hamkorlikda")}:</strong> ${ent.collaborators.map(c => c.name).join(", ")}</div>` : ""}
@@ -7343,7 +7384,7 @@ function renderUsersAdminTableRows() {
         const safePass = String(u.pass || "").replace(/"/g, '&quot;');
         return `
         <tr>
-          <td><strong>${u.name}</strong></td>
+          <td>${renderUserBadgeHtml(u)}</td>
           <td>
             <span>${localizeRoleTitle(u.role, u.roleTitle)}</span>
             ${u.partialAdmin && u.role !== "admin" ? `<span class="badge-pill partial-admin">${t("Част. админ", "Qisman admin")}</span>` : ""}
@@ -7927,6 +7968,11 @@ let activeTaskDiscussionId = null; // ID задачи, если открыт ч�
 let chatCreateMode = "direct";
 let chatCreateSelectedIds = [];
 let chatPendingAttachments = { images: [], files: [] };
+let chatReplyTarget = null; // { id, senderId, senderName, text }
+let chatEditTarget = null;  // { scopeType, scopeId, msgId }
+let chatPendingMentions = []; // array of userIds
+let chatMentionPopoverOpen = false;
+let chatMentionSearch = "";
 
 let editingTaskId = null;
 let taskDraftColor = "#ef4444";
@@ -8071,12 +8117,19 @@ function renderChatTabsBar() {
     if (!list.length) {
       return `<div class="st-meta" style="padding:8px 10px; text-align:center;">${emptyText}</div>`;
     }
-    return list.map(c => `
+    return list.map(c => {
+      const otherId = c.type !== "group" ? (c.members || []).find(id => id !== currentUser.id) : null;
+      const otherUser = otherId ? appState.users.find(u => u.id === otherId) : null;
+      const labelHtml = otherUser
+        ? renderUserBadgeHtml(otherUser)
+        : `<span class="chat-dd-item-name">${getChatDisplayName(c)}</span>`;
+      return `
       <div class="chat-dd-item ${activeChatTabId === c.id ? 'active' : ''}" onclick="selectChatTab('${c.id}')">
-        <span class="chat-dd-item-name">${getChatDisplayName(c)}</span>
+        ${labelHtml}
         <button type="button" class="chat-tab-del" data-del-trigger="1" onclick="event.stopPropagation(); deleteChatById('${c.id}', this)" title="${t("Удалить чат", "Çatni öçiriş")}">×</button>
       </div>
-    `).join("");
+    `;
+    }).join("");
   };
 
   bar.innerHTML = `
@@ -8251,12 +8304,61 @@ function renderChatDrawerBody() {
   body.scrollTop = body.scrollHeight;
 }
 
+function formatChatTextWithMentions(text, mentionIds) {
+  let safe = String(text || "");
+  const ids = Array.isArray(mentionIds) ? [...new Set(mentionIds)] : [];
+  const usedIds = new Set();
+
+  ids.forEach(uid => {
+    const u = (appState.users || []).find(x => x.id === uid);
+    if (!u || !u.name) return;
+    const token = "@" + u.name;
+    if (safe.includes(token)) {
+      usedIds.add(uid);
+      const pill = renderUserBadgeHtml(u, {
+        clickable: true,
+        prefix: "@",
+        onclick: `event.stopPropagation(); insertMentionIntoChatInput('${u.id}')`,
+        title: t("Нажмите, чтобы отметить в ответе", "Javobda belgilash uşun bosing")
+      });
+      safe = safe.split(token).join(pill);
+    }
+  });
+
+  const extraPills = ids
+    .filter(uid => !usedIds.has(uid))
+    .map(uid => {
+      const u = (appState.users || []).find(x => x.id === uid);
+      if (!u) return "";
+      return renderUserBadgeHtml(u, {
+        clickable: true,
+        prefix: "@",
+        onclick: `event.stopPropagation(); insertMentionIntoChatInput('${u.id}')`
+      });
+    })
+    .filter(Boolean)
+    .join(" ");
+
+  return `${extraPills ? `<div style="margin-bottom:4px; display:flex; flex-wrap:wrap; gap:4px;">${extraPills}</div>` : ""}${safe ? `<div>${safe}</div>` : ""}`;
+}
+
 function renderChatMessageBubble(m, scopeType, scopeId) {
   const isMine = m.senderId === currentUser.id;
   const sender = appState.users.find(u => u.id === m.senderId);
-  const senderName = sender ? sender.name : t("Пользователь", "Foydalanuvçi");
+  const senderHtml = sender ? renderUserBadgeHtml(sender) : `<span>${t("Пользователь", "Foydalanuvçi")}</span>`;
 
-  let contentHtml = m.text ? `<div>${m.text}</div>` : "";
+  let contentHtml = "";
+
+  if (m.replyTo) {
+    contentHtml += `
+      <div class="chat-reply-quote">
+        <div class="chat-reply-quote-author">${m.replyTo.senderName || ""}</div>
+        <div class="chat-reply-quote-text">${m.replyTo.text || t("Вложение", "Fayl")}</div>
+      </div>
+    `;
+  }
+
+  contentHtml += formatChatTextWithMentions(m.text, m.mentions);
 
   const imgs = Array.isArray(m.images) ? [...m.images] : [];
   const files = Array.isArray(m.files) ? [...m.files] : [];
@@ -8303,15 +8405,258 @@ function renderChatMessageBubble(m, scopeType, scopeId) {
     `;
   }
 
-  return `
+  const editBtn = `
+    <button type="button" class="chat-msg-act-btn" onclick="startEditChatMessage('${scopeType}', '${scopeId}', '${m.id}')" title="${t("Редактировать", "Tahrirlaş")}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>
+    </button>
+  `;
+  const delBtn = `
+    <button type="button" class="chat-msg-act-btn danger" data-del-trigger="1" onclick="deleteChatMessage('${scopeType}', '${scopeId}', '${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+    </button>
+  `;
+  const replyBtn = `
+    <button type="button" class="chat-msg-act-btn" onclick="startReplyChatMessage('${scopeType}', '${scopeId}', '${m.id}')" title="${t("Ответить", "Javob beriş")}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4 -4l4 -4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/></svg>
+    </button>
+  `;
+
+  const hoverActions = isMine
+    ? `<div class="chat-msg-hover-actions">${editBtn}${delBtn}</div>`
+    : `<div class="chat-msg-hover-actions">${replyBtn}</div>`;
+
+  const bubbleHtml = `
     <div class="chat-msg-bubble ${isMine ? 'mine' : ''}">
-      <div class="chat-msg-meta">
-        <span>${senderName}</span>
-        <span>${m.time || ""}</span>
+      <div class="chat-msg-meta" style="align-items:center;">
+        <span>${senderHtml}</span>
+        <span>${m.time || ""}${m.edited ? `<span class="chat-edited-tag">(${t("изм.", "tahrir.")})</span>` : ""}</span>
       </div>
       ${contentHtml}
     </div>
   `;
+
+  return `
+    <div class="chat-msg-row ${isMine ? 'mine' : 'theirs'}">
+      ${isMine ? hoverActions + bubbleHtml : bubbleHtml + hoverActions}
+    </div>
+  `;
+}
+
+function getChatMessagesContainer(scopeType, scopeId) {
+  return scopeType === "task"
+    ? (appState.tasks || []).find(tk => tk.id === scopeId)
+    : (appState.chats || []).find(c => c.id === scopeId);
+}
+
+function startReplyChatMessage(scopeType, scopeId, msgId) {
+  const container = getChatMessagesContainer(scopeType, scopeId);
+  if (!container) return;
+  const msg = (container.messages || []).find(m => m.id === msgId);
+  if (!msg) return;
+  const sender = appState.users.find(u => u.id === msg.senderId);
+  chatEditTarget = null;
+  chatReplyTarget = {
+    id: msg.id,
+    senderId: msg.senderId,
+    senderName: sender ? sender.name : t("Пользователь", "Foydalanuvçi"),
+    text: msg.text || (msg.poll ? msg.poll.question : t("Вложение", "Fayl"))
+  };
+  renderChatContextBar();
+  const inp = document.getElementById("chatMessageInput");
+  if (inp) inp.focus();
+}
+
+function startEditChatMessage(scopeType, scopeId, msgId) {
+  const container = getChatMessagesContainer(scopeType, scopeId);
+  if (!container) return;
+  const msg = (container.messages || []).find(m => m.id === msgId);
+  if (!msg || msg.senderId !== currentUser.id) return;
+  chatReplyTarget = null;
+  chatEditTarget = { scopeType, scopeId, msgId };
+  renderChatContextBar();
+  const inp = document.getElementById("chatMessageInput");
+  if (inp) {
+    inp.value = msg.text || "";
+    inp.focus();
+  }
+}
+
+function cancelChatContextMode() {
+  chatReplyTarget = null;
+  chatEditTarget = null;
+  renderChatContextBar();
+}
+
+function renderChatContextBar() {
+  const bar = document.getElementById("chatContextBar");
+  if (!bar) return;
+  if (!chatReplyTarget && !chatEditTarget) {
+    bar.classList.add("hidden");
+    bar.innerHTML = "";
+    return;
+  }
+  bar.classList.remove("hidden");
+  if (chatEditTarget) {
+    bar.innerHTML = `
+      <div class="chat-context-bar-text">
+        <div class="chat-context-bar-title">${t("Редактирование сообщения", "Xabarni tahrirlaş")}</div>
+        <div class="chat-context-bar-sub">${t("Измените текст и нажмите Enter", "Matnni özgaltiring va Enter bosing")}</div>
+      </div>
+      <button type="button" class="icon-circle-btn sm" onclick="cancelChatContextMode()">×</button>
+    `;
+  } else if (chatReplyTarget) {
+    bar.innerHTML = `
+      <div class="chat-context-bar-text">
+        <div class="chat-context-bar-title">${t("Ответ для", "Javob")}: ${chatReplyTarget.senderName}</div>
+        <div class="chat-context-bar-sub">${chatReplyTarget.text}</div>
+      </div>
+      <button type="button" class="icon-circle-btn sm" onclick="cancelChatContextMode()">×</button>
+    `;
+  }
+}
+
+function deleteChatMessage(scopeType, scopeId, msgId, btnEl) {
+  const container = getChatMessagesContainer(scopeType, scopeId);
+  if (!container) return;
+  const msg = (container.messages || []).find(m => m.id === msgId);
+  if (!msg || msg.senderId !== currentUser.id) return;
+  askConfirmDelete(btnEl, () => {
+    container.messages = (container.messages || []).filter(m => m.id !== msgId);
+    saveState(true);
+    syncChatHubToCloud();
+    renderChatDrawerBody();
+    showToast(t("Сообщение удалено", "Xabar öçirildi"));
+  });
+}
+
+// --- @-Упоминания в групповых чатах и чатах заданий ---
+function isMentionAllowedInActiveChat() {
+  if (activeChatTabId === "tasks" && activeTaskDiscussionId) return true;
+  const chat = (appState.chats || []).find(c => c.id === activeChatTabId);
+  return Boolean(chat && chat.type === "group");
+}
+
+function handleChatMessageInput(e) {
+  if (!isMentionAllowedInActiveChat()) {
+    closeChatMentionPopover();
+    return;
+  }
+  const val = e.target.value || "";
+  if (/(^|\s)@$/.test(val)) {
+    openChatMentionPopover();
+  }
+}
+
+function handleChatMessageKeydown(e) {
+  if (e.key === "Escape" && chatMentionPopoverOpen) {
+    closeChatMentionPopover();
+    return;
+  }
+  if (e.key === "Enter") {
+    e.preventDefault();
+    if (chatMentionPopoverOpen) {
+      applySelectedChatMentions();
+    } else {
+      sendChatMessage();
+    }
+  }
+}
+
+function openChatMentionPopover() {
+  chatMentionPopoverOpen = true;
+  chatMentionSearch = "";
+  renderChatMentionPopover();
+}
+
+function closeChatMentionPopover() {
+  chatMentionPopoverOpen = false;
+  const pop = document.getElementById("chatMentionPopover");
+  if (pop) {
+    pop.classList.add("hidden");
+    pop.innerHTML = "";
+  }
+}
+
+function renderChatMentionPopover() {
+  const pop = document.getElementById("chatMentionPopover");
+  if (!pop || !chatMentionPopoverOpen) return;
+  pop.classList.remove("hidden");
+
+  const q = (chatMentionSearch || "").trim().toLowerCase();
+  const users = (appState.users || []).filter(u =>
+    !q || (u.name || "").toLowerCase().includes(q) || localizeRoleTitle(u.role, u.roleTitle).toLowerCase().includes(q)
+  );
+
+  pop.innerHTML = `
+    <input type="text" id="chatMentionSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск пользователя для отметки...", "Belgilash uşun foydalanuvçini qidiriş...")}" value="${chatMentionSearch.replace(/"/g, '&quot;')}" oninput="chatMentionSearch=this.value; renderChatMentionPopover()" />
+    <div class="chat-mention-list">
+      ${users.length ? users.map(u => {
+        const checked = chatPendingMentions.includes(u.id);
+        return `
+          <label class="social-check-option">
+            <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleChatPendingMention('${u.id}')" />
+            <span>${renderUserBadgeHtml(u)}</span>
+          </label>
+        `;
+      }).join("") : `<div class="st-meta" style="padding:6px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`}
+    </div>
+    <div class="chat-mention-foot">
+      <span class="st-meta">${t("Выбрано", "Tanlandi")}: ${chatPendingMentions.length}</span>
+      <div style="display:flex; gap:6px;">
+        <button type="button" class="btn-ghost-sm" onclick="closeChatMentionPopover()">${t("Отмена", "Bekor")}</button>
+        <button type="button" class="btn-orange sm" onclick="applySelectedChatMentions()">${t("Отметить", "Belgilash")}</button>
+      </div>
+    </div>
+  `;
+  const sInp = document.getElementById("chatMentionSearchInput");
+  if (sInp) {
+    sInp.focus();
+    sInp.setSelectionRange(sInp.value.length, sInp.value.length);
+  }
+}
+
+function toggleChatPendingMention(uid) {
+  if (chatPendingMentions.includes(uid)) {
+    chatPendingMentions = chatPendingMentions.filter(x => x !== uid);
+  } else {
+    chatPendingMentions.push(uid);
+  }
+  renderChatMentionPopover();
+}
+
+function applySelectedChatMentions() {
+  const inp = document.getElementById("chatMessageInput");
+  if (inp) {
+    let text = inp.value || "";
+    text = text.replace(/(^|\s)@$/, "$1");
+    const tokens = chatPendingMentions.map(uid => {
+      const u = (appState.users || []).find(x => x.id === uid);
+      return u ? `@${u.name}` : "";
+    }).filter(Boolean);
+    const toAdd = tokens.filter(tok => !text.includes(tok));
+    if (toAdd.length) {
+      text = (text.trim() ? text.trim() + " " : "") + toAdd.join(" ") + " ";
+    }
+    inp.value = text;
+    inp.focus();
+  }
+  closeChatMentionPopover();
+}
+
+function insertMentionIntoChatInput(userId) {
+  const u = (appState.users || []).find(x => x.id === userId);
+  if (!u) return;
+  if (!chatPendingMentions.includes(userId)) {
+    chatPendingMentions.push(userId);
+  }
+  const inp = document.getElementById("chatMessageInput");
+  if (inp) {
+    const tok = `@${u.name}`;
+    if (!inp.value.includes(tok)) {
+      inp.value = (inp.value.trim() ? inp.value.trim() + " " : "") + tok + " ";
+    }
+    inp.focus();
+  }
 }
 
 // --- Создание чата / группы ---
@@ -8337,7 +8682,19 @@ function renderChatCreateMembersList() {
   const listEl = document.getElementById("chatCreateMembersList");
   if (!listEl) return;
   const q = (document.getElementById("chatMemberSearch").value || "").trim().toLowerCase();
-  const others = (appState.users || []).filter(u => u.id !== currentUser.id);
+  let others = (appState.users || []).filter(u => u.id !== currentUser.id);
+
+  // В личном чате скрываем пользователей, с которыми уже есть активный диалог
+  if (chatCreateMode === "direct") {
+    const existingDirectPartnerIds = new Set();
+    (appState.chats || []).forEach(c => {
+      if (c.type === "direct" && Array.isArray(c.members) && c.members.includes(currentUser.id)) {
+        c.members.forEach(id => { if (id !== currentUser.id) existingDirectPartnerIds.add(id); });
+      }
+    });
+    others = others.filter(u => !existingDirectPartnerIds.has(u.id));
+  }
+
   const matched = q ? others.filter(u => (u.name || "").toLowerCase().includes(q)) : others;
 
   listEl.innerHTML = matched.map(u => {
@@ -8345,10 +8702,10 @@ function renderChatCreateMembersList() {
     return `
       <label class="social-check-option">
         <input type="${chatCreateMode === 'direct' ? 'radio' : 'checkbox'}" name="chatMemberPick" ${checked ? "checked" : ""} onchange="toggleChatCreateMember('${u.id}')" />
-        <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+        <span>${renderUserBadgeHtml(u)} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
       </label>
     `;
-  }).join("") || `<div class="st-meta" style="padding:8px;">${t("Пользователи не найдены", "Foydalanuvçilar topilmadi")}</div>`;
+  }).join("") || `<div class="st-meta" style="padding:8px;">${t("Нет доступных собеседников", "Mavjud suhbatdoşlar yöq")}</div>`;
 }
 
 function toggleChatCreateMember(uid) {
@@ -8393,7 +8750,20 @@ function confirmCreateChat() {
     activeChatTabId = newChat.id;
   } else {
     const title = document.getElementById("chatNewGroupName").value.trim() || t("Новая группа", "Yangi guruh");
-    const members = [...new Set([currentUser.id, ...chatCreateSelectedIds])];
+    const members = [...new Set([currentUser.id, ...chatCreateSelectedIds])].sort();
+    const existingGroup = (appState.chats || []).find(c => {
+      if (c.type !== "group") return false;
+      const cMembers = [...(c.members || [])].sort();
+      return cMembers.length === members.length && cMembers.every((v, i) => v === members[i]) &&
+        (c.title || "").trim().toLowerCase() === title.toLowerCase();
+    });
+    if (existingGroup) {
+      activeChatTabId = existingGroup.id;
+      closeModal("chatCreateModal");
+      renderChatDrawer();
+      showToast(t("Такая группа уже существует — открыт существующий чат", "Bunday guruh allaqaçon mavjud"));
+      return;
+    }
     const newGroup = {
       id: `grp_${Date.now()}`,
       type: "group",
@@ -8777,9 +9147,35 @@ function voteInChatPoll(scopeType, scopeId, msgId, optIdx) {
 function sendChatMessage(pollObj = null) {
   const inp = document.getElementById("chatMessageInput");
   const text = inp ? inp.value.trim() : "";
+
+  // Режим редактирования собственного сообщения
+  if (chatEditTarget && !pollObj) {
+    if (!text) return;
+    const container = getChatMessagesContainer(chatEditTarget.scopeType, chatEditTarget.scopeId);
+    if (container) {
+      const targetMsg = (container.messages || []).find(m => m.id === chatEditTarget.msgId);
+      if (targetMsg && targetMsg.senderId === currentUser.id) {
+        targetMsg.text = text;
+        targetMsg.edited = true;
+      }
+    }
+    if (inp) inp.value = "";
+    cancelChatContextMode();
+    saveState(true);
+    syncChatHubToCloud();
+    renderChatDrawerBody();
+    return;
+  }
+
   const imgs = (chatPendingAttachments.images || []).slice(0, 10);
   const files = (chatPendingAttachments.files || []).slice(0, 10);
   if (!text && !imgs.length && !files.length && !pollObj) return;
+
+  // Определяем реальные упоминания в тексте
+  const mentionedIds = [...new Set(chatPendingMentions.filter(uid => {
+    const u = (appState.users || []).find(x => x.id === uid);
+    return u && text.includes("@" + u.name);
+  }))];
 
   const nowTs = Date.now();
   const msg = {
@@ -8790,24 +9186,57 @@ function sendChatMessage(pollObj = null) {
     images: imgs,
     files: files,
     poll: pollObj || null,
+    replyTo: chatReplyTarget ? { ...chatReplyTarget } : null,
+    mentions: mentionedIds,
     time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   };
+
+  let refType = "chat";
+  let refId = activeChatTabId;
+  let chatTitle = "";
 
   if (activeChatTabId === "tasks" && activeTaskDiscussionId) {
     const task = (appState.tasks || []).find(tk => tk.id === activeTaskDiscussionId);
     if (!task) return;
     if (!Array.isArray(task.messages)) task.messages = [];
     task.messages.push(msg);
+    refType = "task";
+    refId = task.id;
+    chatTitle = task.title;
   } else {
     const chat = (appState.chats || []).find(c => c.id === activeChatTabId);
     if (!chat) return;
     if (!Array.isArray(chat.messages)) chat.messages = [];
     chat.messages.push(msg);
     chat.lastActivity = nowTs;
+    chatTitle = getChatDisplayName(chat);
+  }
+
+  // Уведомление об ответе на сообщение
+  if (msg.replyTo && msg.replyTo.senderId && msg.replyTo.senderId !== currentUser.id) {
+    addSystemNotification(
+      [msg.replyTo.senderId],
+      `${currentUser.name} ${t("ответил(а) на ваше сообщение в", "xabaringizga javob berdi")}: «${chatTitle}»`,
+      refType,
+      refId
+    );
+  }
+
+  // Уведомления об @-упоминаниях
+  if (mentionedIds.length) {
+    addSystemNotification(
+      mentionedIds,
+      `${currentUser.name} ${t("отметил(а) вас в чате", "sizni çatda belgiladi")}: «${chatTitle}»`,
+      refType,
+      refId
+    );
   }
 
   if (inp) inp.value = "";
   chatPendingAttachments = { images: [], files: [] };
+  chatPendingMentions = [];
+  cancelChatContextMode();
+  closeChatMentionPopover();
   renderPendingAttachBar();
   saveState(true);
   syncChatHubToCloud();
@@ -8916,6 +9345,24 @@ async function loadChatHubFromCloud() {
     // Если во время загрузки пользователь отправил новое сообщение — игнорируем устаревший ответ
     if (reqVersion !== chatHubSyncVersion || chatHubSaveInFlight > 0) return;
 
+    if (json && json.status === "ok") {
+      if (Array.isArray(json.onlineUserIds)) {
+        const nextSet = new Set(json.onlineUserIds);
+        if (currentUser && currentUser.id) nextSet.add(currentUser.id);
+        const prevKey = [...onlineUserIds].sort().join(",");
+        const nextKey = [...nextSet].sort().join(",");
+        if (prevKey !== nextKey) {
+          onlineUserIds = nextSet;
+          if (chatDrawerOpen) {
+            renderChatTabsBar();
+            renderChatDrawerBody();
+          }
+          const activeEl = document.activeElement;
+          const isTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+          if (!isTyping) renderAllViews();
+        }
+      }
+    }
     if (json && json.status === "ok" && json.hub) {
       const incomingHub = {
         chats: deduplicateById(json.hub.chats || []),
