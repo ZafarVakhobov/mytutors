@@ -3905,6 +3905,7 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   outline: none;
 }
 
+
 /* Фикс: чтобы выпадающий список ролей и курсов не обрезался шапкой модального окна */
 #nuRoleWrap .cs-menu,
 #euRoleWrap .cs-menu,
@@ -3918,4 +3919,36 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
 #nuCourseWrap .cs-option,
 #euCourseWrap .cs-option {
   padding: 6px 10px;
+}
+
+
+/* ==================== ШИРИНА ОКНА ЧАТА 33% НА ПК И ПЕРЕХОД К ОТВЕТУ ==================== */
+@media (min-width: 1024px) {
+  .chat-drawer {
+    width: 33vw;
+  }
+}
+
+.chat-reply-quote.clickable {
+  cursor: pointer;
+  transition: background 0.16s ease, transform 0.12s ease;
+}
+
+.chat-reply-quote.clickable:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.chat-msg-bubble.mine .chat-reply-quote.clickable:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.chat-msg-row.chat-msg-highlight .chat-msg-bubble {
+  animation: chatMsgJumpHighlight 1.6s ease;
+}
+
+@keyframes chatMsgJumpHighlight {
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0.75); transform: scale(1); }
+  20% { box-shadow: 0 0 0 6px rgba(255, 107, 61, 0.45); transform: scale(1.02); }
+  50% { box-shadow: 0 0 0 4px rgba(255, 107, 61, 0.28); transform: scale(1); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0); transform: scale(1); }
 }
