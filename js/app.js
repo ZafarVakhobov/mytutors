@@ -229,7 +229,7 @@ const I18N = {
     upload_st_photo: "Talaba rasmini yuklaş",
     remove_photo: "Rasmni öçiriş",
     st_photo_hint: "JPG / PNG • Talaba kartasida saqlanadi",
-    sec_marital: "OILAVIY HOLATI",
+    sec_marital: "OILAVIY HOLATI HAQIDA MA'LUMOT",
     lbl_marital_status: "Oilaviy holati",
     lbl_spouse_name: "Turmuş örtoğining F.I.Ş.",
     lbl_spouse_birth: "Tuğilgan sanasi",
