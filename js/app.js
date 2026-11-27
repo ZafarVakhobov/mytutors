@@ -742,6 +742,211 @@ function canDeleteData(ownerId) {
 }
 
 
+
+// ==================== ПАГИНАЦИЯ (СТРАНИЦЫ ДЛЯ ТАБЛИЦ И ЛЕНТ) ====================
+const PAGE_LIMITS = {
+  students: 30,
+  telegram: 10,
+  monitoring: 10,
+  users: 20
+};
+
+const paginationState = {
+  students: 1,
+  telegram: 1,
+  monitoring: 1,
+  users: 1
+};
+
+function paginateList(list, key) {
+  const limit = PAGE_LIMITS[key] || 20;
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  let page = Number(paginationState[key]) || 1;
+  if (page < 1) page = 1;
+  if (page > totalPages) page = totalPages;
+  paginationState[key] = page;
+  const start = (page - 1) * limit;
+  const items = list.slice(start, start + limit);
+  return { items, page, totalPages, total, start, limit };
+}
+
+function renderPaginationBar(key, pageInfo, onPageFnName) {
+  if (!pageInfo || pageInfo.totalPages <= 1) return "";
+  const { page, totalPages, total, start, items } = pageInfo;
+  const fromNum = start + 1;
+  const toNum = start + items.length;
+
+  const pages = [];
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || Math.abs(p - page) <= 1) {
+      pages.push(p);
+    } else if (pages[pages.length - 1] !== "...") {
+      pages.push("...");
+    }
+  }
+
+  return `
+    <div class="pagination-bar">
+      <div class="pagination-info">${t("Показано", "Körsatilmoqda")}: ${fromNum}–${toNum} ${t("из", "dan")} ${total}</div>
+      <div class="pagination-btns">
+        <button type="button" class="page-btn" ${page <= 1 ? "disabled" : ""} onclick="${onPageFnName}(${page - 1})" title="${t("Предыдущая страница", "Oldingi sahifa")}">←</button>
+        ${pages.map(p => p === "..."
+          ? `<span class="page-ellipsis">…</span>`
+          : `<button type="button" class="page-btn ${p === page ? 'active' : ''}" onclick="${onPageFnName}(${p})">${p}</button>`
+        ).join("")}
+        <button type="button" class="page-btn" ${page >= totalPages ? "disabled" : ""} onclick="${onPageFnName}(${page + 1})" title="${t("Следующая страница", "Keyingi sahifa")}">→</button>
+      </div>
+    </div>
+  `;
+}
+
+function goToStudentsPage(p) {
+  paginationState.students = p;
+  renderStudentsAllTable();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function goToTelegramPage(p) {
+  paginationState.telegram = p;
+  renderTelegramSection();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function goToMonitoringPage(p) {
+  paginationState.monitoring = p;
+  renderMonitoringCardsList();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function goToUsersPage(p) {
+  paginationState.users = p;
+  renderUsersAdminTableRows();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ==================== МОБИЛЬНОЕ ГАМБУРГЕР-МЕНЮ ====================
+let mobileMenuOpen = false;
+
+function toggleMobileMenu(forceState) {
+  const drawer = document.getElementById("mobileDrawer");
+  const backdrop = document.getElementById("mobileDrawerBackdrop");
+  const iconOpen = document.getElementById("mobileMenuIconOpen");
+  const iconClose = document.getElementById("mobileMenuIconClose");
+  if (!drawer || !backdrop) return;
+
+  mobileMenuOpen = typeof forceState === "boolean" ? forceState : !mobileMenuOpen;
+  drawer.classList.toggle("open", mobileMenuOpen);
+  backdrop.classList.toggle("hidden", !mobileMenuOpen);
+  drawer.setAttribute("aria-hidden", mobileMenuOpen ? "false" : "true");
+  if (iconOpen) iconOpen.classList.toggle("hidden", mobileMenuOpen);
+  if (iconClose) iconClose.classList.toggle("hidden", !mobileMenuOpen);
+}
+
+function mobileNavAction(tabName) {
+  toggleMobileMenu(false);
+  switchTab(tabName);
+}
+
+function toggleMobileProfileSubmenu() {
+  const block = document.getElementById("mobileProfileBlock");
+  const sub = document.getElementById("mobileProfileSubmenu");
+  if (!block || !sub) return;
+  const isHidden = sub.classList.toggle("hidden");
+  block.classList.toggle("open", !isHidden);
+}
+
+// ==================== КАСТОМНЫЙ ПЛАВНЫЙ ТУЛТИП (СЛЕДУЕТ ЗА КУРСОРОМ) ====================
+(function initSmartTooltip() {
+  let activeEl = null;
+  let lastX = 0;
+  let lastY = 0;
+
+  function getTipEl() {
+    return document.getElementById("smartTooltip");
+  }
+
+  function positionTip(x, y) {
+    const tip = getTipEl();
+    if (!tip || tip.classList.contains("hidden")) return;
+    const pad = 12;
+    const offset = 14;
+    const rect = tip.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+
+    let left = x + offset;
+    let top = y + offset;
+
+    if (left + rect.width + pad > vw) {
+      left = x - rect.width - offset;
+    }
+    if (left < pad) left = pad;
+
+    if (top + rect.height + pad > vh) {
+      top = y - rect.height - offset;
+    }
+    if (top < pad) top = pad;
+
+    tip.style.transform = `translate3d(${Math.round(left)}px, ${Math.round(top)}px, 0) scale(1)`;
+  }
+
+  function showTip(el, text, x, y) {
+    const tip = getTipEl();
+    if (!tip || !text) return;
+    activeEl = el;
+    tip.textContent = text;
+    tip.classList.remove("hidden");
+    positionTip(x, y);
+    requestAnimationFrame(() => tip.classList.add("visible"));
+  }
+
+  function hideTip() {
+    const tip = getTipEl();
+    activeEl = null;
+    if (!tip) return;
+    tip.classList.remove("visible");
+    tip.classList.add("hidden");
+  }
+
+  document.addEventListener("mouseover", (e) => {
+    const target = e.target.closest("[title], [data-smart-title]");
+    if (!target) {
+      if (activeEl) hideTip();
+      return;
+    }
+    const nativeTitle = target.getAttribute("title");
+    if (nativeTitle) {
+      target.setAttribute("data-smart-title", nativeTitle);
+      target.removeAttribute("title");
+    }
+    const text = target.getAttribute("data-smart-title");
+    if (!text) return;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    showTip(target, text, lastX, lastY);
+  }, true);
+
+  document.addEventListener("mousemove", (e) => {
+    if (!activeEl) return;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    positionTip(lastX, lastY);
+  }, true);
+
+  document.addEventListener("mouseout", (e) => {
+    if (!activeEl) return;
+    const related = e.relatedTarget;
+    if (!related || !activeEl.contains(related)) {
+      hideTip();
+    }
+  }, true);
+
+  window.addEventListener("scroll", hideTip, true);
+  document.addEventListener("mousedown", hideTip, true);
+  document.addEventListener("touchstart", hideTip, true);
+})();
+
 // ==================== ОНЛАЙН-СТАТУС И РОЛЕВЫЕ ПЛАШКИ ПОЛЬЗОВАТЕЛЕЙ ====================
 let onlineUserIds = new Set();
 
@@ -1053,6 +1258,8 @@ function setLanguage(lang) {
   localStorage.setItem("mytutors_lang_v1", lang);
   const slider = document.getElementById("langSlider");
   slider.style.transform = lang === "oz" ? "translateX(38px)" : "translateX(0)";
+  const mSlider = document.getElementById("mobileLangSlider");
+  if (mSlider) mSlider.style.transform = lang === "oz" ? "translateX(38px)" : "translateX(0)";
   document.querySelectorAll(".lang-btn").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.lang === lang);
   });
@@ -1083,6 +1290,10 @@ function toggleTheme() {
   const isDark = document.body.classList.contains("dark");
   document.getElementById("themeIconMoon").classList.toggle("hidden", isDark);
   document.getElementById("themeIconSun").classList.toggle("hidden", !isDark);
+  const mMoon = document.getElementById("mobileThemeIconMoon");
+  const mSun = document.getElementById("mobileThemeIconSun");
+  if (mMoon) mMoon.classList.toggle("hidden", isDark);
+  if (mSun) mSun.classList.toggle("hidden", !isDark);
   if (currentUser && activeTab === "dashboard") {
     renderCharts();
   }
@@ -1226,6 +1437,7 @@ async function handleLogin(e) {
     document.getElementById("appShell").classList.remove("hidden");
     const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.remove("hidden");
     document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
+    const mUsersBtn = document.getElementById("mobileNavUsersBtn"); if (mUsersBtn) mUsersBtn.classList.toggle("hidden", currentUser.role !== "admin");
 
     dashFilters = {
       tutor: isTutorOnly() ? currentUser.id : "all",
@@ -1290,6 +1502,7 @@ function restoreSession() {
   document.getElementById("appShell").classList.remove("hidden");
   const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.remove("hidden");
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
+    const mUsersBtn = document.getElementById("mobileNavUsersBtn"); if (mUsersBtn) mUsersBtn.classList.toggle("hidden", currentUser.role !== "admin");
 
   dashFilters = {
     tutor: isTutorOnly() ? currentUser.id : "all",
@@ -1319,6 +1532,14 @@ function updateHeaderAndGreeting() {
   document.getElementById("headerUserName").innerHTML = `${renderOnlineDotHtml(currentUser.id)} ${currentUser.name}`;
   document.getElementById("headerUserRole").textContent = localizeRoleTitle(currentUser.role, currentUser.roleTitle);
   document.getElementById("driveTooltip").textContent = `Google Drive: ${currentUser.driveFolder}`;
+  const mAv = document.getElementById("mobileUserAvatar");
+  if (mAv) mAv.innerHTML = currentUser.photo ? `<img src="${currentUser.photo}" alt="Avatar" />` : initials;
+  const mName = document.getElementById("mobileUserName");
+  if (mName) mName.innerHTML = `${renderOnlineDotHtml(currentUser.id)} ${currentUser.name}`;
+  const mRole = document.getElementById("mobileUserRole");
+  if (mRole) mRole.textContent = localizeRoleTitle(currentUser.role, currentUser.roleTitle);
+  const mDrive = document.getElementById("mobileDriveTooltip");
+  if (mDrive) mDrive.textContent = `Google Drive: ${currentUser.driveFolder}`;
 
   const greetPrefix = t("Добро пожаловать", "Xuş kelibsiz");
   document.getElementById("welcomeGreeting").textContent = `${greetPrefix}, ${currentUser.name}`;
@@ -1383,7 +1604,7 @@ function toggleCustomSelect(id) {
 // ==================== НАВИГАЦИЯ С ПЛАВНЫМ СЛАЙДЕРОМ ====================
 function switchTab(tabName, subTab = null) {
   activeTab = tabName;
-  document.querySelectorAll(".nav-item").forEach(btn => {
+  document.querySelectorAll(".nav-item, .mobile-nav-item").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.tab === tabName);
   });
   document.querySelectorAll(".tab-view").forEach(sec => {
@@ -2430,7 +2651,11 @@ function renderStudentsAllTable() {
             </tr>
           </thead>
           <tbody>
-            ${list.map(s => {
+            ${(() => {
+              const pg = paginateList(list, "students");
+              window._lastStPg = pg;
+              return pg.items;
+            })().map(s => {
               const tutor = appState.users.find(u => u.id === s.tutorId);
               const empBadge = s.employed
                 ? `<span class="badge-pill work">${t("Трудоустроен", "Işlaydi")}${s.empOrg ? ` • ${s.empOrg}` : ""}</span>`
@@ -2468,6 +2693,7 @@ function renderStudentsAllTable() {
         </table>
       </div>
     </div>
+    ${renderPaginationBar("students", window._lastStPg, "goToStudentsPage")}
   `;
 }
 
@@ -3746,7 +3972,8 @@ function renderTelegramSection() {
       "Telegram dan yuklangan postlar hozirça yöq. Yuqorida https://t.me/studlifeuniv/12028 şaklidagi havolani kiriting."
     )}</div>`;
   } else {
-    listEl.innerHTML = authorFilterBannerHtml + posts.map(p => {
+    const tgPg = paginateList(posts, "telegram");
+    listEl.innerHTML = authorFilterBannerHtml + tgPg.items.map(p => {
       const cleanImages = (p.images || []).filter(isRealPostPhoto);
       const authorUser = appState.users.find(u => u.id === p.authorId);
       const authorName = authorUser ? authorUser.name : t("Неизвестный автор", "Noma’lum muallif");
@@ -3797,7 +4024,7 @@ function renderTelegramSection() {
           </div>
         </div>
       `;
-    }).join("");
+    }).join("") + renderPaginationBar("telegram", tgPg, "goToTelegramPage");
   }
 
   updateReportPreview();
@@ -4704,9 +4931,10 @@ function renderMonitoringCardsList() {
     return;
   }
 
+  const monPg = paginateList(list, "monitoring");
   container.innerHTML = `
     <div class="diary-grid">
-      ${list.map(rec => {
+      ${monPg.items.map(rec => {
         const st = appState.students.find(s => s.id === rec.studentId);
         const tutor = appState.users.find(u => u.id === rec.tutorId);
         return `
@@ -4764,6 +4992,7 @@ function renderMonitoringCardsList() {
         `;
       }).join("")}
     </div>
+    ${renderPaginationBar("monitoring", monPg, "goToMonitoringPage")}
   `;
 }
 
@@ -7564,7 +7793,10 @@ function renderUsersAdminTableRows() {
       </tr>
     </thead>
     <tbody>
-      ${list.length ? list.map(u => {
+      ${(() => {
+        const uPg = paginateList(list, "users");
+        window._lastUsersPg = uPg;
+        return uPg.items.length ? uPg.items.map(u => {
         const isRevealed = revealedUserPassIds.has(u.id);
         const safePass = String(u.pass || "").replace(/"/g, '&quot;');
         return `
@@ -7604,9 +7836,19 @@ function renderUsersAdminTableRows() {
             ${t("Пользователи по выбранным фильтрам не найдены.", "Tanlangan filtrlar böyiça foydalanuvçilar topilmadi.")}
           </td>
         </tr>
-      `}
+      `;
+      })()}
     </tbody>
   `;
+  let uPgBar = document.getElementById("usersPaginationWrap");
+  if (!uPgBar && table.parentElement && table.parentElement.parentElement) {
+    uPgBar = document.createElement("div");
+    uPgBar.id = "usersPaginationWrap";
+    table.parentElement.parentElement.appendChild(uPgBar);
+  }
+  if (uPgBar) {
+    uPgBar.innerHTML = renderPaginationBar("users", window._lastUsersPg, "goToUsersPage");
+  }
 }
 
 function updateUserPassword(userId) {
@@ -7756,7 +7998,6 @@ function renderStudentVolunteerSelect(keepOpen = false) {
   const allDirs = getAllVolunteerDirections();
   const selected = modalStudentState.volunteers || [];
   const triggerText = formatVolunteerTriggerLabel(selected, allDirs);
-
   wrap.innerHTML = `
     <div class="cs-trigger" onclick="toggleCustomSelect('stVolunteerWrap'); setTimeout(() => { const i = document.getElementById('volSearchInput'); if(i) i.focus(); }, 30);">
       <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${triggerText}</span>
@@ -8217,6 +8458,13 @@ function updateChatIndicators() {
   if (badgeEl) {
     badgeEl.textContent = totalCount;
     badgeEl.classList.toggle("hidden", totalCount === 0);
+  }
+  const mPulse = document.getElementById("mobileChatPulse");
+  if (mPulse) mPulse.classList.toggle("hidden", myActiveTasks.length === 0);
+  const mBadge = document.getElementById("mobileChatBadge");
+  if (mBadge) {
+    mBadge.textContent = totalCount;
+    mBadge.classList.toggle("hidden", totalCount === 0);
   }
   if (notifCountEl) {
     notifCountEl.textContent = unreadNotifs.length;
