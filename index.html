@@ -20,7 +20,7 @@
       <button type="button" class="lang-btn active" data-lang="ru" onclick="setLanguage('ru')">RU</button>
       <button type="button" class="lang-btn" data-lang="oz" onclick="setLanguage('oz')">ÖZ</button>
     </div>
-    <button type="button" class="icon-circle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="Сменить тему">
+    <button type="button" class="icon-circle-btn" id="themeToggleBtn" onclick="toggleTheme()" data-i18n-title="ttl_theme" title="Сменить тему">
       <svg id="themeIconMoon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/></svg>
       <svg id="themeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></svg>
     </button>
@@ -243,7 +243,7 @@
             <button type="button" class="lang-btn active" data-lang="ru" onclick="setLanguage('ru'); toggleMobileMenu(false);">RU</button>
             <button type="button" class="lang-btn" data-lang="oz" onclick="setLanguage('oz'); toggleMobileMenu(false);">ÖZ</button>
           </div>
-          <button type="button" class="icon-circle-btn" onclick="toggleTheme(); toggleMobileMenu(false);" title="Сменить тему">
+          <button type="button" class="icon-circle-btn" onclick="toggleTheme(); toggleMobileMenu(false);" data-i18n-title="ttl_theme" title="Сменить тему">
             <svg id="mobileThemeIconMoon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3c.132 0 .263 0 .393 0a7.5 7.5 0 0 0 7.92 12.446a9 9 0 1 1 -8.313 -12.454z"/></svg>
             <svg id="mobileThemeIconSun" class="hidden" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 12h1m8 -9v1m8 8h1m-9 8v1m-6.4 -15.4l.7 .7m12.1 -.7l-.7 .7m0 11.4l.7 .7m-12.1 -.7l-.7 .7"/></svg>
           </button>
@@ -728,7 +728,7 @@
         <div class="form-grid-3">
           <div class="form-group">
             <label class="form-label" data-i18n="lbl_st_fio">Ф.И.О. студента *</label>
-            <input type="text" id="stFullName" class="form-input" placeholder="Иванов Иван Иванович" />
+            <input type="text" id="stFullName" class="form-input" data-i18n-placeholder="ph_st_fio" placeholder="Иванов Иван Иванович" />
           </div>
           <div class="form-group">
             <label class="form-label" data-i18n="lbl_st_group">Группа *</label>
@@ -858,7 +858,7 @@
             <div class="form-grid-3">
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" data-i18n="lbl_spouse_name">Ф.И.О. супруга(и)</label>
-                <input type="text" id="stSpouseName" class="form-input" placeholder="Ф.И.О." />
+                <input type="text" id="stSpouseName" class="form-input" data-i18n-placeholder="ph_fio" placeholder="Ф.И.О." />
               </div>
               <div class="form-group" style="margin-bottom:0;">
                 <label class="form-label" data-i18n="lbl_spouse_birth">Дата рождения супруга(и)</label>
@@ -930,7 +930,7 @@
         </div>
         <div class="form-group hidden" id="monCustomCatWrap">
           <label class="form-label" data-i18n="lbl_mon_custom">Укажите категорию вручную</label>
-          <input type="text" id="monCustomCategoryInput" class="form-input" placeholder="Например: Систематические опоздания..." />
+          <input type="text" id="monCustomCategoryInput" class="form-input" data-i18n-placeholder="ph_mon_custom" placeholder="Например: Систематические опоздания..." />
         </div>
         <div class="form-group hidden" id="monPartnerWrap">
           <label class="form-label" data-i18n="lbl_mon_partner">Поиск второй половинки (студент)</label>
@@ -940,11 +940,11 @@
         </div>
         <div class="form-group hidden" id="monDebtWrap">
           <label class="form-label" data-i18n="lbl_mon_debt">Сумма долга по контракту (UZS)</label>
-          <input type="number" id="monDebtAmountInput" class="form-input" min="0" step="50000" placeholder="Например: 3500000" />
+          <input type="number" id="monDebtAmountInput" class="form-input" min="0" step="50000" data-i18n-placeholder="ph_mon_debt" placeholder="Например: 3500000" />
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_mon_note">Первичная запись в дневнике</label>
-          <textarea id="monInitialNote" class="form-textarea" rows="3" placeholder="Опишите ситуацию и проведенную беседу..."></textarea>
+          <textarea id="monInitialNote" class="form-textarea" rows="3" data-i18n-placeholder="ph_mon_note" placeholder="Опишите ситуацию и проведенную беседу..."></textarea>
         </div>
       </div>
       <div class="modal-foot">
@@ -1041,11 +1041,11 @@
         <div class="form-grid-2">
           <div class="form-group">
             <label class="form-label" data-i18n="lbl_rent_address">Адрес съемной квартиры</label>
-            <input type="text" id="rentAddressInput" class="form-input" placeholder="Автоматически из карточки студента..." />
+            <input type="text" id="rentAddressInput" class="form-input" data-i18n-placeholder="ph_auto_student" placeholder="Автоматически из карточки студента..." />
           </div>
           <div class="form-group">
             <label class="form-label" data-i18n="lbl_rent_landlord">Владелец квартиры (Ф.И.О., тел.)</label>
-            <input type="text" id="rentLandlordInput" class="form-input" placeholder="Автоматически из карточки студента..." />
+            <input type="text" id="rentLandlordInput" class="form-input" data-i18n-placeholder="ph_auto_student" placeholder="Автоматически из карточки студента..." />
           </div>
         </div>
 
@@ -1098,7 +1098,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_hemis_bulk">Пакетный импорт списка студентов</label>
-          <textarea id="hemisBulkText" class="form-textarea" rows="5" placeholder="Азизбек Тошпулатов | TR-101 | 1 | М | +998 90 411 22 01&#10;Нилуфар Бобоева | MH-202 | 2 | Ж | +998 90 911 77 07"></textarea>
+          <textarea id="hemisBulkText" class="form-textarea" rows="5" data-i18n-placeholder="ph_hemis_bulk" placeholder="Азизбек Тошпулатов | TR-101 | 1 | М | +998 90 411 22 01&#10;Нилуфар Бобоева | MH-202 | 2 | Ж | +998 90 911 77 07"></textarea>
         </div>
       </div>
       <div class="modal-foot">
@@ -1120,7 +1120,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_ev_title">Название события</label>
-          <input type="text" id="evTitle" class="form-input" placeholder="Кураторский час в группе TR-101" />
+          <input type="text" id="evTitle" class="form-input" data-i18n-placeholder="ph_ev_title" placeholder="Кураторский час в группе TR-101" />
         </div>
         <div class="form-grid-2">
           <div class="form-group">
@@ -1134,7 +1134,7 @@
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_ev_desc">Описание / Место проведения</label>
-          <textarea id="evDesc" class="form-textarea" rows="2" placeholder="Аудитория 204, главный корпус..."></textarea>
+          <textarea id="evDesc" class="form-textarea" rows="2" data-i18n-placeholder="ph_ev_desc" placeholder="Аудитория 204, главный корпус..."></textarea>
         </div>
       </div>
       <div class="modal-foot">
@@ -1156,7 +1156,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_nu_name">Ф.И.О. сотрудника</label>
-          <input type="text" id="nuName" class="form-input" placeholder="А. Каримов" />
+          <input type="text" id="nuName" class="form-input" data-i18n-placeholder="ph_nu_name" placeholder="А. Каримов" />
         </div>
         <div class="form-grid-2">
           <div class="form-group">
@@ -1276,17 +1276,17 @@
     <div class="chat-drawer-header">
       <div class="chat-tabs-bar" id="chatTabsBar"></div>
       <div class="chat-header-controls">
-        <button type="button" class="icon-circle-btn sm" id="chatNewBtn" onclick="openChatCreateModal()" title="Новый чат / Группа">
+        <button type="button" class="icon-circle-btn sm" id="chatNewBtn" onclick="openChatCreateModal()" data-i18n-title="ttl_new_chat" title="Новый чат / Группа">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
         </button>
         <div class="chat-notif-wrap" id="chatNotifWrap">
-          <button type="button" class="icon-circle-btn sm" id="chatNotifBtn" onclick="toggleChatNotifications(event)" title="Уведомления">
+          <button type="button" class="icon-circle-btn sm" id="chatNotifBtn" onclick="toggleChatNotifications(event)" data-i18n-title="ttl_notifs" title="Уведомления">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6"/><path d="M9 17v1a3 3 0 0 0 6 0v-1"/></svg>
             <span class="chat-notif-count hidden" id="chatNotifCount">0</span>
           </button>
           <div class="chat-notif-dropdown hidden" id="chatNotifDropdown" onclick="event.stopPropagation()"></div>
         </div>
-        <button type="button" class="icon-circle-btn sm" onclick="toggleChatDrawer(false)" title="Закрыть">
+        <button type="button" class="icon-circle-btn sm" onclick="toggleChatDrawer(false)" data-i18n-title="ttl_close" title="Закрыть">
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6l-12 12"/><path d="M6 6l12 12"/></svg>
         </button>
       </div>
@@ -1302,7 +1302,7 @@
       <div class="chat-pending-attach hidden" id="chatPendingAttach"></div>
       <div class="chat-composer-row">
         <div class="chat-attach-wrap" id="chatAttachWrap">
-          <button type="button" class="chat-tool-btn" onclick="toggleChatAttachMenu(event)" title="Прикрепить">
+          <button type="button" class="chat-tool-btn" onclick="toggleChatAttachMenu(event)" data-i18n-title="ttl_attach" title="Прикрепить">
             <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 7l-6.5 6.5a1.5 1.5 0 0 0 3 3l6.5 -6.5a3 3 0 0 0 -6 -6l-6.5 6.5a4.5 4.5 0 0 0 9 9l6.5 -6.5"/></svg>
           </button>
           <div class="chat-attach-menu hidden" id="chatAttachMenu" onclick="event.stopPropagation()">
@@ -1326,13 +1326,13 @@
         <input type="text" id="chatMessageInput" class="chat-text-input" data-i18n-placeholder="chat_ph_msg" placeholder="Сообщение..." oninput="handleChatMessageInput(event)" onkeydown="handleChatMessageKeydown(event)" />
 
         <div class="chat-emoji-wrap" id="chatEmojiWrap">
-          <button type="button" class="chat-tool-btn" onclick="toggleChatEmojiPicker(event)" title="Эмодзи">
+          <button type="button" class="chat-tool-btn" onclick="toggleChatEmojiPicker(event)" data-i18n-title="ttl_emoji" title="Эмодзи">
             <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 10l.01 0"/><path d="M15 10l.01 0"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>
           </button>
           <div class="chat-emoji-popover hidden" id="chatEmojiPopover" onclick="event.stopPropagation()"></div>
         </div>
 
-        <button type="button" class="chat-send-btn" onclick="sendChatMessage()" title="Отправить">
+        <button type="button" class="chat-send-btn" onclick="sendChatMessage()" data-i18n-title="ttl_send" title="Отправить">
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l11 -11"/><path d="M21 3l-6.5 18a.55 .55 0 0 1 -1 0l-3.5 -7l-7 -3.5a.55 .55 0 0 1 0 -1l18 -6.5"/></svg>
         </button>
       </div>
@@ -1355,11 +1355,11 @@
         </div>
         <div class="form-group hidden" id="chatGroupNameWrap">
           <label class="form-label" data-i18n="chat_lbl_group_name">Название группы</label>
-          <input type="text" id="chatNewGroupName" class="form-input" placeholder="Например: Тюторы 1 курса" />
+          <input type="text" id="chatNewGroupName" class="form-input" data-i18n-placeholder="ph_chat_group_name" placeholder="Например: Тюторы 1 курса" />
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="chat_lbl_members">Выберите собеседников</label>
-          <input type="text" id="chatMemberSearch" class="form-input mb-8" placeholder="Поиск пользователя..." oninput="renderChatCreateMembersList()" />
+          <input type="text" id="chatMemberSearch" class="form-input mb-8" data-i18n-placeholder="ph_chat_member_search" placeholder="Поиск пользователя..." oninput="renderChatCreateMembersList()" />
           <div class="chat-members-list" id="chatCreateMembersList"></div>
         </div>
       </div>
@@ -1382,7 +1382,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" data-i18n="task_lbl_title">Наименование задачи *</label>
-          <input type="text" id="taskTitleInput" class="form-input" placeholder="Например: Проверить посещаемость в общежитии" />
+          <input type="text" id="taskTitleInput" class="form-input" data-i18n-placeholder="ph_task_title" placeholder="Например: Проверить посещаемость в общежитии" />
         </div>
         <div class="form-grid-2">
           <div class="form-group">
@@ -1401,7 +1401,7 @@
         <div class="form-group">
           <label class="form-label" data-i18n="task_lbl_todos">Пункты задачи (To-Do)</label>
           <div class="todo-input-row">
-            <input type="text" id="taskTodoDraftInput" class="form-input" placeholder="Добавить пункт..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addDraftTaskTodo();}" />
+            <input type="text" id="taskTodoDraftInput" class="form-input" data-i18n-placeholder="ph_task_todo" placeholder="Добавить пункт..." onkeydown="if(event.key==='Enter'){event.preventDefault(); addDraftTaskTodo();}" />
             <button type="button" class="btn-export" onclick="addDraftTaskTodo()">+</button>
           </div>
           <div id="taskDraftTodosList" class="todo-list mt-10"></div>
@@ -1426,7 +1426,7 @@
       <div class="modal-body">
         <div class="form-group">
           <label class="form-label" data-i18n="poll_lbl_question">Вопрос *</label>
-          <input type="text" id="pollQuestionInput" class="form-input" placeholder="Задайте вопрос..." />
+          <input type="text" id="pollQuestionInput" class="form-input" data-i18n-placeholder="ph_poll_q" placeholder="Задайте вопрос..." />
         </div>
         <div class="form-group">
           <label class="form-label" data-i18n="poll_lbl_options">Варианты ответа</label>
