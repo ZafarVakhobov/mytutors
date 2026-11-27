@@ -9962,10 +9962,10 @@ function playIncomingChatSound() {
     const playTone = (freq, startOffset, duration, peakGain) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = "sine";
+      osc.type = "triangle";
       osc.frequency.setValueAtTime(freq, now + startOffset);
       gain.gain.setValueAtTime(0.0001, now + startOffset);
-      gain.gain.exponentialRampToValueAtTime(peakGain, now + startOffset + 0.015);
+      gain.gain.exponentialRampToValueAtTime(peakGain, now + startOffset + 0.012);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -9973,9 +9973,9 @@ function playIncomingChatSound() {
       osc.stop(now + startOffset + duration + 0.02);
     };
 
-    // Мягкий двухтональный сигнал (C6 -> E6)
-    playTone(1046.5, 0, 0.14, 0.06);
-    playTone(1318.5, 0.09, 0.18, 0.05);
+    // Чёткий и заметный двухтональный сигнал (A5 -> E6)
+    playTone(880, 0, 0.16, 0.22);
+    playTone(1318.5, 0.1, 0.24, 0.2);
   } catch (e) {}
 }
 
