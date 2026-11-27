@@ -5985,6 +5985,7 @@ let chatCreateMode = "direct";
 let chatCreateSelectedIds = [];
 let chatPendingAttachments = { images: [], files: [] };
 
+let editingTaskId = null;
 let taskDraftColor = "#ef4444";
 let taskDraftAssignees = [];
 let taskDraftTodos = [];
@@ -6256,9 +6257,14 @@ function renderChatDrawerBody() {
                 ${tk.deadline ? `<div class="st-meta" style="color:var(--accent); font-weight:600;">${t("Дедлайн", "Muddat")}: ${tk.deadline.replace('T', ' ')}</div>` : ""}
               </div>
               ${hasAdminPrivileges() || tk.authorId === currentUser.id ? `
-                <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTaskById('${tk.id}', this)" title="${t("Удалить задание", "Vazifani öçiriş")}">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-                </button>
+                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                  <button type="button" class="icon-circle-btn sm" onclick="openChatTaskModal('${tk.id}')" title="${t("Редактировать задание", "Vazifani tahrirlaş")}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1"/><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z"/><path d="M16 5l3 3"/></svg>
+                  </button>
+                  <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTaskById('${tk.id}', this)" title="${t("Удалить задание", "Vazifani öçiriş")}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                  </button>
+                </div>
               ` : ""}
             </div>
             ${(tk.todos || []).length ? `
@@ -6476,15 +6482,33 @@ function deleteChatById(chatId, btnEl) {
 }
 
 // --- Задания (только админ / частичный админ) ---
-function openChatTaskModal() {
-  if (!hasAdminPrivileges()) return;
-  taskDraftColor = "#ef4444";
-  taskDraftAssignees = [];
-  taskDraftTodos = [];
+function openChatTaskModal(taskId = null) {
+  const existing = taskId ? (appState.tasks || []).find(tk => tk.id === taskId) : null;
+  if (!existing && !hasAdminPrivileges()) return;
+  if (existing && !hasAdminPrivileges() && existing.authorId !== currentUser.id) return;
+
+  editingTaskId = existing ? existing.id : null;
+  taskDraftColor = existing && existing.color ? existing.color : "#ef4444";
+  taskDraftAssignees = existing && Array.isArray(existing.assignees) ? [...existing.assignees] : [];
+  taskDraftTodos = existing && Array.isArray(existing.todos) ? JSON.parse(JSON.stringify(existing.todos)) : [];
   taskAssigneeSearch = "";
 
-  document.getElementById("taskTitleInput").value = "";
-  document.getElementById("taskDeadlineInput").value = "";
+  const modalEl = document.getElementById("chatTaskModal");
+  const titleEl = modalEl ? modalEl.querySelector(".modal-title") : null;
+  const submitBtn = modalEl ? modalEl.querySelector(".modal-foot .btn-orange") : null;
+  if (titleEl) {
+    titleEl.textContent = existing
+      ? t("Редактирование задания", "Vazifani tahrirlaş")
+      : t("Новое задание", "Yangi vazifa");
+  }
+  if (submitBtn) {
+    submitBtn.textContent = existing
+      ? t("Сохранить изменения", "Özgarishlarni saqlaş")
+      : t("Назначить задание", "Vazifa biriktiriş");
+  }
+
+  document.getElementById("taskTitleInput").value = existing ? (existing.title || "") : "";
+  document.getElementById("taskDeadlineInput").value = existing ? (existing.deadline || "") : "";
   document.getElementById("taskTodoDraftInput").value = "";
 
   const colorOpts = [
@@ -6569,12 +6593,33 @@ function saveNewTask() {
     return;
   }
 
+  const deadlineVal = document.getElementById("taskDeadlineInput").value || "";
+
+  if (editingTaskId) {
+    const existing = (appState.tasks || []).find(tk => tk.id === editingTaskId);
+    if (existing) {
+      existing.title = title;
+      existing.assignees = [...taskDraftAssignees];
+      existing.deadline = deadlineVal;
+      existing.color = taskDraftColor;
+      existing.todos = JSON.parse(JSON.stringify(taskDraftTodos));
+      addSystemNotification(taskDraftAssignees, `${currentUser.name} ${t("обновил(а) задание", "vazifani yangiladi")}: «${title}»`, "task", existing.id);
+    }
+    editingTaskId = null;
+    saveState(true);
+    syncChatHubToCloud();
+    closeModal("chatTaskModal");
+    renderChatDrawer();
+    showToast(t("Задание обновлено", "Vazifa yangilandi"));
+    return;
+  }
+
   const newTask = {
     id: `task_${Date.now()}`,
     title,
     authorId: currentUser.id,
     assignees: [...taskDraftAssignees],
-    deadline: document.getElementById("taskDeadlineInput").value || "",
+    deadline: deadlineVal,
     color: taskDraftColor,
     todos: JSON.parse(JSON.stringify(taskDraftTodos)),
     status: "active",
