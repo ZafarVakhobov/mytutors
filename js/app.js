@@ -34,6 +34,17 @@ const I18N = {
     dist_study_form: "По форме обучения",
     dist_volunteers: "По волонтерству",
     dist_region: "По регионам",
+    dist_marital: "Семейный статус",
+    upload_st_photo: "Загрузить фото студента",
+    remove_photo: "Удалить фото",
+    st_photo_hint: "JPG / PNG • Сохраняется в карточке студента",
+    sec_marital: "СЕМЕЙНЫЙ СТАТУС",
+    lbl_marital_status: "Семейное положение",
+    lbl_spouse_name: "Ф.И.О. супруга(и)",
+    lbl_spouse_birth: "Дата рождения супруга(и)",
+    lbl_children_count: "Количество детей",
+    lbl_mon_partner: "Поиск второй половинки (студент)",
+    ph_mon_partner_search: "Введите Ф.И.О. или группу студента...",
     students_title: "Студенты и HEMIS",
     btn_sync_hemis: "Синхронизировать с tyutor.hemis.uz",
     btn_add_student: "Добавить студента",
@@ -214,6 +225,17 @@ const I18N = {
     dist_study_form: "Ta’lim şakli böyiça",
     dist_volunteers: "Volontyorlik böyiça",
     dist_region: "Hududlar böyiça",
+    dist_marital: "Oilaviy holati",
+    upload_st_photo: "Talaba rasmini yuklaş",
+    remove_photo: "Rasmni öçiriş",
+    st_photo_hint: "JPG / PNG • Talaba kartasida saqlanadi",
+    sec_marital: "OILAVIY HOLATI",
+    lbl_marital_status: "Oilaviy holati",
+    lbl_spouse_name: "Turmuş örtoğining F.I.Ş.",
+    lbl_spouse_birth: "Turmuş örtoğining tuğilgan sanasi",
+    lbl_children_count: "Farzandlar soni",
+    lbl_mon_partner: "Ikkinçi yarmini qidiriş (talaba)",
+    ph_mon_partner_search: "Talabaning F.I.Ş. yoki guruhini kiriting...",
     students_title: "Talabalar va HEMIS",
     btn_sync_hemis: "tyutor.hemis.uz bilan sinxronlaş",
     btn_add_student: "Talaba qöşiş",
@@ -601,6 +623,7 @@ const MONITORING_CATEGORIES = [
   { value: "Хиджаб", ru: "Хиджаб", oz: "Römolli" },
   { value: "Борода", ru: "Борода", oz: "Soqol" },
   { value: "Прогулы", ru: "Прогулы", oz: "Dars qoldiriş" },
+  { value: "В отношениях с...", ru: "В отношениях с...", oz: "Munosabatda...", adminOnly: true },
   { value: "Другое...", ru: "Другое...", oz: "Boşqa..." }
 ];
 
@@ -1559,6 +1582,26 @@ function renderCharts() {
       "#06b6d4", "#ec4899", "#84cc16", "#6366f1", "#14b8a6",
       "#f97316", "#a855f7", "#0ea5e9", "#eab308", "#ef4444", "#94a3b8"
     ];
+  } else if (distChartMode === "marital") {
+    const nonDivorced = students.filter(s => s.maritalStatus !== "divorced");
+    const marriedCount = nonDivorced.filter(s => s.maritalStatus === "married").length;
+    const singleCount = nonDivorced.filter(s => s.maritalStatus !== "married").length;
+
+    if (dashFilters.gender === "М") {
+      labels = currentLang === "oz"
+        ? ["Uylanganlar", "Böydoqlar"]
+        : ["Женаты", "Холосты"];
+    } else if (dashFilters.gender === "Ж") {
+      labels = currentLang === "oz"
+        ? ["Turmuşga çiqqanlar", "Turmuşga çiqmaganlar"]
+        : ["Замужем", "Не замужем"];
+    } else {
+      labels = currentLang === "oz"
+        ? ["Oilalilar", "Turmuş qurmaganlar"]
+        : ["Семейные", "Холостые"];
+    }
+    series = [marriedCount, singleCount];
+    colors = ["#ff6b3d", "#2563eb"];
   }
 
   if (distChartInstance) distChartInstance.destroy();
@@ -2379,7 +2422,9 @@ let modalStudentState = {
   housingType: "dorm",
   volunteers: [],
   selectedSocial: [],
-  employed: "no"
+  employed: "no",
+  maritalStatus: "single",
+  photo: ""
 };
 
 function getGroupsForTutor(tutorId) {
@@ -2451,8 +2496,11 @@ function openStudentModal(studentId = null, prefillName = "") {
     region: st && st.region ? st.region : "",
     housingType: st ? st.housingType : "dorm",
     volunteers: st ? getStudentVolunteers(st) : [],
-    employed: st && st.employed ? "yes" : "no"
+    employed: st && st.employed ? "yes" : "no",
+    maritalStatus: st && st.maritalStatus ? st.maritalStatus : "single",
+    photo: st && st.photo ? st.photo : ""
   };
+  renderStudentPhotoPreview();
 
   renderStudentGroupSelect(modalStudentState.tutorId, modalStudentState.group);
 
@@ -2475,6 +2523,7 @@ function openStudentModal(studentId = null, prefillName = "") {
   const onGenderChange = (v) => {
     modalStudentState.gender = v;
     renderCustomSelect("stGenderSelectWrap", genderOptions, v, onGenderChange);
+    renderMaritalStatusSelector();
   };
   renderCustomSelect("stGenderSelectWrap", genderOptions, modalStudentState.gender, onGenderChange);
 
@@ -2526,6 +2575,7 @@ function openStudentModal(studentId = null, prefillName = "") {
   renderStudentRegionSelect();
 
   renderEmploymentSelector(st);
+  renderMaritalStatusSelector(st);
 
   // Родители и родственники
   tempFamilyMembers = st && Array.isArray(st.family) && st.family.length
@@ -2579,6 +2629,86 @@ function renderEmploymentSelector(st = null) {
   } else {
     orgBox.innerHTML = "";
     extraBox.classList.add("hidden");
+  }
+}
+
+
+function renderStudentPhotoPreview() {
+  const prev = document.getElementById("stPhotoPreview");
+  const removeBtn = document.getElementById("stPhotoRemoveBtn");
+  if (!prev) return;
+  const nameVal = (document.getElementById("stFullName") ? document.getElementById("stFullName").value.trim() : "") || "ST";
+  const initials = nameVal.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase() || "ST";
+  if (modalStudentState.photo) {
+    prev.innerHTML = `<img src="${modalStudentState.photo}" alt="Student" style="cursor:zoom-in;" onclick="openLightbox('${modalStudentState.photo}')" />`;
+    if (removeBtn) removeBtn.classList.remove("hidden");
+  } else {
+    prev.innerHTML = initials;
+    if (removeBtn) removeBtn.classList.add("hidden");
+  }
+}
+
+function handleStudentPhotoUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    compressAvatarDataUrl(reader.result, (compressed) => {
+      modalStudentState.photo = compressed;
+      renderStudentPhotoPreview();
+      showToast(t("Фото студента загружено", "Talaba rasmi yuklandi"));
+    });
+  };
+  reader.readAsDataURL(file);
+  e.target.value = "";
+}
+
+function removeStudentPhoto() {
+  modalStudentState.photo = "";
+  renderStudentPhotoPreview();
+}
+
+function getMaritalStatusOptions(gender) {
+  if (gender === "Ж") {
+    return [
+      { value: "single", label: t("Не замужем", "Turmuşga çiqmagan") },
+      { value: "married", label: t("Замужем", "Turmuşga çiqqan") },
+      { value: "divorced", label: t("Разведена", "Ajraşgan") }
+    ];
+  }
+  return [
+    { value: "single", label: t("Холост", "Böydoq") },
+    { value: "married", label: t("Женат", "Uylangan") },
+    { value: "divorced", label: t("Разведен", "Ajraşgan") }
+  ];
+}
+
+function renderMaritalStatusSelector(st = null) {
+  const opts = getMaritalStatusOptions(modalStudentState.gender);
+  renderCustomSelect("stMaritalStatusWrap", opts, modalStudentState.maritalStatus || "single", (val) => {
+    modalStudentState.maritalStatus = val;
+    renderMaritalStatusSelector(st);
+  });
+
+  const extraBox = document.getElementById("maritalExtraFields");
+  if (!extraBox) return;
+  const isMarried = modalStudentState.maritalStatus === "married";
+  extraBox.classList.toggle("hidden", !isMarried);
+
+  if (st) {
+    const spName = document.getElementById("stSpouseName");
+    const spBirth = document.getElementById("stSpouseBirth");
+    const chCount = document.getElementById("stChildrenCount");
+    if (spName) spName.value = st.spouseName || "";
+    if (spBirth) spBirth.value = st.spouseBirth || "";
+    if (chCount) chCount.value = st.childrenCount !== undefined && st.childrenCount !== "" ? st.childrenCount : "";
+  } else if (!isMarried) {
+    const spName = document.getElementById("stSpouseName");
+    const spBirth = document.getElementById("stSpouseBirth");
+    const chCount = document.getElementById("stChildrenCount");
+    if (spName && !spName.value) spName.value = "";
+    if (spBirth && !spBirth.value) spBirth.value = "";
+    if (chCount && !chCount.value) chCount.value = "";
   }
 }
 
@@ -2747,6 +2877,11 @@ function saveStudent() {
     empTimeFrom: isEmployed ? document.getElementById("stEmpTimeFrom").value : "",
     empTimeTo: isEmployed ? document.getElementById("stEmpTimeTo").value : "",
     empSalary: isEmployed ? document.getElementById("stEmpSalary").value.trim() : "",
+    photo: modalStudentState.photo || "",
+    maritalStatus: modalStudentState.maritalStatus || "single",
+    spouseName: modalStudentState.maritalStatus === "married" && document.getElementById("stSpouseName") ? document.getElementById("stSpouseName").value.trim() : "",
+    spouseBirth: modalStudentState.maritalStatus === "married" && document.getElementById("stSpouseBirth") ? document.getElementById("stSpouseBirth").value : "",
+    childrenCount: modalStudentState.maritalStatus === "married" && document.getElementById("stChildrenCount") ? document.getElementById("stChildrenCount").value : "",
     family: tempFamilyMembers,
     social,
     volunteer: [...new Set(modalStudentState.volunteers || [])]
@@ -4356,6 +4491,13 @@ function renderMonitoringCardsList() {
               </div>
             </div>
 
+            ${rec.partnerName ? `
+              <div class="mon-partner-card mt-10">
+                <div class="mon-partner-card-title">${t("Вторая половинка", "Ikkinçi yarmi")}: ${rec.partnerName}</div>
+                <div class="st-meta">${t("Курс", "Kurs")}: <strong>${rec.partnerCourse || "—"}</strong> • ${t("Группа", "Guruh")}: <strong>${rec.partnerGroup || "—"}</strong> • ${t("Тютор", "Tyutor")}: <strong>${rec.partnerTutorName || "—"}</strong></div>
+              </div>
+            ` : ""}
+
             <div class="diary-entries">
               ${(rec.entries || []).map(ent => `
                 <div class="diary-entry-item ${ent.type || ''}">
@@ -4483,6 +4625,7 @@ function renderParentMeetingsCardsList() {
 
 let monModalStudentId = "";
 let monModalCategory = "Курение";
+let monSelectedPartnerId = "";
 let monFilterState = { search: "", tutor: "all", group: "all" };
 let pmFilterState = { search: "", tutor: "all", group: "all" };
 let pmSelectedParentWho = "";
@@ -4689,17 +4832,93 @@ function openMonitoringModal() {
   if (searchInp) searchInp.value = "";
   renderMonStudentFiltersAndList();
 
-  const catOpts = MONITORING_CATEGORIES.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  monSelectedPartnerId = "";
+  const availableMonCats = MONITORING_CATEGORIES.filter(c => !c.adminOnly || hasAdminPrivileges());
+  const catOpts = availableMonCats.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
   const onMonCatChange = (v) => {
     monModalCategory = v;
     document.getElementById("monCustomCatWrap").classList.toggle("hidden", v !== "Другое...");
+    const partnerWrap = document.getElementById("monPartnerWrap");
+    if (partnerWrap) {
+      partnerWrap.classList.toggle("hidden", v !== "В отношениях с...");
+      if (v === "В отношениях с...") {
+        renderMonPartnerSearchResults();
+      }
+    }
     renderCustomSelect("monCategorySelectWrap", catOpts, v, onMonCatChange);
   };
   renderCustomSelect("monCategorySelectWrap", catOpts, monModalCategory, onMonCatChange);
 
   document.getElementById("monCustomCatWrap").classList.add("hidden");
+  const partnerWrap = document.getElementById("monPartnerWrap");
+  if (partnerWrap) partnerWrap.classList.add("hidden");
+  const pSearch = document.getElementById("monPartnerSearchInput");
+  if (pSearch) pSearch.value = "";
+  const pRes = document.getElementById("monPartnerResultsList");
+  if (pRes) { pRes.innerHTML = ""; pRes.classList.add("hidden"); }
+  const pCard = document.getElementById("monPartnerInfoCard");
+  if (pCard) { pCard.innerHTML = ""; pCard.classList.add("hidden"); }
+
   document.getElementById("monInitialNote").value = "";
   document.getElementById("monitoringModal").classList.remove("hidden");
+}
+
+function renderMonPartnerSearchResults() {
+  const inp = document.getElementById("monPartnerSearchInput");
+  const listEl = document.getElementById("monPartnerResultsList");
+  if (!inp || !listEl) return;
+
+  const q = inp.value.trim().toLowerCase();
+  if (!q) {
+    listEl.innerHTML = "";
+    listEl.classList.add("hidden");
+    return;
+  }
+
+  const matches = (appState.students || [])
+    .filter(s => s.id !== monModalStudentId && (
+      (s.name || "").toLowerCase().includes(q) ||
+      (s.group || "").toLowerCase().includes(q)
+    ))
+    .slice(0, 8);
+
+  listEl.classList.remove("hidden");
+  if (!matches.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Студент не найден", "Talaba topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = matches.map(s => {
+    const tr = appState.users.find(u => u.id === s.tutorId);
+    return `
+      <div class="mon-partner-opt" onclick="selectMonPartner('${s.id}')">
+        <div style="font-weight:700; font-size:13px;">${s.name}</div>
+        <div class="st-meta">${s.course} ${t("курс", "kurs")} • ${s.group} • ${t("Тютор", "Tyutor")}: ${tr ? tr.name : "—"}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function selectMonPartner(partnerId) {
+  const partner = (appState.students || []).find(s => s.id === partnerId);
+  if (!partner) return;
+  monSelectedPartnerId = partner.id;
+  const tr = appState.users.find(u => u.id === partner.tutorId);
+
+  const inp = document.getElementById("monPartnerSearchInput");
+  if (inp) inp.value = partner.name;
+  const listEl = document.getElementById("monPartnerResultsList");
+  if (listEl) listEl.classList.add("hidden");
+
+  const card = document.getElementById("monPartnerInfoCard");
+  if (card) {
+    card.classList.remove("hidden");
+    card.innerHTML = `
+      <div class="mon-partner-card-title">${partner.name}</div>
+      <div class="st-meta">${t("Курс", "Kurs")}: <strong>${partner.course}</strong> • ${t("Группа", "Guruh")}: <strong>${partner.group}</strong></div>
+      <div class="st-meta">${t("Прикрепленный тютор", "Biriktirilgan tyutor")}: <strong>${tr ? tr.name : "—"}</strong></div>
+    `;
+  }
 }
 
 function saveMonitoringRecord() {
@@ -4711,9 +4930,25 @@ function saveMonitoringRecord() {
     : monModalCategory;
   const note = document.getElementById("monInitialNote").value.trim() || t("Поставлен(а) на индивидуальный мониторинг.", "Individual monitoringga qöyildi.");
 
+  let partnerPayload = {};
+  if (finalCat === "В отношениях с..." && monSelectedPartnerId) {
+    const partner = (appState.students || []).find(s => s.id === monSelectedPartnerId);
+    if (partner) {
+      const pTutor = appState.users.find(u => u.id === partner.tutorId);
+      partnerPayload = {
+        partnerId: partner.id,
+        partnerName: partner.name,
+        partnerCourse: partner.course,
+        partnerGroup: partner.group,
+        partnerTutorName: pTutor ? pTutor.name : "—"
+      };
+    }
+  }
+
   const existing = appState.monitoring.find(m => m.studentId === st.id && m.category === finalCat);
   if (existing) {
     existing.status = "active";
+    if (partnerPayload.partnerId) Object.assign(existing, partnerPayload);
     existing.entries.push({
       date: new Date().toISOString().slice(0, 10),
       type: "reopened",
@@ -4726,6 +4961,7 @@ function saveMonitoringRecord() {
       studentName: st.name,
       tutorId: st.tutorId,
       category: finalCat,
+      ...partnerPayload,
       status: "active",
       entries: [{ date: new Date().toISOString().slice(0, 10), type: "normal", text: note }]
     });
