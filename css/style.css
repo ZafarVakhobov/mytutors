@@ -4338,3 +4338,45 @@ body.dark .mobile-nav-item.active {
     padding: 24px 18px;
   }
 }
+
+
+/* ==================== КНОПКИ СКАЧИВАНИЯ PDF-СПРАВОЧНИКОВ В МЕНЮ ПРОФИЛЯ ==================== */
+.ud-handbooks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ud-handbook-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.ud-handbook-btn svg {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.ud-handbook-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ud-handbook-btn:hover {
+  background: rgba(255, 107, 61, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
