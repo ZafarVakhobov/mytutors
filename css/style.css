@@ -2277,3 +2277,14 @@ body.dark ::-webkit-scrollbar-thumb:hover {
     flex-wrap: wrap;
   }
 }
+
+.phone-tg-link {
+  color: var(--blue);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.phone-tg-link:hover {
+  text-decoration: underline;
+}
