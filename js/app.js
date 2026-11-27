@@ -49,6 +49,7 @@ const I18N = {
     tg_add_post: "Добавить пост по ссылке",
     btn_load_post: "Загрузить пост",
     lbl_tg_author: "Автор поста",
+    lbl_tg_groups: "Группы (теги)",
     lbl_tg_collab: "Совместно с (коллаборация)",
     tg_edit_modal_title: "Редактирование поста Telegram",
     lbl_tg_url: "Ссылка на пост",
@@ -147,6 +148,7 @@ const I18N = {
     lbl_nu_login: "Логин",
     lbl_nu_pass: "Пароль",
     lbl_nu_role: "Роль",
+    lbl_nu_course: "Курс",
     lbl_nu_groups: "Закрепленные группы",
     btn_create_cabinet: "Создать кабинет",
     lbl_partial_admin: "Частичные права администратора",
@@ -201,6 +203,7 @@ const I18N = {
     tg_add_post: "Havola orqali post qöşiş",
     btn_load_post: "Postni yuklaş",
     lbl_tg_author: "Post muallifi",
+    lbl_tg_groups: "Guruhlar (teglar)",
     lbl_tg_collab: "Hamkorlikda (kollaboratsiya)",
     tg_edit_modal_title: "Telegram postini tahrirlaş",
     lbl_tg_url: "Post havolasi",
@@ -299,6 +302,7 @@ const I18N = {
     lbl_nu_login: "Login",
     lbl_nu_pass: "Parol",
     lbl_nu_role: "Rol",
+    lbl_nu_course: "Kurs",
     lbl_nu_groups: "Biriktirilgan guruhlar",
     btn_create_cabinet: "Kabinet oçiş",
     lbl_partial_admin: "Qisman administrator huquqlari",
@@ -1203,14 +1207,27 @@ function renderDashboard() {
       .concat(tutors.map(tr => ({ value: tr.id, label: tr.name })));
     renderCustomSelect("filterTutorWrap", tutorOpts, dashFilters.tutor, (val) => {
       dashFilters.tutor = val;
+      if (val === "all") {
+        dashFilters.course = "all";
+      } else {
+        const trObj = appState.users.find(u => u.id === val);
+        dashFilters.course = (trObj && trObj.course) ? String(trObj.course) : "all";
+      }
       renderDashboard();
     });
   }
 
-  // Умный фильтр курсов: у тютора отображается только курс его студентов (или реальные курсы его студентов),
-  // а у админа и руководства — полноценное меню со всеми курсами (1–4)
+  // Умный фильтр курсов: учитывает курс, прикрепленный к профилю тютора
   let courseOpts = [];
-  if (isTutorOnly()) {
+  const activeTutorForCourse = isTutorOnly()
+    ? currentUser
+    : (dashFilters.tutor !== "all" ? appState.users.find(u => u.id === dashFilters.tutor) : null);
+
+  if (activeTutorForCourse && activeTutorForCourse.course) {
+    const tc = String(activeTutorForCourse.course);
+    dashFilters.course = tc;
+    courseOpts = [{ value: tc, label: `${tc} ${t("курс", "kurs")}` }];
+  } else if (isTutorOnly()) {
     const tutorCourses = [...new Set(scopedStudents.map(s => String(s.course)).filter(Boolean))].sort();
     if (tutorCourses.length === 1) {
       dashFilters.course = tutorCourses[0];
@@ -1251,14 +1268,11 @@ function renderDashboard() {
 
   let uniqueGroups = [];
   if (isTutorOnly()) {
-    // Тютор видит только свои группы из раздела «Пользователи»
     uniqueGroups = [...new Set(parseUserGroups(currentUser))];
   } else if (dashFilters.tutor !== "all") {
-    // При выборе конкретного тютора — только группы этого тютора
     const selectedTutor = appState.users.find(u => u.id === dashFilters.tutor);
     uniqueGroups = [...new Set(parseUserGroups(selectedTutor))];
   } else {
-    // При «Все тюторы» — все группы всех тюторов
     const allSet = new Set();
     appState.users.filter(u => u.role === "tutor").forEach(tr => {
       parseUserGroups(tr).forEach(g => allSet.add(g));
@@ -1266,7 +1280,6 @@ function renderDashboard() {
     uniqueGroups = [...allSet].sort((a, b) => a.localeCompare(b));
   }
 
-  // Автосброс выбранной группы, если её нет у нового выбранного тютора
   if (dashFilters.group !== "all" && !uniqueGroups.includes(dashFilters.group)) {
     dashFilters.group = "all";
   }
@@ -2048,10 +2061,14 @@ function openStudentModal(studentId = null) {
   if (hemisEl) hemisEl.value = st && st.hemisId ? st.hemisId : "";
 
   const defaultTutorId = st ? st.tutorId : (isTutorOnly() ? currentUser.id : "tutor1");
+  const defaultTutorObj = appState.users.find(u => u.id === defaultTutorId);
+  const initialCourse = st
+    ? String(st.course)
+    : (defaultTutorObj && defaultTutorObj.course ? String(defaultTutorObj.course) : "1");
 
   modalStudentState = {
     group: st ? (st.group || "") : "",
-    course: st ? String(st.course) : "1",
+    course: initialCourse,
     gender: st ? st.gender : "М",
     tutorId: defaultTutorId,
     studyForm: st && st.studyForm ? st.studyForm : "contract",
@@ -2100,6 +2117,11 @@ function openStudentModal(studentId = null) {
       modalStudentState.tutorId = v;
       renderCustomSelect("stTutorSelectWrap", tutorOpts, v, onTutorChange);
       renderStudentGroupSelect(v, "");
+      const pickedTutor = appState.users.find(u => u.id === v);
+      if (pickedTutor && pickedTutor.course) {
+        modalStudentState.course = String(pickedTutor.course);
+        renderCustomSelect("stCourseSelectWrap", courseOptions, modalStudentState.course, onCourseChange);
+      }
     };
     renderCustomSelect("stTutorSelectWrap", tutorOpts, modalStudentState.tutorId, onTutorChange);
   } else {
@@ -2446,6 +2468,8 @@ let reportTagSearchQuery = "";
 
 let selectedPostAuthorId = "";
 let tgAuthorSearchQuery = "";
+let selectedPostGroups = [];
+let tgGroupsSearchQuery = "";
 let selectedPostCollabs = []; // [{ type: "user", id, name } | { type: "custom", name }]
 let tgCollabSearchQuery = "";
 let activeTgAuthorFilter = "all";
@@ -2454,10 +2478,106 @@ let editTgState = {
   id: "",
   authorId: "",
   authorSearch: "",
+  groups: [],
+  groupsSearch: "",
   collaborators: [],
   collabSearch: "",
   tags: []
 };
+
+function getAvailableGroupsForPost(authorId, collaborators) {
+  const invalid = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+  const groupSet = new Set();
+  const addUserGroups = (uid) => {
+    const u = (appState.users || []).find(x => x.id === uid);
+    if (!u || u.role !== "tutor" || !u.groups) return;
+    String(u.groups)
+      .split(",")
+      .map(g => g.trim())
+      .filter(g => g && !invalid.has(g))
+      .forEach(g => groupSet.add(g));
+  };
+
+  if (authorId) addUserGroups(authorId);
+  (collaborators || []).forEach(c => {
+    if (c && c.type === "user" && c.id) addUserGroups(c.id);
+  });
+  return [...groupSet];
+}
+
+function formatTgGroupsTrigger(selectedArr) {
+  if (!selectedArr || !selectedArr.length) {
+    return t("Выберите группы...", "Guruhlarni tanlang...");
+  }
+  if (selectedArr.length <= 2) return selectedArr.join(", ");
+  return `${selectedArr[0]}, ${selectedArr[1]} (+${selectedArr.length - 2})`;
+}
+
+function renderTgGroupsSelect(keepOpen = false) {
+  const fieldWrap = document.getElementById("tgGroupsFieldWrap");
+  const grid = document.getElementById("tgMetaGrid");
+  const wrap = document.getElementById("tgGroupsSelectWrap");
+  if (!fieldWrap || !grid || !wrap) return;
+
+  const available = getAvailableGroupsForPost(getEffectiveNewPostAuthorId(), selectedPostCollabs);
+  selectedPostGroups = selectedPostGroups.filter(g => available.includes(g));
+
+  if (!available.length) {
+    fieldWrap.classList.add("hidden");
+    grid.classList.remove("has-groups");
+    return;
+  }
+
+  fieldWrap.classList.remove("hidden");
+  grid.classList.add("has-groups");
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('tgGroupsSelectWrap'); setTimeout(() => { const i = document.getElementById('tgGroupsSearchInput'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${formatTgGroupsTrigger(selectedPostGroups)}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="tgGroupsSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск группы...", "Guruh qidiriş...")}" value="${tgGroupsSearchQuery}" oninput="renderTgGroupsOptionsList()" />
+      <div id="tgGroupsOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+
+  if (wasOpen) wrap.classList.add("open");
+  renderTgGroupsOptionsList();
+}
+
+function renderTgGroupsOptionsList() {
+  const listEl = document.getElementById("tgGroupsOptionsList");
+  const inp = document.getElementById("tgGroupsSearchInput");
+  if (!listEl) return;
+
+  tgGroupsSearchQuery = inp ? inp.value : "";
+  const q = tgGroupsSearchQuery.trim().toLowerCase();
+  const available = getAvailableGroupsForPost(getEffectiveNewPostAuthorId(), selectedPostCollabs);
+  const matched = q ? available.filter(g => g.toLowerCase().includes(q)) : available;
+
+  listEl.innerHTML = matched.length
+    ? matched.map(g => {
+        const checked = selectedPostGroups.includes(g);
+        return `
+          <label class="social-check-option">
+            <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleNewPostGroup('${g.replace(/'/g, "\'")}')" />
+            <span>#${g}</span>
+          </label>
+        `;
+      }).join("")
+    : `<div class="st-meta" style="padding:8px 10px;">${t("Группы не найдены", "Guruhlar topilmadi")}</div>`;
+}
+
+function toggleNewPostGroup(groupName) {
+  if (selectedPostGroups.includes(groupName)) {
+    selectedPostGroups = selectedPostGroups.filter(g => g !== groupName);
+  } else {
+    selectedPostGroups = [...selectedPostGroups, groupName];
+  }
+  renderTgGroupsSelect(true);
+}
 
 function getEffectiveNewPostAuthorId() {
   if (hasAdminPrivileges() && selectedPostAuthorId && appState.users.some(u => u.id === selectedPostAuthorId)) {
@@ -2531,6 +2651,7 @@ function selectNewPostAuthor(userId) {
   const wrap = document.getElementById("tgAuthorSelectWrap");
   if (wrap) wrap.classList.remove("open");
   renderTgAuthorSelect();
+  renderTgGroupsSelect();
   renderTgCollabSelect();
 }
 
@@ -2628,6 +2749,7 @@ function toggleTgCollabUser(userId) {
   } else {
     selectedPostCollabs.push({ type: "user", id: user.id, name: user.name });
   }
+  renderTgGroupsSelect();
   renderTgCollabSelect(true);
 }
 
@@ -2921,6 +3043,7 @@ function renderTelegramSection() {
 
   renderNewPostTagsArea();
   renderTgAuthorSelect();
+  renderTgGroupsSelect();
   renderTgCollabSelect();
 
   // Фильтр постов: «Все посты» + 5 последних использованных тегов + выпадающий список всех тегов с поиском
@@ -3019,7 +3142,7 @@ function renderTelegramSection() {
           </div>
           <p style="font-size:14px; white-space:pre-line;">${p.text}</p>
           <div class="checkbox-chips mt-10">
-            ${(p.tags || []).map(tg => `<span class="badge-pill">${tg}</span>`).join("")}
+            ${(p.tags || []).map(tg => `<button type="button" class="badge-pill clickable-tag ${activeTgTagFilter === tg ? 'active' : ''}" onclick="setTgTagFilter('${tg.replace(/'/g, "\'")}')">${tg}</button>`).join("")}
           </div>
           ${cleanImages.length ? `
             <div class="post-images">
@@ -3049,6 +3172,7 @@ function toggleNewPostTag(tag) {
   }
   renderNewPostTagsArea();
 }
+
 function setTgTagFilter(tag) {
   activeTgTagFilter = tag;
   tgAllTagsSearchQuery = "";
@@ -3103,22 +3227,28 @@ async function parseTelegramPost() {
   }
 
   const chosenAuthorId = getEffectiveNewPostAuthorId();
+  const groupTags = selectedPostGroups.map(g => normalizeTagInput(g)).filter(Boolean);
+  const mergedTags = [...new Set([...selectedNewPostTags, ...groupTags])];
+
   appState.tgPosts.unshift({
     id: `post_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     authorId: chosenAuthorId,
+    groups: [...selectedPostGroups],
     collaborators: [...selectedPostCollabs],
     url,
     date: postDate,
     text,
-    tags: [...selectedNewPostTags],
+    tags: mergedTags,
     images
   });
 
   selectedPostAuthorId = currentUser.id;
   tgAuthorSearchQuery = "";
+  selectedPostGroups = [];
+  tgGroupsSearchQuery = "";
   selectedPostCollabs = [];
   tgCollabSearchQuery = "";
-  recordRecentTags(selectedNewPostTags);
+  recordRecentTags(mergedTags);
   saveState();
   syncSpecificTutorFolder(chosenAuthorId);
   document.getElementById("tgUrlInput").value = "";
@@ -3137,10 +3267,13 @@ function openEditTgPostModal(postId) {
   const post = appState.tgPosts.find(p => p.id === postId);
   if (!post) return;
 
+  const postGroups = Array.isArray(post.groups) ? [...post.groups] : [];
   editTgState = {
     id: post.id,
     authorId: post.authorId || currentUser.id,
     authorSearch: "",
+    groups: postGroups,
+    groupsSearch: "",
     collaborators: Array.isArray(post.collaborators) ? JSON.parse(JSON.stringify(post.collaborators)) : [],
     collabSearch: "",
     tags: Array.isArray(post.tags) ? [...post.tags] : []
@@ -3152,6 +3285,7 @@ function openEditTgPostModal(postId) {
   document.getElementById("editTgText").value = post.text || "";
 
   renderEditTgAuthorSelect();
+  renderEditTgGroupsSelect();
   renderEditTgCollabSelect();
   renderEditTgTagsArea();
 
@@ -3209,6 +3343,7 @@ function selectEditTgAuthor(userId) {
   const wrap = document.getElementById("editTgAuthorWrap");
   if (wrap) wrap.classList.remove("open");
   renderEditTgAuthorSelect();
+  renderEditTgGroupsSelect();
   renderEditTgCollabSelect();
 }
 
@@ -3301,6 +3436,7 @@ function toggleEditTgCollabUser(userId) {
   } else {
     editTgState.collaborators.push({ type: "user", id: user.id, name: user.name });
   }
+  renderEditTgGroupsSelect();
   renderEditTgCollabSelect(true);
 }
 
@@ -3318,6 +3454,73 @@ function addEditTgCustomCollab(rawName) {
 function removeEditTgCustomCollab(name) {
   editTgState.collaborators = editTgState.collaborators.filter(c => !(c.type === "custom" && c.name === name));
   renderEditTgCollabSelect(true);
+}
+
+
+function renderEditTgGroupsSelect(keepOpen = false) {
+  const fieldWrap = document.getElementById("editTgGroupsFieldWrap");
+  const grid = document.getElementById("editTgMetaGrid");
+  const wrap = document.getElementById("editTgGroupsWrap");
+  if (!fieldWrap || !grid || !wrap) return;
+
+  const available = getAvailableGroupsForPost(editTgState.authorId, editTgState.collaborators);
+  editTgState.groups = (editTgState.groups || []).filter(g => available.includes(g));
+
+  if (!available.length) {
+    fieldWrap.classList.add("hidden");
+    grid.classList.remove("has-groups");
+    return;
+  }
+
+  fieldWrap.classList.remove("hidden");
+  grid.classList.add("has-groups");
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('editTgGroupsWrap'); setTimeout(() => { const i = document.getElementById('editTgGroupsSearch'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${formatTgGroupsTrigger(editTgState.groups)}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="editTgGroupsSearch" class="tg-tag-search-input" placeholder="${t("Поиск группы...", "Guruh qidiriş...")}" value="${editTgState.groupsSearch}" oninput="renderEditTgGroupsOptions()" />
+      <div id="editTgGroupsOptions" class="tg-tag-search-list"></div>
+    </div>
+  `;
+
+  if (wasOpen) wrap.classList.add("open");
+  renderEditTgGroupsOptions();
+}
+
+function renderEditTgGroupsOptions() {
+  const listEl = document.getElementById("editTgGroupsOptions");
+  const inp = document.getElementById("editTgGroupsSearch");
+  if (!listEl) return;
+
+  editTgState.groupsSearch = inp ? inp.value : "";
+  const q = editTgState.groupsSearch.trim().toLowerCase();
+  const available = getAvailableGroupsForPost(editTgState.authorId, editTgState.collaborators);
+  const matched = q ? available.filter(g => g.toLowerCase().includes(q)) : available;
+
+  listEl.innerHTML = matched.length
+    ? matched.map(g => {
+        const checked = (editTgState.groups || []).includes(g);
+        return `
+          <label class="social-check-option">
+            <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleEditTgGroup('${g.replace(/'/g, "\'")}')" />
+            <span>#${g}</span>
+          </label>
+        `;
+      }).join("")
+    : `<div class="st-meta" style="padding:8px 10px;">${t("Группы не найдены", "Guruhlar topilmadi")}</div>`;
+}
+
+function toggleEditTgGroup(groupName) {
+  if ((editTgState.groups || []).includes(groupName)) {
+    editTgState.groups = editTgState.groups.filter(g => g !== groupName);
+  } else {
+    editTgState.groups = [...(editTgState.groups || []), groupName];
+  }
+  renderEditTgGroupsSelect(true);
 }
 
 function renderEditTgTagsArea() {
@@ -3357,9 +3560,14 @@ function saveEditedTgPost() {
   post.url = url;
   post.date = date;
   post.text = text;
+  const prevGroupTags = new Set((post.groups || []).map(g => normalizeTagInput(g)));
+  const cleanBaseTags = (editTgState.tags || []).filter(tg => !prevGroupTags.has(tg));
+  const nextGroupTags = (editTgState.groups || []).map(g => normalizeTagInput(g)).filter(Boolean);
+
   post.authorId = editTgState.authorId || post.authorId;
+  post.groups = [...(editTgState.groups || [])];
   post.collaborators = [...editTgState.collaborators];
-  post.tags = [...editTgState.tags];
+  post.tags = [...new Set([...cleanBaseTags, ...nextGroupTags])];
 
   recordRecentTags(post.tags);
   saveState();
@@ -4119,8 +4327,19 @@ function deleteBlogPost(id, btnEl) {
 
 // ==================== 7. АДМИНИСТРИРОВАНИЕ ПРОФИЛЕЙ И ПАРОЛЕЙ ====================
 let newUserRole = "tutor";
+let newUserCourse = "1";
 let editingUserId = null;
 let editingUserRole = "tutor";
+let editingUserCourse = "1";
+
+function getCourseOptions() {
+  return [
+    { value: "1", label: `1 ${t("курс", "kurs")}` },
+    { value: "2", label: `2 ${t("курс", "kurs")}` },
+    { value: "3", label: `3 ${t("курс", "kurs")}` },
+    { value: "4", label: `4 ${t("курс", "kurs")}` }
+  ];
+}
 
 function syncUsersToGoogleDrive() {
   if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
@@ -4142,16 +4361,26 @@ function getUserRoleOptions() {
 }
 
 function updateNewUserRoleVisibility() {
+  const row = document.getElementById("nuRoleRow");
+  const courseGroup = document.getElementById("nuCourseGroup");
   const groupsGroup = document.getElementById("nuGroupsGroup");
   const partialWrap = document.getElementById("nuPartialAdminWrap");
-  if (groupsGroup) groupsGroup.classList.toggle("hidden", newUserRole !== "tutor");
+  const isTut = newUserRole === "tutor";
+  if (row) row.classList.toggle("is-tutor", isTut);
+  if (courseGroup) courseGroup.classList.toggle("hidden", !isTut);
+  if (groupsGroup) groupsGroup.classList.toggle("hidden", !isTut);
   if (partialWrap) partialWrap.classList.toggle("hidden", newUserRole === "admin");
 }
 
 function updateEditUserRoleVisibility() {
+  const row = document.getElementById("euRoleRow");
+  const courseGroup = document.getElementById("euCourseGroup");
   const groupsGroup = document.getElementById("euGroupsGroup");
   const partialWrap = document.getElementById("euPartialAdminWrap");
-  if (groupsGroup) groupsGroup.classList.toggle("hidden", editingUserRole !== "tutor");
+  const isTut = editingUserRole === "tutor";
+  if (row) row.classList.toggle("is-tutor", isTut);
+  if (courseGroup) courseGroup.classList.toggle("hidden", !isTut);
+  if (groupsGroup) groupsGroup.classList.toggle("hidden", !isTut);
   if (partialWrap) partialWrap.classList.toggle("hidden", editingUserRole === "admin");
 }
 
@@ -4186,10 +4415,14 @@ function ensureEditUserModal() {
             </div>
           </div>
 
-          <div class="form-grid-2">
+          <div class="user-role-row is-tutor" id="euRoleRow">
             <div class="form-group">
               <label class="form-label">${t("Роль в системе", "Tizimdagi roli")}</label>
               <div class="custom-select drop-up" id="euRoleWrap"></div>
+            </div>
+            <div class="form-group" id="euCourseGroup">
+              <label class="form-label">${t("Курс", "Kurs")}</label>
+              <div class="custom-select drop-up" id="euCourseWrap"></div>
             </div>
             <div class="form-group" id="euGroupsGroup">
               <label class="form-label">${t("Закрепленные группы", "Biriktirilgan guruhlar")}</label>
@@ -4227,6 +4460,7 @@ function openEditUserModal(userId) {
   ensureEditUserModal();
   editingUserId = userId;
   editingUserRole = u.role || "tutor";
+  editingUserCourse = u.course ? String(u.course) : "1";
 
   document.getElementById("euName").value = u.name || "";
   document.getElementById("euGroups").value = (u.role === "tutor" && u.groups !== "Все группы") ? (u.groups || "") : "";
@@ -4241,6 +4475,13 @@ function openEditUserModal(userId) {
     updateEditUserRoleVisibility();
   };
   renderCustomSelect("euRoleWrap", roleOpts, editingUserRole, onEditRoleChange);
+
+  const courseOpts = getCourseOptions();
+  const onEditCourseChange = (v) => {
+    editingUserCourse = v;
+    renderCustomSelect("euCourseWrap", courseOpts, v, onEditCourseChange);
+  };
+  renderCustomSelect("euCourseWrap", courseOpts, editingUserCourse, onEditCourseChange);
   updateEditUserRoleVisibility();
 
   document.getElementById("editUserModal").classList.remove("hidden");
@@ -4281,6 +4522,7 @@ function saveEditedUser() {
   u.name = name;
   u.role = role;
   u.roleTitle = foundRole ? foundRole.ru : (u.roleTitle || "Тютор");
+  u.course = role === "tutor" ? editingUserCourse : "";
   u.groups = groups;
   u.login = login;
   u.pass = pass;
@@ -4321,7 +4563,7 @@ function renderUsersAdminTable() {
             <span>${localizeRoleTitle(u.role, u.roleTitle)}</span>
             ${u.partialAdmin && u.role !== "admin" ? `<span class="badge-pill partial-admin">${t("Част. админ", "Qisman admin")}</span>` : ""}
           </td>
-          <td>${u.role === "tutor" ? (u.groups || "—") : `<span class="st-meta">—</span>`}</td>
+          <td>${u.role === "tutor" ? `${u.course ? `<span class="badge-pill" style="margin-right:6px;">${u.course} ${t("курс", "kurs")}</span>` : ""}${u.groups || "—"}` : `<span class="st-meta">—</span>`}</td>
           <td><code>${u.login}</code></td>
           <td>
             <div style="display:flex; gap:6px; align-items:center;">
@@ -4361,6 +4603,7 @@ function updateUserPassword(userId) {
 function openNewUserModal() {
   if (!isFullAdmin()) return;
   newUserRole = "tutor";
+  newUserCourse = "1";
   document.getElementById("nuName").value = "";
   document.getElementById("nuLogin").value = "";
   document.getElementById("nuPass").value = "";
@@ -4375,6 +4618,13 @@ function openNewUserModal() {
     updateNewUserRoleVisibility();
   };
   renderCustomSelect("nuRoleWrap", roleOpts, newUserRole, onRoleChange);
+
+  const courseOpts = getCourseOptions();
+  const onCourseChange = (v) => {
+    newUserCourse = v;
+    renderCustomSelect("nuCourseWrap", courseOpts, v, onCourseChange);
+  };
+  renderCustomSelect("nuCourseWrap", courseOpts, newUserCourse, onCourseChange);
   updateNewUserRoleVisibility();
   document.getElementById("newUserModal").classList.remove("hidden");
 }
@@ -4406,6 +4656,7 @@ function createNewUser() {
     name,
     role: newUserRole,
     roleTitle: foundRole ? foundRole.ru : "Тютор",
+    course: newUserRole === "tutor" ? newUserCourse : "",
     partialAdmin,
     dept: "Университет туризма",
     groups,
