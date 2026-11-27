@@ -79,6 +79,19 @@ const I18N = {
     diaries_sub: "Индивидуальная воспитательная работа, фиксация результатов и архив наблюдений",
     tab_monitoring: "Мониторинг студентов",
     tab_parents: "Работа с родителями",
+    tab_dorm_logs: "Записи по общежитию",
+    lbl_mon_debt: "Сумма долга по контракту (UZS)",
+    dorm_modal_title: "Фиксация изучения комнаты общежития",
+    lbl_dorm_room: "Комната общежития *",
+    lbl_dorm_date: "Дата проверки",
+    lbl_dorm_cat: "Категория проверки *",
+    lbl_dorm_problem_res: "Выберите жильцов (мультивыбор)",
+    lbl_dorm_relocation: "Желаемая комната / комментарий по переселению",
+    ph_dorm_relocation: "Например: Комната 305 или причина переселения...",
+    lbl_dorm_collab: "Совместная работа (участники беседы)",
+    lbl_dorm_conflict: "Конфликт со студентом (поиск по всей базе)",
+    lbl_dorm_notes: "Текст дневника проверки *",
+    ph_dorm_notes: "Опишите результаты проверки, замечания и принятые меры...",
     profile_title: "Личный профиль и Авто-CV",
     profile_sub: "Данные синхронизируются с Google Drive и автоматически формируют резюме",
     btn_print_cv: "Печать / PDF CV",
@@ -229,10 +242,10 @@ const I18N = {
     upload_st_photo: "Talaba rasmini yuklaş",
     remove_photo: "Rasmni öçiriş",
     st_photo_hint: "JPG / PNG • Talaba kartasida saqlanadi",
-    sec_marital: "OILAVIY HOLATI HAQIDA MA'LUMOT",
+    sec_marital: "OILAVIY HOLATI",
     lbl_marital_status: "Oilaviy holati",
     lbl_spouse_name: "Turmuş örtoğining F.I.Ş.",
-    lbl_spouse_birth: "Tuğilgan sanasi",
+    lbl_spouse_birth: "Turmuş örtoğining tuğilgan sanasi",
     lbl_children_count: "Farzandlar soni",
     lbl_mon_partner: "Ikkinçi yarmini qidiriş (talaba)",
     ph_mon_partner_search: "Talabaning F.I.Ş. yoki guruhini kiriting...",
@@ -270,6 +283,19 @@ const I18N = {
     diaries_sub: "Individual tarbiyaviy işlar, natijalarni qayd etiş va kuzatuvlar arxivi",
     tab_monitoring: "Talabalar monitoringi",
     tab_parents: "Ota-onalar bilan işlaş",
+    tab_dorm_logs: "Yotoqxona qaydlari",
+    lbl_mon_debt: "Kontrakt qarzi summasi (UZS)",
+    dorm_modal_title: "Yotoqxona xonasini örganişni qayd etiş",
+    lbl_dorm_room: "Yotoqxona xonasi *",
+    lbl_dorm_date: "Tekşiruv sanasi",
+    lbl_dorm_cat: "Tekşiruv toifasi *",
+    lbl_dorm_problem_res: "Xonadoşlarni tanlang (bir neçta)",
+    lbl_dorm_relocation: "Köçiş xonasi / izoh",
+    ph_dorm_relocation: "Masalan: 305-xona yoki köçiş sababi...",
+    lbl_dorm_collab: "Hamkorlikda (suhbat iştirokçilari)",
+    lbl_dorm_conflict: "Talaba bilan nizo (baza böyiça qidiriş)",
+    lbl_dorm_notes: "Tekşiruv kundaligi matni *",
+    ph_dorm_notes: "Tekşiruv natijalari, kamçiliklar va körilgan çoralarni yozing...",
     profile_title: "Şaxsiy profil va Avto-CV",
     profile_sub: "Ma’lumotlar Google Drive bilan sinxronlanadi va avtomatik CV yaratadi",
     btn_print_cv: "Çop etiş / PDF CV",
@@ -623,8 +649,20 @@ const MONITORING_CATEGORIES = [
   { value: "Хиджаб", ru: "Хиджаб", oz: "Römolli" },
   { value: "Борода", ru: "Борода", oz: "Soqol" },
   { value: "Прогулы", ru: "Прогулы", oz: "Dars qoldiriş" },
+  { value: "Долг по контракту", ru: "Долг по контракту", oz: "Kontrakt qarzi" },
   { value: "В отношениях с...", ru: "В отношениях с...", oz: "Munosabatda...", adminOnly: true },
   { value: "Другое...", ru: "Другое...", oz: "Boşqa..." }
+];
+
+const DORM_CHECK_CATEGORIES = [
+  { value: "Санитарно-гигиеническая ситуация", ru: "Санитарно-гигиеническая ситуация", oz: "Sanitariya-gigiyena holati" },
+  { value: "Коммунальные проблемы", ru: "Коммунальные проблемы", oz: "Kommunal muammolar" },
+  { value: "Проблема с конкретными жильцами", ru: "Проблема с конкретным(и) жильцами", oz: "Ayrim xonadoşlar bilan muammo" },
+  { value: "Неуплата за жильё", ru: "Неуплата за жильё", oz: "Turar joy tölovi qarzi" },
+  { value: "Запрос о переселении", ru: "Запрос о переселении", oz: "Köçiriş sörovi" },
+  { value: "Профилактическая беседа", ru: "Профилактическая беседа", oz: "Profilaktik suhbat" },
+  { value: "Конфликт с...", ru: "Конфликт с...", oz: "... bilan nizo", adminOnly: true },
+  { value: "Свободный текст", ru: "Свободный текст", oz: "Erkin matn" }
 ];
 
 const RELATIVE_TYPES = [
@@ -737,6 +775,7 @@ function sanitizeAppState(rawObj) {
     tgPosts: deduplicateById(base.tgPosts || []),
     monitoring: deduplicateById(base.monitoring || []),
     parentMeetings: deduplicateById(base.parentMeetings || []),
+    dormLogs: deduplicateById(base.dormLogs || []),
     schedule: deduplicateById(base.schedule || []),
     calendarEvents: deduplicateById(base.calendarEvents || []),
     blogPosts: deduplicateById(base.blogPosts || []),
@@ -771,6 +810,8 @@ function buildPayloadForCurrentUser() {
       tgPosts: appState.tgPosts.filter(p => p.authorId === currentUser.id),
       monitoring: appState.monitoring.filter(m => m.tutorId === currentUser.id),
       parentMeetings: appState.parentMeetings.filter(m => m.tutorId === currentUser.id),
+    dormLogs: appState.dormLogs.filter(d => d.tutorId === currentUser.id),
+      dormLogs: appState.dormLogs.filter(d => d.tutorId === currentUser.id),
       schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === currentUser.id),
       calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
       blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
@@ -828,6 +869,7 @@ function syncSpecificTutorFolder(tutorId) {
     tgPosts: appState.tgPosts.filter(p => p.authorId === tutorId),
     monitoring: appState.monitoring.filter(m => m.tutorId === tutorId),
     parentMeetings: appState.parentMeetings.filter(m => m.tutorId === tutorId),
+    dormLogs: appState.dormLogs.filter(d => d.tutorId === tutorId),
     schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === tutorId),
     calendarEvents: appState.calendarEvents.filter(ev => ev.userId === tutorId),
     blogPosts: appState.blogPosts.filter(b => b.userId === tutorId),
@@ -1024,6 +1066,7 @@ async function loadFromGoogleDrive() {
           tgPosts: (incoming.tgPosts || []).filter(p => p.authorId === currentUser.id),
           monitoring: (incoming.monitoring || []).filter(m => m.tutorId === currentUser.id),
           parentMeetings: (incoming.parentMeetings || []).filter(m => m.tutorId === currentUser.id),
+          dormLogs: (incoming.dormLogs || []).filter(d => d.tutorId === currentUser.id),
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
@@ -1044,6 +1087,7 @@ async function loadFromGoogleDrive() {
           tgPosts: incoming.tgPosts || [],
           monitoring: incoming.monitoring || [],
           parentMeetings: incoming.parentMeetings || [],
+          dormLogs: incoming.dormLogs || [],
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
@@ -2998,6 +3042,7 @@ let tgGroupsSearchQuery = "";
 let selectedPostCollabs = []; // [{ type: "user", id, name } | { type: "custom", name }]
 let tgCollabSearchQuery = "";
 let activeTgAuthorFilter = "all";
+
 let editTgState = {
   id: "",
   authorId: "",
@@ -4209,6 +4254,8 @@ function setDiarySubtab(sub) {
   activeDiarySubtab = sub;
   document.getElementById("diaryTabMonitoring").classList.toggle("active", sub === "monitoring");
   document.getElementById("diaryTabParents").classList.toggle("active", sub === "parents");
+  const dormBtn = document.getElementById("diaryTabDorm");
+  if (dormBtn) dormBtn.classList.toggle("active", sub === "dorm");
   renderDiariesSection();
 }
 
@@ -4343,6 +4390,39 @@ function renderDiariesSection() {
 
     renderMonListFilterControls();
     renderMonitoringCardsList();
+    return;
+  }
+
+  if (activeDiarySubtab === "dorm") {
+    area.innerHTML = `
+      <div class="subtabs-row">
+        <div>
+          <h3 class="card-title">${t("Дневник проверок общежития", "Yotoqxona tekşiruvlari kundaligi")}</h3>
+          <p class="card-sub">${t("Учет состояния комнат, жильцов, коммунальных и воспитательных вопросов", "Xonalar holati, yotoqxona aholisi, kommunal va tarbiyaviy masalalar hisobi")}</p>
+        </div>
+        <button type="button" class="btn-orange" onclick="openDormLogModal()">+ ${t("Зафиксировать изучение", "Örganişni qayd etiş")}</button>
+      </div>
+
+      <div class="diary-list-toolbar">
+        <div class="st-search-box diary-list-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+          <input type="text" id="dormListSearchInput" placeholder="${t("Поиск по комнате, студенту, тексту...", "Xona, talaba, matn böyiça qidiriş...")}" value="${dormListFilters.search.replace(/"/g, '&quot;')}" oninput="dormListFilters.search=this.value; renderDormLogsList()" />
+        </div>
+        <div class="diary-list-filters">
+          <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="dormListTutorFilterWrap"></div>
+          <div class="custom-select" id="dormListRoomFilterWrap"></div>
+          <div class="custom-select" id="dormListCatFilterWrap"></div>
+          <input type="date" id="dormListDateFrom" class="form-input diary-date-input" value="${dormListFilters.dateFrom}" title="${t("Дата с", "Sana (dan)")}" onchange="dormListFilters.dateFrom=this.value; renderDormLogsList()" />
+          <input type="date" id="dormListDateTo" class="form-input diary-date-input" value="${dormListFilters.dateTo}" title="${t("Дата по", "Sana (gaça)")}" onchange="dormListFilters.dateTo=this.value; renderDormLogsList()" />
+          <button type="button" id="dormListResetBtn" class="btn-export sm hidden" onclick="resetDormListFilters()">${t("Сбросить", "Tozalaş")}</button>
+        </div>
+      </div>
+
+      <div id="dormLogsCardsContainer"></div>
+    `;
+
+    renderDormListFilterControls();
+    renderDormLogsList();
     return;
   }
 
@@ -4508,6 +4588,12 @@ function renderMonitoringCardsList() {
               <div class="mon-partner-card mt-10">
                 <div class="mon-partner-card-title">${t("Вторая половинка", "Ikkinçi yarmi")}: ${rec.partnerName}</div>
                 <div class="st-meta">${t("Курс", "Kurs")}: <strong>${rec.partnerCourse || "—"}</strong> • ${t("Группа", "Guruh")}: <strong>${rec.partnerGroup || "—"}</strong> • ${t("Тютор", "Tyutor")}: <strong>${rec.partnerTutorName || "—"}</strong></div>
+              </div>
+            ` : ""}
+            ${rec.debtAmount ? `
+              <div class="mon-debt-badge mt-10">
+                <span>${t("Сумма долга по контракту", "Kontrakt qarzi")}:</span>
+                <strong>${formatSalaryUZS(rec.debtAmount)}</strong>
               </div>
             ` : ""}
 
@@ -4858,6 +4944,10 @@ function openMonitoringModal() {
         renderMonPartnerSearchResults();
       }
     }
+    const debtWrap = document.getElementById("monDebtWrap");
+    if (debtWrap) {
+      debtWrap.classList.toggle("hidden", v !== "Долг по контракту");
+    }
     renderCustomSelect("monCategorySelectWrap", catOpts, v, onMonCatChange);
   };
   renderCustomSelect("monCategorySelectWrap", catOpts, monModalCategory, onMonCatChange);
@@ -4865,6 +4955,10 @@ function openMonitoringModal() {
   document.getElementById("monCustomCatWrap").classList.add("hidden");
   const partnerWrap = document.getElementById("monPartnerWrap");
   if (partnerWrap) partnerWrap.classList.add("hidden");
+  const debtWrap = document.getElementById("monDebtWrap");
+  if (debtWrap) debtWrap.classList.add("hidden");
+  const debtInp = document.getElementById("monDebtAmountInput");
+  if (debtInp) debtInp.value = "";
   const pSearch = document.getElementById("monPartnerSearchInput");
   if (pSearch) pSearch.value = "";
   const pRes = document.getElementById("monPartnerResultsList");
@@ -4943,7 +5037,12 @@ function saveMonitoringRecord() {
     : monModalCategory;
   const note = document.getElementById("monInitialNote").value.trim() || t("Поставлен(а) на индивидуальный мониторинг.", "Individual monitoringga qöyildi.");
 
+  const debtAmountVal = finalCat === "Долг по контракту" && document.getElementById("monDebtAmountInput")
+    ? document.getElementById("monDebtAmountInput").value.trim()
+    : "";
+
   let partnerPayload = {};
+  if (debtAmountVal) partnerPayload.debtAmount = debtAmountVal;
   if (finalCat === "В отношениях с..." && monSelectedPartnerId) {
     const partner = (appState.students || []).find(s => s.id === monSelectedPartnerId);
     if (partner) {
@@ -4961,7 +5060,7 @@ function saveMonitoringRecord() {
   const existing = appState.monitoring.find(m => m.studentId === st.id && m.category === finalCat);
   if (existing) {
     existing.status = "active";
-    if (partnerPayload.partnerId) Object.assign(existing, partnerPayload);
+    if (partnerPayload.partnerId || partnerPayload.debtAmount) Object.assign(existing, partnerPayload);
     existing.entries.push({
       date: new Date().toISOString().slice(0, 10),
       type: "reopened",
@@ -4997,6 +5096,7 @@ function addMonitoringEntry(recId) {
     showToast(t("Введите текст заметки", "Qayd matnini kiriting"));
     return;
   }
+
   const autoPositive = /сбрил|сняла|бросил|устранен|oldirdi|yeçdi|taşladi/i.test(text);
   const isPositive = check.checked || autoPositive;
 
@@ -5094,6 +5194,521 @@ function deleteParentMeeting(id, btnEl) {
     renderDiariesSection();
     showToast(t("Запись удалена", "Qayd öçirildi"));
   });
+}
+
+
+// ==================== ЗАПИСИ ПО ОБЩЕЖИТИЮ (ДНЕВНИК КОМНАТ) ====================
+let dormListFilters = { search: "", tutors: [], rooms: [], categories: [], dateFrom: "", dateTo: "" };
+let dormModalState = {
+  room: "",
+  category: "Санитарно-гигиеническая ситуация",
+  problemResidents: [],
+  collaborators: [],
+  collabSearch: "",
+  conflictStudentId: ""
+};
+
+function getAvailableDormRoomsForCurrentUser() {
+  const scoped = getRoleScopedStudents();
+  const roomSet = new Set();
+  scoped.forEach(s => {
+    if (s.housingType === "dorm" && s.room && String(s.room).trim()) {
+      roomSet.add(String(s.room).trim());
+    }
+  });
+  return [...roomSet].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+}
+
+function getDormRoomResidentsSplit(roomNum) {
+  const rStr = String(roomNum || "").trim();
+  if (!rStr) return { mine: [], others: [], all: [] };
+  const all = (appState.students || []).filter(s => s.housingType === "dorm" && String(s.room || "").trim() === rStr);
+  if (isTutorOnly()) {
+    return {
+      mine: all.filter(s => s.tutorId === currentUser.id),
+      others: all.filter(s => s.tutorId !== currentUser.id),
+      all
+    };
+  }
+  return { mine: all, others: [], all };
+}
+
+function openDormLogModal() {
+  const rooms = getAvailableDormRoomsForCurrentUser();
+  if (!rooms.length) {
+    showToast(t("Нет студентов, проживающих в общежитии с указанным номером комнаты", "Yotoqxona xonasi kiritilgan talabalar topilmadi"));
+    return;
+  }
+
+  dormModalState = {
+    room: rooms[0],
+    category: DORM_CHECK_CATEGORIES[0].value,
+    problemResidents: [],
+    collaborators: [],
+    collabSearch: "",
+    conflictStudentId: ""
+  };
+
+  document.getElementById("dormDateInput").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("dormRelocationInput").value = "";
+  document.getElementById("dormNotesInput").value = "";
+  document.getElementById("dormConflictSearchInput").value = "";
+  const cRes = document.getElementById("dormConflictResultsList");
+  if (cRes) { cRes.innerHTML = ""; cRes.classList.add("hidden"); }
+  const cCard = document.getElementById("dormConflictInfoCard");
+  if (cCard) { cCard.innerHTML = ""; cCard.classList.add("hidden"); }
+
+  const roomOpts = rooms.map(r => ({ value: r, label: `${t("Комната №", "Xona №")} ${r}` }));
+  const onRoomChange = (v) => {
+    dormModalState.room = v;
+    dormModalState.problemResidents = [];
+    renderCustomSelect("dormRoomSelectWrap", roomOpts, v, onRoomChange);
+    renderDormModalResidentsPreview();
+    renderDormProblemResidentsCheckboxes();
+  };
+  renderCustomSelect("dormRoomSelectWrap", roomOpts, dormModalState.room, onRoomChange);
+
+  const availCats = DORM_CHECK_CATEGORIES.filter(c => !c.adminOnly || hasAdminPrivileges());
+  const catOpts = availCats.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  const onCatChange = (v) => {
+    dormModalState.category = v;
+    renderCustomSelect("dormCategorySelectWrap", catOpts, v, onCatChange);
+    updateDormCategoryFieldsVisibility();
+  };
+  renderCustomSelect("dormCategorySelectWrap", catOpts, dormModalState.category, onCatChange);
+
+  renderDormModalResidentsPreview();
+  renderDormProblemResidentsCheckboxes();
+  renderDormCollabSelect();
+  updateDormCategoryFieldsVisibility();
+
+  document.getElementById("dormDiaryModal").classList.remove("hidden");
+}
+
+function renderDormModalResidentsPreview() {
+  const box = document.getElementById("dormResidentsPreview");
+  if (!box) return;
+  const split = getDormRoomResidentsSplit(dormModalState.room);
+  if (!split.all.length) {
+    box.classList.add("hidden");
+    return;
+  }
+  box.classList.remove("hidden");
+
+  const renderRow = (s, showTutor) => {
+    const tr = appState.users.find(u => u.id === s.tutorId);
+    return `<div class="dorm-res-line">• <strong>${s.name}</strong> (${s.group}, ${s.course} ${t("курс", "kurs")})${showTutor ? ` — <span class="st-meta">${t("Тютор", "Tyutor")}: ${tr ? tr.name : "—"}</span>` : ""}</div>`;
+  };
+
+  let html = `<div class="sub-panel-title">${t("ЖИЛЬЦЫ КОМНАТЫ №", "XONA AHOLISI №")} ${dormModalState.room}</div>`;
+  if (isTutorOnly()) {
+    html += `<div class="dorm-res-group-label">${t("Ваши студенты", "Sizning talabalaringiz")}:</div>`;
+    html += split.mine.length
+      ? split.mine.map(s => renderRow(s, false)).join("")
+      : `<div class="st-meta">—</div>`;
+    if (split.others.length) {
+      html += `<div class="dorm-res-group-label mt-10">${t("Соседи (закреплены за другими тюторами)", "Xonadoşlar (boşqa tyutorlarga biriktirilgan)")}:</div>`;
+      html += split.others.map(s => renderRow(s, true)).join("");
+    }
+  } else {
+    html += split.all.map(s => renderRow(s, true)).join("");
+  }
+  box.innerHTML = html;
+}
+
+function renderDormProblemResidentsCheckboxes() {
+  const wrap = document.getElementById("dormProblemResidentsList");
+  if (!wrap) return;
+  const split = getDormRoomResidentsSplit(dormModalState.room);
+  if (!split.all.length) {
+    wrap.innerHTML = `<div class="st-meta">${t("В комнате нет жильцов", "Xonada talabalar yöq")}</div>`;
+    return;
+  }
+  wrap.innerHTML = split.all.map(s => {
+    const checked = dormModalState.problemResidents.includes(s.id);
+    return `
+      <label class="social-check-option">
+        <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleDormProblemResident('${s.id}')" />
+        <span>${s.name} <span class="st-meta">(${s.group})</span></span>
+      </label>
+    `;
+  }).join("");
+}
+
+function toggleDormProblemResident(stId) {
+  if (dormModalState.problemResidents.includes(stId)) {
+    dormModalState.problemResidents = dormModalState.problemResidents.filter(x => x !== stId);
+  } else {
+    dormModalState.problemResidents.push(stId);
+  }
+}
+
+function updateDormCategoryFieldsVisibility() {
+  const cat = dormModalState.category;
+  const pWrap = document.getElementById("dormProblemResidentsWrap");
+  const rWrap = document.getElementById("dormRelocationWrap");
+  const cWrap = document.getElementById("dormCollabWrap");
+  const cfWrap = document.getElementById("dormConflictWrap");
+
+  if (pWrap) pWrap.classList.toggle("hidden", cat !== "Проблема с конкретными жильцами");
+  if (rWrap) rWrap.classList.toggle("hidden", cat !== "Запрос о переселении");
+  if (cWrap) cWrap.classList.toggle("hidden", cat !== "Профилактическая беседа");
+  if (cfWrap) cfWrap.classList.toggle("hidden", cat !== "Конфликт с...");
+}
+
+function formatDormCollabTrigger() {
+  if (!dormModalState.collaborators.length) {
+    return t("Выберите сотрудников или введите вручную...", "Xodimlarni tanlang yoki qölda kiriting...");
+  }
+  const names = dormModalState.collaborators.map(c => c.name);
+  if (names.length <= 2) return names.join(", ");
+  return `${names[0]}, ${names[1]} (+${names.length - 2})`;
+}
+
+function renderDormCollabSelect(keepOpen = false) {
+  const wrap = document.getElementById("dormCollabSelectWrap");
+  if (!wrap) return;
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('dormCollabSelectWrap'); setTimeout(() => { const i = document.getElementById('dormCollabSearchInput'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${formatDormCollabTrigger()}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()" style="max-height:none; overflow:visible; width:100%; max-width:none; padding:8px;">
+      <input type="text" id="dormCollabSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск сотрудника или введите участника...", "Xodimni qidiriş yoki qölda kiritiş...")}" value="${dormModalState.collabSearch}" oninput="renderDormCollabOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addDormCustomCollab(this.value);}" />
+      <div id="dormCollabOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  if (wasOpen) wrap.classList.add("open");
+  renderDormCollabOptions();
+}
+
+function renderDormCollabOptions() {
+  const listEl = document.getElementById("dormCollabOptionsList");
+  const inp = document.getElementById("dormCollabSearchInput");
+  if (!listEl) return;
+
+  dormModalState.collabSearch = inp ? inp.value : "";
+  const q = dormModalState.collabSearch.trim().toLowerCase();
+  const users = (appState.users || []).filter(u => u.id !== currentUser.id);
+  const matchedUsers = q ? users.filter(u => (u.name || "").toLowerCase().includes(q)) : users;
+  const exactUserMatch = users.some(u => (u.name || "").toLowerCase() === q);
+  const customSelected = dormModalState.collaborators.filter(c => c.type === "custom");
+
+  let html = "";
+  if (customSelected.length && !q) {
+    html += `<div class="cs-divider-label">${t("Введенные вручную", "Qölda kiritilganlar")}</div>`;
+    html += customSelected.map(c => `
+      <label class="social-check-option">
+        <input type="checkbox" checked onchange="removeDormCustomCollab('${c.name.replace(/'/g, "\'")}')" />
+        <span>${c.name}</span>
+      </label>
+    `).join("");
+  }
+
+  if (matchedUsers.length) {
+    html += `<div class="cs-divider-label">${t("Пользователи системы", "Tizim foydalanuvçilari")}</div>`;
+    html += matchedUsers.map(u => {
+      const checked = dormModalState.collaborators.some(c => c.type === "user" && c.id === u.id);
+      return `
+        <label class="social-check-option">
+          <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleDormCollabUser('${u.id}')" />
+          <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+        </label>
+      `;
+    }).join("");
+  }
+
+  const cleanQ = dormModalState.collabSearch.trim();
+  if (cleanQ && !exactUserMatch) {
+    html += `
+      <div class="tag-ac-item create-new" onclick="addDormCustomCollab('${cleanQ.replace(/'/g, "\'")}')">
+        <span>+ ${t("Добавить участника", "Iştirokçi qöşiş")}: <strong>${cleanQ}</strong></span>
+      </div>
+    `;
+  }
+
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function toggleDormCollabUser(uid) {
+  const user = appState.users.find(u => u.id === uid);
+  if (!user) return;
+  const exists = dormModalState.collaborators.some(c => c.type === "user" && c.id === uid);
+  if (exists) {
+    dormModalState.collaborators = dormModalState.collaborators.filter(c => !(c.type === "user" && c.id === uid));
+  } else {
+    dormModalState.collaborators.push({ type: "user", id: user.id, name: user.name });
+  }
+  renderDormCollabSelect(true);
+}
+
+function addDormCustomCollab(rawName) {
+  const clean = convertUzbekLatinText(String(rawName || "").trim());
+  if (!clean) return;
+  if (!dormModalState.collaborators.some(c => c.type === "custom" && c.name.toLowerCase() === clean.toLowerCase())) {
+    dormModalState.collaborators.push({ type: "custom", name: clean });
+  }
+  dormModalState.collabSearch = "";
+  renderDormCollabSelect(true);
+}
+
+function removeDormCustomCollab(name) {
+  dormModalState.collaborators = dormModalState.collaborators.filter(c => !(c.type === "custom" && c.name === name));
+  renderDormCollabSelect(true);
+}
+
+function renderDormConflictSearchResults() {
+  const inp = document.getElementById("dormConflictSearchInput");
+  const listEl = document.getElementById("dormConflictResultsList");
+  if (!inp || !listEl) return;
+
+  const q = inp.value.trim().toLowerCase();
+  if (!q) {
+    listEl.innerHTML = "";
+    listEl.classList.add("hidden");
+    return;
+  }
+
+  const matches = (appState.students || [])
+    .filter(s => (s.name || "").toLowerCase().includes(q) || (s.group || "").toLowerCase().includes(q))
+    .slice(0, 8);
+
+  listEl.classList.remove("hidden");
+  if (!matches.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Студент не найден", "Talaba topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = matches.map(s => {
+    const tr = appState.users.find(u => u.id === s.tutorId);
+    return `
+      <div class="mon-partner-opt" onclick="selectDormConflictStudent('${s.id}')">
+        <div style="font-weight:700; font-size:13px;">${s.name}</div>
+        <div class="st-meta">${s.course} ${t("курс", "kurs")} • ${s.group} • ${t("Тютор", "Tyutor")}: ${tr ? tr.name : "—"}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function selectDormConflictStudent(stId) {
+  const st = (appState.students || []).find(s => s.id === stId);
+  if (!st) return;
+  dormModalState.conflictStudentId = st.id;
+  const tr = appState.users.find(u => u.id === st.tutorId);
+
+  const inp = document.getElementById("dormConflictSearchInput");
+  if (inp) inp.value = st.name;
+  const listEl = document.getElementById("dormConflictResultsList");
+  if (listEl) listEl.classList.add("hidden");
+
+  const card = document.getElementById("dormConflictInfoCard");
+  if (card) {
+    card.classList.remove("hidden");
+    card.innerHTML = `
+      <div class="mon-partner-card-title">${st.name}</div>
+      <div class="st-meta">${t("Курс", "Kurs")}: <strong>${st.course}</strong> • ${t("Группа", "Guruh")}: <strong>${st.group}</strong></div>
+      <div class="st-meta">${t("Прикрепленный тютор", "Biriktirilgan tyutor")}: <strong>${tr ? tr.name : "—"}</strong></div>
+    `;
+  }
+}
+
+function saveDormLog() {
+  const room = String(dormModalState.room || "").trim();
+  const notes = document.getElementById("dormNotesInput").value.trim();
+  if (!room || !notes) {
+    showToast(t("Выберите комнату и введите текст дневника", "Xonani tanlang va kundalik matnini kiriting"));
+    return;
+  }
+
+  const split = getDormRoomResidentsSplit(room);
+  const problemNames = dormModalState.category === "Проблема с конкретными жильцами"
+    ? dormModalState.problemResidents.map(id => {
+        const s = appState.students.find(x => x.id === id);
+        return s ? `${s.name} (${s.group})` : id;
+      })
+    : [];
+
+  let conflictObj = null;
+  if (dormModalState.category === "Конфликт с..." && dormModalState.conflictStudentId) {
+    const cs = appState.students.find(s => s.id === dormModalState.conflictStudentId);
+    if (cs) {
+      const ctr = appState.users.find(u => u.id === cs.tutorId);
+      conflictObj = {
+        id: cs.id,
+        name: cs.name,
+        course: cs.course,
+        group: cs.group,
+        tutorName: ctr ? ctr.name : "—"
+      };
+    }
+  }
+
+  const rec = {
+    id: `dorm_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+    tutorId: currentUser.id,
+    room,
+    date: document.getElementById("dormDateInput").value || new Date().toISOString().slice(0, 10),
+    category: dormModalState.category,
+    residents: split.all.map(s => ({ id: s.id, name: s.name, group: s.group, tutorId: s.tutorId })),
+    problemResidents: problemNames,
+    relocationNote: dormModalState.category === "Запрос о переселении" ? document.getElementById("dormRelocationInput").value.trim() : "",
+    collaborators: dormModalState.category === "Профилактическая беседа" ? [...dormModalState.collaborators] : [],
+    conflictStudent: conflictObj,
+    notes
+  };
+
+  appState.dormLogs.unshift(rec);
+  saveState();
+  syncSpecificTutorFolder(rec.tutorId);
+  closeModal("dormDiaryModal");
+  renderDiariesSection();
+  showToast(t("Запись по общежитию сохранена", "Yotoqxona qaydi saqlandi"));
+}
+
+function deleteDormLog(id, btnEl) {
+  const target = (appState.dormLogs || []).find(d => d.id === id);
+  if (!target || !canDeleteData(target.tutorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
+  askConfirmDelete(btnEl, () => {
+    const ownerId = target.tutorId;
+    appState.dormLogs = (appState.dormLogs || []).filter(d => d.id !== id);
+    saveState();
+    if (ownerId) syncSpecificTutorFolder(ownerId);
+    renderDormLogsList();
+    showToast(t("Запись удалена", "Qayd öçirildi"));
+  });
+}
+
+function renderDormListFilterControls(keepOpenId = null) {
+  if (!isTutorOnly()) {
+    const tutorOpts = appState.users.filter(u => u.role === "tutor" || hasAdminPrivileges(u)).map(tr => ({ value: tr.id, label: tr.name }));
+    renderDiaryMultiSelect("dormListTutorFilterWrap", t("Тюторы", "Tyutorlar"), tutorOpts, dormListFilters.tutors, (val) => {
+      dormListFilters.tutors = dormListFilters.tutors.includes(val)
+        ? dormListFilters.tutors.filter(x => x !== val)
+        : [...dormListFilters.tutors, val];
+      renderDormListFilterControls("dormListTutorFilterWrap");
+      renderDormLogsList();
+    }, keepOpenId === "dormListTutorFilterWrap");
+  }
+
+  const allRooms = [...new Set([
+    ...getAvailableDormRoomsForCurrentUser(),
+    ...(appState.dormLogs || []).map(d => String(d.room || "").trim()).filter(Boolean)
+  ])].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const roomOpts = allRooms.map(r => ({ value: r, label: `${t("Комн.", "Xona")} ${r}` }));
+  renderDiaryMultiSelect("dormListRoomFilterWrap", t("Комнаты", "Xonalar"), roomOpts, dormListFilters.rooms, (val) => {
+    dormListFilters.rooms = dormListFilters.rooms.includes(val)
+      ? dormListFilters.rooms.filter(x => x !== val)
+      : [...dormListFilters.rooms, val];
+    renderDormListFilterControls("dormListRoomFilterWrap");
+    renderDormLogsList();
+  }, keepOpenId === "dormListRoomFilterWrap");
+
+  const availCats = DORM_CHECK_CATEGORIES.filter(c => !c.adminOnly || hasAdminPrivileges());
+  const catOpts = availCats.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  renderDiaryMultiSelect("dormListCatFilterWrap", t("Категории", "Toifalar"), catOpts, dormListFilters.categories, (val) => {
+    dormListFilters.categories = dormListFilters.categories.includes(val)
+      ? dormListFilters.categories.filter(x => x !== val)
+      : [...dormListFilters.categories, val];
+    renderDormListFilterControls("dormListCatFilterWrap");
+    renderDormLogsList();
+  }, keepOpenId === "dormListCatFilterWrap");
+}
+
+function resetDormListFilters() {
+  dormListFilters = { search: "", tutors: [], rooms: [], categories: [], dateFrom: "", dateTo: "" };
+  const s = document.getElementById("dormListSearchInput"); if (s) s.value = "";
+  const df = document.getElementById("dormListDateFrom"); if (df) df.value = "";
+  const dt = document.getElementById("dormListDateTo"); if (dt) dt.value = "";
+  renderDormListFilterControls();
+  renderDormLogsList();
+}
+
+function renderDormLogsList() {
+  const container = document.getElementById("dormLogsCardsContainer");
+  const resetBtn = document.getElementById("dormListResetBtn");
+  if (!container) return;
+
+  let list = isTutorOnly()
+    ? (appState.dormLogs || []).filter(d => d.tutorId === currentUser.id)
+    : (appState.dormLogs || []);
+
+  if (!isTutorOnly() && dormListFilters.tutors.length > 0) {
+    list = list.filter(d => dormListFilters.tutors.includes(d.tutorId));
+  }
+  if (dormListFilters.rooms.length > 0) {
+    list = list.filter(d => dormListFilters.rooms.includes(String(d.room || "").trim()));
+  }
+  if (dormListFilters.categories.length > 0) {
+    list = list.filter(d => dormListFilters.categories.includes(d.category));
+  }
+  if (dormListFilters.dateFrom) {
+    list = list.filter(d => (d.date || "") >= dormListFilters.dateFrom);
+  }
+  if (dormListFilters.dateTo) {
+    list = list.filter(d => (d.date || "") <= dormListFilters.dateTo);
+  }
+  const q = (dormListFilters.search || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(d => {
+      const roomMatch = String(d.room || "").toLowerCase().includes(q);
+      const notesMatch = (d.notes || "").toLowerCase().includes(q);
+      const catMatch = (d.category || "").toLowerCase().includes(q);
+      const resMatch = (d.residents || []).some(r => (r.name || "").toLowerCase().includes(q));
+      const conflictMatch = d.conflictStudent && (d.conflictStudent.name || "").toLowerCase().includes(q);
+      return roomMatch || notesMatch || catMatch || resMatch || conflictMatch;
+    });
+  }
+
+  const hasFilter = Boolean(q || dormListFilters.tutors.length || dormListFilters.rooms.length || dormListFilters.categories.length || dormListFilters.dateFrom || dormListFilters.dateTo);
+  if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state">${t("Записей по общежитию пока нет.", "Yotoqxona böyiça qaydlar hozirça yöq.")}</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="diary-grid">
+      ${list.map(d => {
+        const author = appState.users.find(u => u.id === d.tutorId);
+        const resNames = (d.residents || []).map(r => `${r.name} (${r.group})`).join(", ");
+        return `
+          <div class="diary-card">
+            <div class="st-card-top">
+              <div>
+                <div class="st-name">${t("Комната №", "Xona №")} ${d.room}</div>
+                <div class="st-meta">${d.date} • ${t("Автор", "Muallif")}: ${author ? author.name : "—"}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge-pill">${getLabelFromDict(DORM_CHECK_CATEGORIES, d.category)}</span>
+                ${canDeleteData(d.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteDormLog('${d.id}', this)" title="${t("Удалить", "Öçiriş")}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                </button>` : ""}
+              </div>
+            </div>
+
+            ${resNames ? `<div class="st-meta mb-8"><strong>${t("Жильцы", "Xonadoşlar")}:</strong> ${resNames}</div>` : ""}
+            ${(d.problemResidents || []).length ? `<div class="mon-debt-badge mb-8"><span>${t("Жильцы по вопросу", "Muammoli xonadoşlar")}:</span> <strong>${d.problemResidents.join(", ")}</strong></div>` : ""}
+            ${d.relocationNote ? `<div class="mon-debt-badge mb-8"><span>${t("Переселение", "Köçiriş")}:</span> <strong>${d.relocationNote}</strong></div>` : ""}
+            ${(d.collaborators || []).length ? `<div class="st-meta mb-8"><strong>${t("Совместно с", "Hamkorlikda")}:</strong> ${d.collaborators.map(c => c.name).join(", ")}</div>` : ""}
+            ${d.conflictStudent ? `
+              <div class="mon-partner-card mb-8">
+                <div class="mon-partner-card-title">${t("Конфликт со студентом", "Nizo iştirokçisi")}: ${d.conflictStudent.name}</div>
+                <div class="st-meta">${t("Курс", "Kurs")}: <strong>${d.conflictStudent.course}</strong> • ${t("Группа", "Guruh")}: <strong>${d.conflictStudent.group}</strong> • ${t("Тютор", "Tyutor")}: <strong>${d.conflictStudent.tutorName}</strong></div>
+              </div>
+            ` : ""}
+
+            <p style="font-size:13px; white-space:pre-line;">${d.notes}</p>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
 }
 
 // ==================== 5. ПРОФИЛЬ И АВТО-CV (ВКЛЮЧАЯ АВАТАР В ВЕРХНЕМ МЕНЮ) ====================
@@ -5996,6 +6611,7 @@ function openNewUserModal() {
   updateNewUserRoleVisibility();
   document.getElementById("newUserModal").classList.remove("hidden");
 }
+
 function createNewUser() {
   if (!isFullAdmin()) return;
   const name = document.getElementById("nuName").value.trim();
