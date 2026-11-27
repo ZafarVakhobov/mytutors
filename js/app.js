@@ -6255,6 +6255,11 @@ function renderChatDrawerBody() {
                 <div class="st-meta">${t("От", "Kimdan")}: ${author ? author.name : "—"} • ${t("Исполнители", "Ijroçilar")}: ${assigneeNames || "—"}</div>
                 ${tk.deadline ? `<div class="st-meta" style="color:var(--accent); font-weight:600;">${t("Дедлайн", "Muddat")}: ${tk.deadline.replace('T', ' ')}</div>` : ""}
               </div>
+              ${hasAdminPrivileges() || tk.authorId === currentUser.id ? `
+                <button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteTaskById('${tk.id}', this)" title="${t("Удалить задание", "Vazifani öçiriş")}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                </button>
+              ` : ""}
             </div>
             ${(tk.todos || []).length ? `
               <div class="task-todos-mini">
@@ -6607,6 +6612,23 @@ function markTaskCompleted(taskId) {
   activeTasksSubtab = "completed";
   renderChatDrawer();
   showToast(t("Задача перенесена в выполненные", "Vazifa bajarilganlarga ötkazildi"));
+}
+
+function deleteTaskById(taskId, btnEl) {
+  const task = (appState.tasks || []).find(tk => tk.id === taskId);
+  if (!task) return;
+  if (!hasAdminPrivileges() && task.authorId !== currentUser.id) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
+  askConfirmDelete(btnEl, () => {
+    appState.tasks = (appState.tasks || []).filter(tk => tk.id !== taskId);
+    if (activeTaskDiscussionId === taskId) activeTaskDiscussionId = null;
+    saveState(true);
+    syncChatHubToCloud();
+    renderChatDrawer();
+    showToast(t("Задание удалено", "Vazifa öçirildi"));
+  });
 }
 
 // --- Прикрепления (скрепка), Эмодзи, Опросы и Отправка ---
