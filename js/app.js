@@ -44,6 +44,7 @@ const I18N = {
     sub_employment: "Трудоустройство",
     sub_schedule: "Расписание (HEMIS)",
     ph_room_search: "Поиск комнаты № (напр. 401)",
+    ph_st_search_short: "Поиск студента...",
     tg_title: "Telegram-архив и Генератор отчетов",
     tg_sub: "Импорт постов из t.me/studlifeuniv с сортировкой по датам и выгрузкой в Google Docs",
     tg_add_post: "Добавить пост по ссылке",
@@ -198,6 +199,7 @@ const I18N = {
     sub_employment: "Bandlik / Iş",
     sub_schedule: "Dars jadvali (HEMIS)",
     ph_room_search: "Xona № qidiriş (masalan, 401)",
+    ph_st_search_short: "Talabani qidiriş...",
     tg_title: "Telegram arxivi va Hisobotlar konstruktori",
     tg_sub: "t.me/studlifeuniv postlarini sanalar böyiça saralaş va Google Docs ga çiqariş",
     tg_add_post: "Havola orqali post qöşiş",
@@ -1509,7 +1511,6 @@ async function exportChart(which, format) {
     return;
   }
 
-  // Вычисляем масштаб, чтобы ApexCharts сразу отрендерил график в 2K (2560 px)
   const targetWidth = 2560;
   const currentWidth = (containerEl && containerEl.clientWidth) ? containerEl.clientWidth : 640;
   const renderScale = Math.max(3, Math.ceil(targetWidth / currentWidth));
@@ -4037,14 +4038,23 @@ function renderDiariesSection() {
     ? appState.parentMeetings.filter(m => m.tutorId === currentUser.id)
     : appState.parentMeetings;
 
-  const students = getRoleScopedStudents();
   area.innerHTML = `
     <div class="bento-card mb-16">
       <h3 class="card-title mb-12">${t("Зафиксировать встречу / беседу с родителями", "Ota-onalar bilan uçraşuv / suhbatni qayd etiş")}</h3>
+      <div class="diary-st-filters ${isTutorOnly() ? 'tutor-only' : ''} mb-12">
+        <div class="form-group" style="margin-bottom:0;">
+          <input type="text" id="pmStudentSearchInput" class="form-input" placeholder="${t("Поиск студента...", "Talabani qidiriş...")}" value="${pmFilterState.search.replace(/"/g, '&quot;')}" oninput="onPmStudentFilterChange()" />
+        </div>
+        <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="pmFilterTutorWrap"></div>
+        <div class="custom-select" id="pmFilterGroupWrap"></div>
+      </div>
       <div class="form-grid-3">
         <div class="custom-select" id="pmStudentSelectWrap"></div>
         <input type="date" id="pmDateInput" class="form-input" value="${new Date().toISOString().slice(0, 10)}" />
-        <input type="text" id="pmParentWho" class="form-input" placeholder="${t("Кто присутствовал (Мать / Отец)", "Kim qatnaşdi (Onasi / Otasi)")}" />
+        <div class="custom-select" id="pmParentWhoWrap"></div>
+      </div>
+      <div class="form-group hidden mt-10" id="pmParentCustomWrap" style="margin-bottom:0;">
+        <input type="text" id="pmParentCustomInput" class="form-input" placeholder="${t("Укажите вручную (например: Дядя — Каримов Б.)", "Qölda kiriting (masalan: Toğasi — Karimov B.)")}" />
       </div>
       <textarea id="pmNotesInput" class="form-textarea mt-10" rows="2" placeholder="${t("Какие вопросы обсуждались и какое принято решение...", "Qanday masalalar muhokama qilindi va qanday qaror qabul qilindi...")}"></textarea>
       <button type="button" class="btn-orange mt-10" onclick="addParentMeeting()">${t("Сохранить запись встречи", "Uçraşuv qaydini saqlaş")}</button>
@@ -4070,20 +4080,202 @@ function renderDiariesSection() {
     `}
   `;
 
-  window._selectedPmStudentId = students[0] ? students[0].id : "";
-  const stOpts = students.length
-    ? students.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }))
-    : [{ value: "", label: t("Сначала добавьте студентов", "Avval talabalarni qöşing") }];
-
-  const onPmStudentChange = (val) => {
-    window._selectedPmStudentId = val;
-    renderCustomSelect("pmStudentSelectWrap", stOpts, val, onPmStudentChange);
-  };
-  renderCustomSelect("pmStudentSelectWrap", stOpts, window._selectedPmStudentId, onPmStudentChange);
+  renderPmStudentFiltersAndList();
 }
 
 let monModalStudentId = "";
 let monModalCategory = "Курение";
+let monFilterState = { search: "", tutor: "all", group: "all" };
+let pmFilterState = { search: "", tutor: "all", group: "all" };
+let pmSelectedParentWho = "";
+
+function getGroupsForDiaryFilter(tutorVal) {
+  const invalid = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+  const parseG = (u) => {
+    if (!u || !u.groups) return [];
+    return String(u.groups).split(",").map(g => g.trim()).filter(g => g && !invalid.has(g));
+  };
+  if (isTutorOnly()) {
+    return [...new Set(parseG(currentUser))];
+  }
+  if (tutorVal && tutorVal !== "all") {
+    const tr = appState.users.find(u => u.id === tutorVal);
+    return [...new Set(parseG(tr))];
+  }
+  const allSet = new Set();
+  appState.users.filter(u => u.role === "tutor").forEach(tr => parseG(tr).forEach(g => allSet.add(g)));
+  return [...allSet].sort((a, b) => a.localeCompare(b));
+}
+
+function getFilteredStudentsForDiary(stateObj) {
+  let list = getRoleScopedStudents();
+  if (!isTutorOnly() && stateObj.tutor !== "all") {
+    list = list.filter(s => s.tutorId === stateObj.tutor);
+  }
+  if (stateObj.group !== "all") {
+    list = list.filter(s => s.group === stateObj.group);
+  }
+  const q = (stateObj.search || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(s =>
+      (s.name || "").toLowerCase().includes(q) ||
+      (s.group || "").toLowerCase().includes(q) ||
+      (s.phone || "").toLowerCase().includes(q)
+    );
+  }
+  return list;
+}
+
+// --- Фильтры и выбор студента для «Работа с родителями» ---
+function onPmStudentFilterChange() {
+  const inp = document.getElementById("pmStudentSearchInput");
+  pmFilterState.search = inp ? inp.value : "";
+  renderPmStudentOptions();
+}
+
+function renderPmStudentFiltersAndList() {
+  const tutors = appState.users.filter(u => u.role === "tutor");
+  if (!isTutorOnly()) {
+    const tutorOpts = [{ value: "all", label: t("Все тюторы", "Barça tyutorlar") }]
+      .concat(tutors.map(tr => ({ value: tr.id, label: tr.name })));
+    renderCustomSelect("pmFilterTutorWrap", tutorOpts, pmFilterState.tutor, (val) => {
+      pmFilterState.tutor = val;
+      pmFilterState.group = "all";
+      renderPmStudentFiltersAndList();
+    });
+  }
+
+  const groups = getGroupsForDiaryFilter(pmFilterState.tutor);
+  if (pmFilterState.group !== "all" && !groups.includes(pmFilterState.group)) {
+    pmFilterState.group = "all";
+  }
+  const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
+    .concat(groups.map(g => ({ value: g, label: g })));
+  renderCustomSelect("pmFilterGroupWrap", groupOpts, pmFilterState.group, (val) => {
+    pmFilterState.group = val;
+    renderPmStudentFiltersAndList();
+  });
+
+  renderPmStudentOptions();
+}
+
+function renderPmStudentOptions() {
+  const filtered = getFilteredStudentsForDiary(pmFilterState);
+  if (!filtered.some(s => s.id === window._selectedPmStudentId)) {
+    window._selectedPmStudentId = filtered[0] ? filtered[0].id : "";
+  }
+  const stOpts = filtered.length
+    ? filtered.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }))
+    : [{ value: "", label: t("Студенты не найдены", "Talabalar topilmadi") }];
+
+  const onPmStudentChange = (val) => {
+    window._selectedPmStudentId = val;
+    renderCustomSelect("pmStudentSelectWrap", stOpts, val, onPmStudentChange);
+    renderPmParentWhoSelect();
+  };
+  renderCustomSelect("pmStudentSelectWrap", stOpts, window._selectedPmStudentId, onPmStudentChange);
+  renderPmParentWhoSelect();
+}
+
+function renderPmParentWhoSelect() {
+  const st = appState.students.find(s => s.id === window._selectedPmStudentId);
+  const family = (st && Array.isArray(st.family)) ? st.family : [];
+  const opts = [];
+
+  family.forEach(mem => {
+    const relLabel = mem.relation === "Другое..."
+      ? (mem.customRelation || t("Родственник", "Qarindoşi"))
+      : getLabelFromDict(RELATIVE_TYPES, mem.relation);
+    const namePart = (mem.name || "").trim();
+    const phonePart = (mem.phone || "").trim();
+    if (namePart || phonePart || mem.relation) {
+      const fullLabel = namePart
+        ? `${relLabel} — ${namePart}${phonePart ? ` (${phonePart})` : ""}`
+        : `${relLabel}${phonePart ? ` (${phonePart})` : ""}`;
+      if (!opts.some(o => o.value === fullLabel)) {
+        opts.push({ value: fullLabel, label: fullLabel });
+      }
+    }
+  });
+
+  opts.push({ value: "__custom__", label: t("Другой (ввести вручную)...", "Boşqa (qölda kiritiş)...") });
+
+  if (!opts.some(o => o.value === pmSelectedParentWho)) {
+    pmSelectedParentWho = opts[0].value;
+  }
+
+  const customWrap = document.getElementById("pmParentCustomWrap");
+  if (customWrap) {
+    customWrap.classList.toggle("hidden", pmSelectedParentWho !== "__custom__");
+  }
+
+  const onWhoChange = (val) => {
+    pmSelectedParentWho = val;
+    renderCustomSelect("pmParentWhoWrap", opts, val, onWhoChange);
+    if (customWrap) {
+      customWrap.classList.toggle("hidden", val !== "__custom__");
+      if (val === "__custom__") {
+        const inp = document.getElementById("pmParentCustomInput");
+        if (inp) inp.focus();
+      }
+    }
+  };
+  renderCustomSelect("pmParentWhoWrap", opts, pmSelectedParentWho, onWhoChange);
+}
+
+// --- Фильтры и выбор студента для модалки «Поставить на мониторинг» ---
+function onMonStudentFilterChange() {
+  const inp = document.getElementById("monStudentSearchInput");
+  monFilterState.search = inp ? inp.value : "";
+  renderMonStudentOptions();
+}
+
+function renderMonStudentFiltersAndList() {
+  const wrap = document.getElementById("monStudentFiltersWrap");
+  const tutorWrap = document.getElementById("monFilterTutorWrap");
+  if (wrap) wrap.classList.toggle("tutor-only", isTutorOnly());
+  if (tutorWrap) tutorWrap.classList.toggle("hidden", isTutorOnly());
+
+  if (!isTutorOnly()) {
+    const tutors = appState.users.filter(u => u.role === "tutor");
+    const tutorOpts = [{ value: "all", label: t("Все тюторы", "Barça tyutorlar") }]
+      .concat(tutors.map(tr => ({ value: tr.id, label: tr.name })));
+    renderCustomSelect("monFilterTutorWrap", tutorOpts, monFilterState.tutor, (val) => {
+      monFilterState.tutor = val;
+      monFilterState.group = "all";
+      renderMonStudentFiltersAndList();
+    });
+  }
+
+  const groups = getGroupsForDiaryFilter(monFilterState.tutor);
+  if (monFilterState.group !== "all" && !groups.includes(monFilterState.group)) {
+    monFilterState.group = "all";
+  }
+  const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
+    .concat(groups.map(g => ({ value: g, label: g })));
+  renderCustomSelect("monFilterGroupWrap", groupOpts, monFilterState.group, (val) => {
+    monFilterState.group = val;
+    renderMonStudentFiltersAndList();
+  });
+
+  renderMonStudentOptions();
+}
+
+function renderMonStudentOptions() {
+  const filtered = getFilteredStudentsForDiary(monFilterState);
+  if (!filtered.some(s => s.id === monModalStudentId)) {
+    monModalStudentId = filtered[0] ? filtered[0].id : "";
+  }
+  const stOpts = filtered.length
+    ? filtered.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }))
+    : [{ value: "", label: t("Студенты не найдены", "Talabalar topilmadi") }];
+
+  const onMonStChange = (v) => {
+    monModalStudentId = v;
+    renderCustomSelect("monStudentSelectWrap", stOpts, v, onMonStChange);
+  };
+  renderCustomSelect("monStudentSelectWrap", stOpts, monModalStudentId, onMonStChange);
+}
 
 function openMonitoringModal() {
   const students = getRoleScopedStudents();
@@ -4091,15 +4283,13 @@ function openMonitoringModal() {
     showToast(t("Сначала добавьте студентов в базу", "Avval bazaga talabalarni qöşing"));
     return;
   }
+  monFilterState = { search: "", tutor: "all", group: "all" };
   monModalStudentId = students[0].id;
   monModalCategory = "Курение";
 
-  const stOpts = students.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }));
-  const onMonStChange = (v) => {
-    monModalStudentId = v;
-    renderCustomSelect("monStudentSelectWrap", stOpts, v, onMonStChange);
-  };
-  renderCustomSelect("monStudentSelectWrap", stOpts, monModalStudentId, onMonStChange);
+  const searchInp = document.getElementById("monStudentSearchInput");
+  if (searchInp) searchInp.value = "";
+  renderMonStudentFiltersAndList();
 
   const catOpts = MONITORING_CATEGORIES.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
   const onMonCatChange = (v) => {
@@ -4232,7 +4422,9 @@ function addParentMeeting() {
     studentId: st.id,
     studentName: `${st.name} (${st.group})`,
     date: document.getElementById("pmDateInput").value,
-    who: document.getElementById("pmParentWho").value.trim() || t("Родители", "Ota-onasi"),
+    who: (pmSelectedParentWho === "__custom__"
+      ? (document.getElementById("pmParentCustomInput") ? document.getElementById("pmParentCustomInput").value.trim() : "")
+      : pmSelectedParentWho) || t("Родители", "Ota-onasi"),
     notes
   });
   saveState();
@@ -4806,7 +4998,6 @@ function saveEditedUser() {
   u.login = login;
   u.pass = pass;
   u.partialAdmin = partialAdmin;
-
   if (currentUser && currentUser.id === u.id) {
     currentUser = u;
     document.getElementById("navUsersBtn").classList.toggle("hidden", !isFullAdmin());
@@ -5023,6 +5214,7 @@ function renderStudentVolunteerSelect(keepOpen = false) {
   if (wasOpen) wrap.classList.add("open");
   renderVolunteerOptionsList();
 }
+
 function renderVolunteerOptionsList() {
   const listEl = document.getElementById("volOptionsList");
   const inp = document.getElementById("volSearchInput");
