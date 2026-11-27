@@ -9929,6 +9929,74 @@ let firebasePresenceRef = null;
 let firebaseMyPresenceRef = null;
 let firebaseConnectedRef = null;
 let chatHubLastHash = "";
+
+// ==================== ЛЁГКИЙ ЗВУКОВОЙ СИГНАЛ НОВОГО СООБЩЕНИЯ (WEB AUDIO API) ====================
+let _chatAudioCtx = null;
+let chatHubInitialLoaded = false;
+let chatKnownMsgIds = new Set();
+
+function getChatAudioCtx() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!_chatAudioCtx) _chatAudioCtx = new Ctx();
+  if (_chatAudioCtx.state === "suspended") {
+    _chatAudioCtx.resume().catch(() => {});
+  }
+  return _chatAudioCtx;
+}
+
+["pointerdown", "keydown"].forEach(evt => {
+  window.addEventListener(evt, () => {
+    if (_chatAudioCtx && _chatAudioCtx.state === "suspended") {
+      _chatAudioCtx.resume().catch(() => {});
+    }
+  }, { passive: true });
+});
+
+function playIncomingChatSound() {
+  try {
+    const ctx = getChatAudioCtx();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const playTone = (freq, startOffset, duration, peakGain) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + startOffset);
+      gain.gain.setValueAtTime(0.0001, now + startOffset);
+      gain.gain.exponentialRampToValueAtTime(peakGain, now + startOffset + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + startOffset);
+      osc.stop(now + startOffset + duration + 0.02);
+    };
+
+    // Мягкий двухтональный сигнал (C6 -> E6)
+    playTone(1046.5, 0, 0.14, 0.06);
+    playTone(1318.5, 0.09, 0.18, 0.05);
+  } catch (e) {}
+}
+
+function collectMyRelevantMessages(hub) {
+  const res = [];
+  if (!currentUser || !hub) return res;
+  const uid = currentUser.id;
+  (hub.chats || []).forEach(c => {
+    if (Array.isArray(c.members) && c.members.includes(uid)) {
+      (c.messages || []).forEach(m => { if (m && m.id) res.push(m); });
+    }
+  });
+  (hub.tasks || []).forEach(tk => {
+    const involved = tk.authorId === uid || (Array.isArray(tk.assignees) && tk.assignees.includes(uid));
+    if (involved) {
+      (tk.messages || []).forEach(m => { if (m && m.id) res.push(m); });
+    }
+  });
+  return res;
+}
+
 let _cachedChatCryptoKey = null;
 
 function bytesToBase64(bytes) {
@@ -10108,10 +10176,22 @@ function startChatHubPolling() {
       notifications: deduplicateById(normalizeFirebaseArray(val.notifications))
     };
 
+    const relevantMsgs = collectMyRelevantMessages(incomingHub);
+    let hasNewIncomingMsg = false;
+    if (chatHubInitialLoaded) {
+      hasNewIncomingMsg = relevantMsgs.some(m => !chatKnownMsgIds.has(m.id) && m.senderId !== currentUser.id);
+    } else {
+      chatHubInitialLoaded = true;
+    }
+    chatKnownMsgIds = new Set(relevantMsgs.map(m => m.id));
+
     const nextHash = JSON.stringify(incomingHub);
     if (nextHash === chatHubLastHash) return;
 
     chatHubLastHash = nextHash;
+    if (hasNewIncomingMsg) {
+      playIncomingChatSound();
+    }
     appState.chats = incomingHub.chats;
     appState.tasks = incomingHub.tasks;
     appState.notifications = incomingHub.notifications;
@@ -10162,6 +10242,8 @@ function startChatHubPolling() {
 }
 
 function stopChatHubPolling() {
+  chatHubInitialLoaded = false;
+  chatKnownMsgIds = new Set();
   if (firebaseHubRef) {
     firebaseHubRef.off();
     firebaseHubRef = null;
