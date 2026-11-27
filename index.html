@@ -780,6 +780,13 @@
         </button>
       </div>
       <div class="modal-body">
+        <div class="diary-st-filters mb-12" id="monStudentFiltersWrap">
+          <div class="form-group" style="margin-bottom:0;">
+            <input type="text" id="monStudentSearchInput" class="form-input" data-i18n-placeholder="ph_st_search_short" placeholder="Поиск студента..." oninput="onMonStudentFilterChange()" />
+          </div>
+          <div class="custom-select" id="monFilterTutorWrap"></div>
+          <div class="custom-select" id="monFilterGroupWrap"></div>
+        </div>
         <div class="form-group">
           <label class="form-label" data-i18n="lbl_student">Студент</label>
           <div class="custom-select" id="monStudentSelectWrap"></div>
