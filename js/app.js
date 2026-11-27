@@ -1495,9 +1495,13 @@ function renderCharts() {
 async function exportChart(which, format) {
   const chart = which === "activity" ? activityChartInstance : distChartInstance;
   if (!chart) return;
-  const dataURI = await chart.dataURI();
+
+  const containerId = which === "activity" ? "activityChart" : "distributionChart";
+  const containerEl = document.getElementById(containerId);
+
   if (format === "svg") {
-    const svgEl = document.querySelector(`#${which === "activity" ? "activityChart" : "distributionChart"} svg`);
+    const svgEl = containerEl ? containerEl.querySelector("svg") : null;
+    if (!svgEl) return;
     const serializer = new XMLSerializer();
     const svgStr = serializer.serializeToString(svgEl);
     const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
@@ -1505,17 +1509,30 @@ async function exportChart(which, format) {
     return;
   }
 
+  // Вычисляем масштаб, чтобы ApexCharts сразу отрендерил график в 2K (2560 px)
+  const targetWidth = 2560;
+  const currentWidth = (containerEl && containerEl.clientWidth) ? containerEl.clientWidth : 640;
+  const renderScale = Math.max(3, Math.ceil(targetWidth / currentWidth));
+
+  const dataURI = await chart.dataURI({ scale: renderScale });
   const img = new Image();
   img.onload = () => {
-    const targetWidth = 2560;
-    const scale = targetWidth / img.width;
+    const pad = 48;
+    const scale = (targetWidth - pad * 2) / img.width;
+    const drawW = Math.round(img.width * scale);
+    const drawH = Math.round(img.height * scale);
+
     const canvas = document.createElement("canvas");
-    canvas.width = targetWidth;
-    canvas.height = Math.round(img.height * scale);
+    canvas.width = drawW + pad * 2;
+    canvas.height = drawH + pad * 2;
+
     const ctx = canvas.getContext("2d");
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     ctx.fillStyle = document.body.classList.contains("dark") ? "#181b23" : "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, pad, pad, drawW, drawH);
+
     triggerDownload(canvas.toDataURL("image/png", 1.0), `mytutors_${which}_2K.png`);
   };
   img.src = dataURI.imgURI;
