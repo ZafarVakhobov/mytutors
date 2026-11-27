@@ -644,6 +644,8 @@ let distSelectedGroup = "all";
 let blogActiveMode = "note";
 
 let dashFilters = { tutor: "all", course: "all", group: "all", gender: "all" };
+let studentListFilters = { search: "", tutors: [], course: "all", group: "all", gender: "all" };
+let stFilterTutorSearch = "";
 let calYear = 2026;
 let calMonth = 10;
 let selectedCalDate = "2026-11-26";
@@ -1570,58 +1572,30 @@ function renderStudentsSection() {
   }
 
   if (activeStudentSubtab === "all") {
-    if (!students.length) {
-      area.innerHTML = `<div class="empty-state">${t(
-        "Список студентов пуст. Нажмите «Добавить студента» или выполните синхронизацию с tyutor.hemis.uz.",
-        "Talabalar röyxati böş. «Talaba qöşiş» tugmasini bosing yoki tyutor.hemis.uz bilan sinxronlang."
-      )}</div>`;
-      return;
-    }
     area.innerHTML = `
-      <div class="bento-card">
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>${t("Ф.И.О.", "F.I.Ş.")}</th>
-                <th>${t("Группа / Курс", "Guruh / Kurs")}</th>
-                <th>${t("Пол", "Jinsi")}</th>
-                <th>${t("Жилье", "Turar joy")}</th>
-                <th>${t("Работа", "Iş joyi")}</th>
-                <th>${t("Тютор", "Tyutor")}</th>
-                <th>${t("Телефон", "Telefon")}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              ${students.map(s => {
-                const tutor = appState.users.find(u => u.id === s.tutorId);
-                const empBadge = s.employed
-                  ? `<span class="badge-pill work">${t("Трудоустроен", "Işlaydi")}${s.empOrg ? ` • ${s.empOrg}` : ""}</span>`
-                  : `<span class="badge-pill unemployed">${t("Не трудоустроен", "Işlamaydi")}</span>`;
-                return `
-                  <tr>
-                    <td><strong>${s.name}</strong></td>
-                    <td>${s.group} • ${s.course} ${t("курс", "kurs")}</td>
-                    <td>${formatGenderShort(s.gender)}</td>
-                    <td>${formatHousingBadge(s)}</td>
-                    <td>${empBadge}</td>
-                    <td>${tutor ? tutor.name : "—"}</td>
-                    <td>${s.phone || "—"}</td>
-                    <td style="text-align:right; white-space:nowrap;">
-                      <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
-                      ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-                      </button>` : ""}
-                    </td>
-                  </tr>
-                `;
-              }).join("")}
-            </tbody>
-          </table>
+      <div class="st-all-toolbar" id="studentsAllToolbar">
+        <div class="st-search-group">
+          <div class="st-search-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+            <input type="text" id="stAllSearchInput" placeholder="${t("Поиск студента по Ф.И.О., группе, телефону...", "Talabani F.I.Ş., guruh, telefon böyiça qidiriş...")}" value="${studentListFilters.search.replace(/"/g, '&quot;')}" oninput="onStudentSearchInput(this.value)" />
+          </div>
+          <button type="button" id="stQuickRegisterBtn" class="btn-orange sm hidden" onclick="openStudentModal(null, studentListFilters.search.trim())">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
+            <span>${t("Зарегистрировать студента", "Talabani röyxatdan ötkaziş")}</span>
+          </button>
+        </div>
+        <div class="st-all-filters">
+          <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="stFilterTutorWrap"></div>
+          <div class="custom-select" id="stFilterCourseWrap"></div>
+          <div class="custom-select" id="stFilterGroupWrap"></div>
+          <div class="custom-select" id="stFilterGenderWrap"></div>
+          <button type="button" id="stFilterResetBtn" class="btn-export sm hidden" onclick="resetStudentListFilters()">${t("Сбросить", "Tozalaş")}</button>
         </div>
       </div>
+      <div id="studentsAllTableContainer"></div>
     `;
+    renderStudentListFilterControls();
+    renderStudentsAllTable();
     return;
   }
 
@@ -1926,6 +1900,286 @@ function renderStudentsSection() {
 }
 
 
+
+// ==================== ПОИСК И ФИЛЬТРЫ ВО ВКЛАДКЕ «ВСЕ СТУДЕНТЫ» ====================
+function onStudentSearchInput(val) {
+  studentListFilters.search = val || "";
+  renderStudentsAllTable();
+}
+
+function resetStudentListFilters() {
+  studentListFilters = { search: "", tutors: [], course: "all", group: "all", gender: "all" };
+  stFilterTutorSearch = "";
+  const inp = document.getElementById("stAllSearchInput");
+  if (inp) inp.value = "";
+  renderStudentListFilterControls();
+  renderStudentsAllTable();
+}
+
+function filterStudentsByTutorClick(tutorId) {
+  if (!tutorId || isTutorOnly()) return;
+  if (studentListFilters.tutors.length === 1 && studentListFilters.tutors[0] === tutorId) {
+    studentListFilters.tutors = [];
+  } else {
+    studentListFilters.tutors = [tutorId];
+  }
+  renderStudentListFilterControls();
+  renderStudentsAllTable();
+}
+
+function toggleStFilterTutor(tutorId) {
+  const arr = studentListFilters.tutors || [];
+  if (arr.includes(tutorId)) {
+    studentListFilters.tutors = arr.filter(id => id !== tutorId);
+  } else {
+    studentListFilters.tutors = [...arr, tutorId];
+  }
+  renderStudentListFilterControls(true);
+  renderStudentsAllTable();
+}
+
+function formatStFilterTutorTrigger() {
+  const selected = studentListFilters.tutors || [];
+  if (!selected.length) return t("Все тюторы", "Barça tyutorlar");
+  if (selected.length === 1) {
+    const u = appState.users.find(x => x.id === selected[0]);
+    return u ? u.name : t("1 тютор", "1 tyutor");
+  }
+  return `${t("Тюторы", "Tyutorlar")}: ${selected.length}`;
+}
+
+function renderStFilterTutorOptions() {
+  const listEl = document.getElementById("stFilterTutorOptions");
+  const inp = document.getElementById("stFilterTutorSearchInput");
+  if (!listEl) return;
+
+  stFilterTutorSearch = inp ? inp.value : "";
+  const q = stFilterTutorSearch.trim().toLowerCase();
+  const tutors = appState.users.filter(u => u.role === "tutor");
+  const matched = q
+    ? tutors.filter(tr => (tr.name || "").toLowerCase().includes(q) || (tr.login || "").toLowerCase().includes(q))
+    : tutors;
+
+  if (!matched.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = matched.map(tr => {
+    const checked = (studentListFilters.tutors || []).includes(tr.id);
+    return `
+      <label class="social-check-option">
+        <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleStFilterTutor('${tr.id}')" />
+        <span>${tr.name}</span>
+      </label>
+    `;
+  }).join("");
+}
+
+function renderStudentListFilterControls(keepTutorOpen = false) {
+  const invalidGroupLabels = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+  const parseGroups = (u) => {
+    if (!u || !u.groups) return [];
+    return String(u.groups).split(",").map(g => g.trim()).filter(g => g && !invalidGroupLabels.has(g));
+  };
+
+  // 1. Мультивыбор тюторов (для админов / руководства)
+  const tutorWrap = document.getElementById("stFilterTutorWrap");
+  if (tutorWrap && !isTutorOnly()) {
+    const wasOpen = keepTutorOpen || tutorWrap.classList.contains("open");
+    tutorWrap.innerHTML = `
+      <div class="cs-trigger" onclick="toggleCustomSelect('stFilterTutorWrap'); setTimeout(() => { const i = document.getElementById('stFilterTutorSearchInput'); if(i) i.focus(); }, 30);">
+        <span>${formatStFilterTutorTrigger()}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+      </div>
+      <div class="cs-menu" onclick="event.stopPropagation()">
+        <input type="text" id="stFilterTutorSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск тютора...", "Tyutor qidiriş...")}" value="${stFilterTutorSearch}" oninput="renderStFilterTutorOptions()" />
+        <div id="stFilterTutorOptions" class="tg-tag-search-list"></div>
+      </div>
+    `;
+    if (wasOpen) tutorWrap.classList.add("open");
+    renderStFilterTutorOptions();
+  }
+
+  // Определяем активных тюторов для зависимых списков курсов и групп
+  let targetTutors = [];
+  if (isTutorOnly()) {
+    targetTutors = [currentUser];
+  } else if (studentListFilters.tutors.length > 0) {
+    targetTutors = appState.users.filter(u => studentListFilters.tutors.includes(u.id));
+  } else {
+    targetTutors = appState.users.filter(u => u.role === "tutor");
+  }
+
+  // 2. Фильтр курсов (соответственно выбранным тюторам)
+  let availableCourses = [];
+  if (isTutorOnly() || studentListFilters.tutors.length > 0) {
+    const cSet = new Set();
+    targetTutors.forEach(tr => { if (tr && tr.course) cSet.add(String(tr.course)); });
+    if (cSet.size === 0) {
+      const targetIds = new Set(targetTutors.map(tr => tr.id));
+      appState.students.filter(s => targetIds.has(s.tutorId)).forEach(s => {
+        if (s.course) cSet.add(String(s.course));
+      });
+    }
+    availableCourses = [...cSet].sort();
+  }
+  if (!availableCourses.length) availableCourses = ["1", "2", "3", "4"];
+
+  let courseOpts = [];
+  if (availableCourses.length === 1 && (isTutorOnly() || studentListFilters.tutors.length > 0)) {
+    studentListFilters.course = availableCourses[0];
+    courseOpts = [{ value: availableCourses[0], label: `${availableCourses[0]} ${t("курс", "kurs")}` }];
+  } else {
+    if (studentListFilters.course !== "all" && !availableCourses.includes(String(studentListFilters.course))) {
+      studentListFilters.course = "all";
+    }
+    courseOpts = [{ value: "all", label: t("Все курсы", "Barça kurslar") }]
+      .concat(availableCourses.map(c => ({ value: c, label: `${c} ${t("курс", "kurs")}` })));
+  }
+  renderCustomSelect("stFilterCourseWrap", courseOpts, studentListFilters.course, (val) => {
+    studentListFilters.course = val;
+    renderStudentListFilterControls();
+    renderStudentsAllTable();
+  });
+
+  // 3. Фильтр групп (соответственно выбранным тюторам)
+  const gSet = new Set();
+  targetTutors.forEach(tr => parseGroups(tr).forEach(g => gSet.add(g)));
+  const availableGroups = [...gSet].sort((a, b) => a.localeCompare(b));
+  if (studentListFilters.group !== "all" && !availableGroups.includes(studentListFilters.group)) {
+    studentListFilters.group = "all";
+  }
+  const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
+    .concat(availableGroups.map(g => ({ value: g, label: g })));
+  renderCustomSelect("stFilterGroupWrap", groupOpts, studentListFilters.group, (val) => {
+    studentListFilters.group = val;
+    renderStudentListFilterControls();
+    renderStudentsAllTable();
+  });
+
+  // 4. Фильтр по полу
+  const genderOpts = [
+    { value: "all", label: t("Пол: Все", "Jinsi: Barça") },
+    { value: "М", label: t("Мужской (М)", "Erkak (E)") },
+    { value: "Ж", label: t("Женский (Ж)", "Ayol (A)") }
+  ];
+  renderCustomSelect("stFilterGenderWrap", genderOpts, studentListFilters.gender, (val) => {
+    studentListFilters.gender = val;
+    renderStudentListFilterControls();
+    renderStudentsAllTable();
+  });
+}
+
+function renderStudentsAllTable() {
+  const container = document.getElementById("studentsAllTableContainer");
+  const quickRegBtn = document.getElementById("stQuickRegisterBtn");
+  const resetBtn = document.getElementById("stFilterResetBtn");
+  if (!container) return;
+
+  let list = getRoleScopedStudents();
+  const q = (studentListFilters.search || "").trim().toLowerCase();
+
+  if (!isTutorOnly() && studentListFilters.tutors.length > 0) {
+    list = list.filter(s => studentListFilters.tutors.includes(s.tutorId));
+  }
+  if (studentListFilters.course !== "all") {
+    list = list.filter(s => String(s.course) === String(studentListFilters.course));
+  }
+  if (studentListFilters.group !== "all") {
+    list = list.filter(s => s.group === studentListFilters.group);
+  }
+  if (studentListFilters.gender !== "all") {
+    list = list.filter(s => s.gender === studentListFilters.gender);
+  }
+  if (q) {
+    list = list.filter(s =>
+      (s.name || "").toLowerCase().includes(q) ||
+      (s.group || "").toLowerCase().includes(q) ||
+      (s.phone || "").toLowerCase().includes(q) ||
+      (s.passport || "").toLowerCase().includes(q) ||
+      (s.hemisId || "").toLowerCase().includes(q)
+    );
+  }
+
+  // Показываем кнопку «Зарегистрировать студента» рядом с поиском, если введено имя и совпадений нет
+  if (quickRegBtn) {
+    quickRegBtn.classList.toggle("hidden", !(q && list.length === 0));
+  }
+
+  // Показываем кнопку «Сбросить», если активен любой фильтр
+  const hasActiveFilter = Boolean(
+    q ||
+    studentListFilters.tutors.length > 0 ||
+    (studentListFilters.course !== "all" && !(isTutorOnly() && currentUser && currentUser.course)) ||
+    studentListFilters.group !== "all" ||
+    studentListFilters.gender !== "all"
+  );
+  if (resetBtn) {
+    resetBtn.classList.toggle("hidden", !hasActiveFilter);
+  }
+
+  if (!list.length) {
+    const emptyText = q
+      ? t(`Студент «${studentListFilters.search.trim()}» не найден. Вы можете сразу зарегистрировать его.`, `«${studentListFilters.search.trim()}» topilmadi. Uni darhol röyxatdan ötkazişingiz mumkin.`)
+      : t("Список студентов пуст или не соответствует выбранным фильтрам.", "Talabalar röyxati böş yoki tanlangan filtrlarga mos kelmadi.");
+    container.innerHTML = `<div class="empty-state">${emptyText}</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="bento-card">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>${t("Ф.И.О.", "F.I.Ş.")}</th>
+              <th>${t("Группа / Курс", "Guruh / Kurs")}</th>
+              <th>${t("Пол", "Jinsi")}</th>
+              <th>${t("Жилье", "Turar joy")}</th>
+              <th>${t("Работа", "Iş joyi")}</th>
+              <th>${t("Тютор", "Tyutor")}</th>
+              <th>${t("Телефон", "Telefon")}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${list.map(s => {
+              const tutor = appState.users.find(u => u.id === s.tutorId);
+              const empBadge = s.employed
+                ? `<span class="badge-pill work">${t("Трудоустроен", "Işlaydi")}${s.empOrg ? ` • ${s.empOrg}` : ""}</span>`
+                : `<span class="badge-pill unemployed">${t("Не трудоустроен", "Işlamaydi")}</span>`;
+              const isTutorActive = studentListFilters.tutors.includes(s.tutorId);
+              const tutorCellHtml = tutor
+                ? (isTutorOnly()
+                    ? `<span>${tutor.name}</span>`
+                    : `<button type="button" class="tutor-table-btn ${isTutorActive ? 'active' : ''}" onclick="filterStudentsByTutorClick('${tutor.id}')" title="${t("Фильтровать по этому тютору", "Uşbu tyutor böyiça filtrlash")}">${tutor.name}</button>`)
+                : "—";
+              return `
+                <tr>
+                  <td><strong>${s.name}</strong></td>
+                  <td>${s.group} • ${s.course} ${t("курс", "kurs")}</td>
+                  <td>${formatGenderShort(s.gender)}</td>
+                  <td>${formatHousingBadge(s)}</td>
+                  <td>${empBadge}</td>
+                  <td>${tutorCellHtml}</td>
+                  <td>${s.phone || "—"}</td>
+                  <td style="text-align:right; white-space:nowrap;">
+                    <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
+                    ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                    </button>` : ""}
+                  </td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
 function setVolunteerFilter(val) {
   activeVolunteerFilter = val;
   volFilterSearchQuery = "";
@@ -2045,13 +2299,13 @@ function renderStudentGroupSelect(tutorId, preferredGroup = "") {
   renderCustomSelect("stGroupSelectWrap", groupOpts, modalStudentState.group, onGroupChange);
 }
 
-function openStudentModal(studentId = null) {
+function openStudentModal(studentId = null, prefillName = "") {
   const st = studentId ? appState.students.find(s => s.id === studentId) : null;
   document.getElementById("editStudentId").value = st ? st.id : "";
   document.getElementById("studentModalTitle").textContent = st
     ? t("Редактирование карточки студента", "Talaba kartasini tahrirlaş")
     : t("Новый студент", "Yangi talaba");
-  document.getElementById("stFullName").value = st ? st.name : "";
+  document.getElementById("stFullName").value = st ? st.name : (prefillName || "");
   document.getElementById("stPhone").value = st ? st.phone : "";
   const passEl = document.getElementById("stPassport");
   if (passEl) passEl.value = st && st.passport ? st.passport : "";
@@ -4744,7 +4998,6 @@ function renderStudentVolunteerSelect(keepOpen = false) {
   if (wasOpen) wrap.classList.add("open");
   renderVolunteerOptionsList();
 }
-
 function renderVolunteerOptionsList() {
   const listEl = document.getElementById("volOptionsList");
   const inp = document.getElementById("volSearchInput");
