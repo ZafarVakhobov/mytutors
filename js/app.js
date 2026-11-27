@@ -153,7 +153,32 @@ const I18N = {
     lbl_nu_groups: "Закрепленные группы",
     btn_create_cabinet: "Создать кабинет",
     lbl_partial_admin: "Частичные права администратора",
-    desc_partial_admin: "Полный доступ к управлению и удалению данных"
+    desc_partial_admin: "Полный доступ к управлению и удалению данных",
+    chat_btn_label: "Чат и Задания",
+    chat_att_photo: "Фото / Изображение",
+    chat_att_file: "Документ / Файл",
+    chat_att_poll: "Создать опрос",
+    chat_ph_msg: "Сообщение...",
+    chat_new_modal_title: "Новый чат или группа",
+    chat_mode_direct: "Личный чат",
+    chat_mode_group: "Создать группу",
+    chat_lbl_group_name: "Название группы",
+    chat_lbl_members: "Выберите собеседников",
+    chat_btn_create: "Создать",
+    task_modal_title: "Новое задание",
+    task_lbl_title: "Наименование задачи *",
+    task_lbl_deadline: "Дедлайн",
+    task_lbl_priority: "Важность (цвет)",
+    task_lbl_assignees: "Исполнители (мультивыбор) *",
+    task_lbl_todos: "Пункты задачи (To-Do)",
+    task_btn_assign: "Назначить задание",
+    poll_modal_title: "Создать опрос",
+    poll_lbl_question: "Вопрос *",
+    poll_lbl_options: "Варианты ответа",
+    poll_btn_add_opt: "Добавить вариант",
+    poll_lbl_multi: "Несколько вариантов ответа",
+    poll_desc_multi: "Участники смогут выбрать сразу несколько пунктов",
+    poll_btn_send: "Отправить опрос"
   },
   oz: {
     auth_title: "Kabinetga kiriş",
@@ -308,7 +333,32 @@ const I18N = {
     lbl_nu_groups: "Biriktirilgan guruhlar",
     btn_create_cabinet: "Kabinet oçiş",
     lbl_partial_admin: "Qisman administrator huquqlari",
-    desc_partial_admin: "Ma’lumotlarni boşqariş va öçirişga töliq ruxsat"
+    desc_partial_admin: "Ma’lumotlarni boşqariş va öçirişga töliq ruxsat",
+    chat_btn_label: "Çat va Vazifalar",
+    chat_att_photo: "Rasm / Foto",
+    chat_att_file: "Hujjat / Fayl",
+    chat_att_poll: "Sörovnoma yaratish",
+    chat_ph_msg: "Xabar...",
+    chat_new_modal_title: "Yangi çat yoki guruh",
+    chat_mode_direct: "Şaxsiy çat",
+    chat_mode_group: "Guruh yaratish",
+    chat_lbl_group_name: "Guruh nomi",
+    chat_lbl_members: "Suhbatdoşlarni tanlang",
+    chat_btn_create: "Yaratish",
+    task_modal_title: "Yangi vazifa",
+    task_lbl_title: "Vazifa nomi *",
+    task_lbl_deadline: "Muddat (dedlayn)",
+    task_lbl_priority: "Muhimlik darajasi (rang)",
+    task_lbl_assignees: "Ijroçilar (bir neçta tanlaş) *",
+    task_lbl_todos: "Vazifa bandlari (To-Do)",
+    task_btn_assign: "Vazifa biriktiriş",
+    poll_modal_title: "Sörovnoma yaratish",
+    poll_lbl_question: "Savol *",
+    poll_lbl_options: "Javob variantlari",
+    poll_btn_add_opt: "Variant qöşiş",
+    poll_lbl_multi: "Bir neçta javob tanlaş",
+    poll_desc_multi: "Iştirokçilar bir vaqtda bir neçta bandni tanlaşi mumkin",
+    poll_btn_send: "Sörovnomani yuboriş"
   }
 };
 
@@ -686,7 +736,10 @@ function sanitizeAppState(rawObj) {
     customTags: Array.isArray(base.customTags) ? [...new Set(base.customTags.filter(Boolean))] : [],
     recentTags: Array.isArray(base.recentTags) ? [...new Set(base.recentTags.filter(Boolean))] : [],
     customVolunteers: Array.isArray(base.customVolunteers) ? [...new Set(base.customVolunteers.filter(Boolean))] : [],
-    customSocialCategories: Array.isArray(base.customSocialCategories) ? [...new Set(base.customSocialCategories.filter(Boolean))] : []
+    customSocialCategories: Array.isArray(base.customSocialCategories) ? [...new Set(base.customSocialCategories.filter(Boolean))] : [],
+    chats: deduplicateById(base.chats || []),
+    tasks: deduplicateById(base.tasks || []),
+    notifications: deduplicateById(base.notifications || [])
   };
 }
 
@@ -717,7 +770,10 @@ function buildPayloadForCurrentUser() {
       customTags: appState.customTags || [],
       recentTags: appState.recentTags || [],
       customVolunteers: appState.customVolunteers || [],
-      customSocialCategories: appState.customSocialCategories || []
+      customSocialCategories: appState.customSocialCategories || [],
+      chats: appState.chats || [],
+      tasks: appState.tasks || [],
+      notifications: appState.notifications || []
     };
   }
   // Для админа/руководства: сохраняем их личные записи (календарь, блог, todo, посты без привязки к тютору)
@@ -734,7 +790,10 @@ function buildPayloadForCurrentUser() {
     customTags: appState.customTags || [],
     recentTags: appState.recentTags || [],
     customVolunteers: appState.customVolunteers || [],
-    customSocialCategories: appState.customSocialCategories || []
+    customSocialCategories: appState.customSocialCategories || [],
+    chats: appState.chats || [],
+    tasks: appState.tasks || [],
+    notifications: appState.notifications || []
   };
 }
 
@@ -841,6 +900,15 @@ document.addEventListener("click", (e) => {
     if (ac) ac.classList.add("hidden");
     const sac = document.getElementById("customSocialAutocomplete");
     if (sac) sac.classList.add("hidden");
+  }
+  if (!e.target.closest("#chatAttachWrap")) {
+    const am = document.getElementById("chatAttachMenu"); if (am) am.classList.add("hidden");
+  }
+  if (!e.target.closest("#chatEmojiWrap")) {
+    const ep = document.getElementById("chatEmojiPopover"); if (ep) ep.classList.add("hidden");
+  }
+  if (!e.target.closest("#chatNotifWrap")) {
+    const nd = document.getElementById("chatNotifDropdown"); if (nd) nd.classList.add("hidden");
   }
   if (!e.target.closest(".social-other-dropdown")) {
     document.querySelectorAll(".social-other-dropdown.open").forEach(el => el.classList.remove("open"));
@@ -1026,6 +1094,7 @@ async function handleLogin(e) {
   localStorage.setItem(SESSION_USER_KEY, found.id);
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("appShell").classList.remove("hidden");
+  const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.remove("hidden");
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
 
   dashFilters = {
@@ -1045,6 +1114,8 @@ function logout() {
   currentUser = null;
   localStorage.removeItem(SESSION_USER_KEY);
   document.getElementById("appShell").classList.add("hidden");
+  const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.add("hidden");
+  toggleChatDrawer(false);
   document.getElementById("authScreen").classList.remove("hidden");
   document.getElementById("loginPassword").value = "";
 }
@@ -1065,6 +1136,7 @@ function restoreSession() {
   selectedPostAuthorId = found.id;
   document.getElementById("authScreen").classList.add("hidden");
   document.getElementById("appShell").classList.remove("hidden");
+  const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.remove("hidden");
   document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
 
   dashFilters = {
@@ -1195,6 +1267,7 @@ function renderAllViews() {
   if (activeTab === "profile") syncProfileCV();
   if (activeTab === "calendar") renderCalendarAndBlog();
   if (activeTab === "users" && currentUser.role === "admin") renderUsersAdminTable();
+  if (typeof updateChatIndicators === "function") updateChatIndicators();
 }
 
 // ==================== 1. DASHBOARD И ГРАФИКИ (2K PNG / SVG) ====================
@@ -1924,7 +1997,6 @@ function renderStudentsSection() {
     `;
   }
 }
-
 
 
 // ==================== ПОИСК И ФИЛЬТРЫ ВО ВКЛАДКЕ «ВСЕ СТУДЕНТЫ» ====================
@@ -5894,4 +5966,753 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", restoreSession);
 } else {
   restoreSession();
+}
+
+
+// ==================== 8. ЧАТ, ГРУППЫ, ЗАДАНИЯ, ОПРОСЫ И УВЕДОМЛЕНИЯ ====================
+let chatDrawerOpen = false;
+let activeChatTabId = "tasks"; // "tasks" или ID чата
+let activeTasksSubtab = "active"; // "active" | "completed"
+let activeTaskDiscussionId = null; // ID задачи, если открыт чат обсуждения конкретной задачи
+let chatCreateMode = "direct";
+let chatCreateSelectedIds = [];
+let chatPendingAttachment = null; // { type: 'image'|'file', name, dataUrl, size }
+
+let taskDraftColor = "#ef4444";
+let taskDraftAssignees = [];
+let taskDraftTodos = [];
+let taskAssigneeSearch = "";
+
+const CHAT_EMOJIS = [
+  "😀","😊","👍","👏","🔥","✅","❤️","🎉","🙏","👌","🤝","💡",
+  "📌","📎","📝","📅","⏰","⚠️","🚀","⭐","😅","🤔","👀","💪"
+];
+
+function addSystemNotification(targetUserIds, text, refType = "chat", refId = "tasks") {
+  if (!Array.isArray(targetUserIds) || !targetUserIds.length) return;
+  const nowStr = new Date().toLocaleString();
+  targetUserIds.forEach(uid => {
+    if (!uid || (currentUser && uid === currentUser.id)) return;
+    appState.notifications.unshift({
+      id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      userId: uid,
+      text,
+      refType,
+      refId,
+      read: false,
+      time: nowStr
+    });
+  });
+}
+
+function getMyActiveAssignedTasks() {
+  if (!currentUser) return [];
+  return (appState.tasks || []).filter(tk =>
+    tk.status === "active" &&
+    Array.isArray(tk.assignees) &&
+    tk.assignees.includes(currentUser.id)
+  );
+}
+
+function updateChatIndicators() {
+  if (!currentUser) return;
+  const myActiveTasks = getMyActiveAssignedTasks();
+  const unreadNotifs = (appState.notifications || []).filter(n => n.userId === currentUser.id && !n.read);
+
+  const pulseEl = document.getElementById("chatLauncherPulse");
+  const badgeEl = document.getElementById("chatLauncherBadge");
+  const notifCountEl = document.getElementById("chatNotifCount");
+
+  if (pulseEl) pulseEl.classList.toggle("hidden", myActiveTasks.length === 0);
+  const totalCount = unreadNotifs.length + myActiveTasks.length;
+  if (badgeEl) {
+    badgeEl.textContent = totalCount;
+    badgeEl.classList.toggle("hidden", totalCount === 0);
+  }
+  if (notifCountEl) {
+    notifCountEl.textContent = unreadNotifs.length;
+    notifCountEl.classList.toggle("hidden", unreadNotifs.length === 0);
+  }
+}
+
+function toggleChatDrawer(forceState) {
+  const drawer = document.getElementById("chatDrawer");
+  const backdrop = document.getElementById("chatDrawerBackdrop");
+  if (!drawer || !backdrop) return;
+
+  chatDrawerOpen = typeof forceState === "boolean" ? forceState : !chatDrawerOpen;
+  drawer.classList.toggle("open", chatDrawerOpen);
+  backdrop.classList.toggle("hidden", !chatDrawerOpen);
+  drawer.setAttribute("aria-hidden", chatDrawerOpen ? "false" : "true");
+
+  if (chatDrawerOpen) {
+    renderChatDrawer();
+  }
+}
+
+function renderChatDrawer() {
+  if (!currentUser) return;
+  updateChatIndicators();
+  renderChatTabsBar();
+  renderChatDrawerBody();
+}
+
+function getVisibleChatsForMe() {
+  if (!currentUser) return [];
+  return (appState.chats || []).filter(c =>
+    Array.isArray(c.members) && c.members.includes(currentUser.id)
+  );
+}
+
+function getChatDisplayName(chat) {
+  if (!chat) return "";
+  if (chat.type === "group") return chat.title || t("Группа", "Guruh");
+  const otherId = (chat.members || []).find(id => id !== currentUser.id);
+  const otherUser = appState.users.find(u => u.id === otherId);
+  return otherUser ? otherUser.name : (chat.title || t("Чат", "Çat"));
+}
+
+function renderChatTabsBar() {
+  const bar = document.getElementById("chatTabsBar");
+  if (!bar) return;
+
+  const myActiveTasks = getMyActiveAssignedTasks();
+  const chats = getVisibleChatsForMe();
+
+  let html = `
+    <div class="chat-tab-pill ${activeChatTabId === 'tasks' ? 'active' : ''}" onclick="selectChatTab('tasks')">
+      ${myActiveTasks.length > 0 ? '<span class="chat-pulse-dot"></span>' : ''}
+      <span>${t("Задания", "Vazifalar")}</span>
+    </div>
+  `;
+
+  html += chats.map(c => `
+    <div class="chat-tab-pill ${activeChatTabId === c.id ? 'active' : ''}" onclick="selectChatTab('${c.id}')">
+      <span>${getChatDisplayName(c)}</span>
+      <button type="button" class="chat-tab-del" data-del-trigger="1" onclick="event.stopPropagation(); deleteChatById('${c.id}', this)" title="${t("Удалить чат", "Çatni öçiriş")}">×</button>
+    </div>
+  `).join("");
+
+  bar.innerHTML = html;
+}
+
+function selectChatTab(tabId) {
+  activeChatTabId = tabId;
+  activeTaskDiscussionId = null;
+  chatPendingAttachment = null;
+  renderPendingAttachBar();
+  renderChatDrawer();
+}
+
+function renderChatDrawerBody() {
+  const body = document.getElementById("chatDrawerBody");
+  const composer = document.getElementById("chatComposer");
+  if (!body || !composer) return;
+
+  // 1. Вкладка «Задания»
+  if (activeChatTabId === "tasks") {
+    if (activeTaskDiscussionId) {
+      const task = (appState.tasks || []).find(tk => tk.id === activeTaskDiscussionId);
+      if (!task) {
+        activeTaskDiscussionId = null;
+        renderChatDrawerBody();
+        return;
+      }
+      composer.classList.remove("hidden");
+      const author = appState.users.find(u => u.id === task.authorId);
+      const msgs = task.messages || [];
+      body.innerHTML = `
+        <div class="task-card" style="border-left-color:${task.color || '#ff6b3d'}; flex-shrink:0;">
+          <div class="task-card-head">
+            <div>
+              <button type="button" class="btn-export sm mb-8" onclick="activeTaskDiscussionId=null; renderChatDrawerBody();">← ${t("К списку заданий", "Vazifalar röyxatiga")}</button>
+              <div class="task-title">${task.title}</div>
+              <div class="st-meta">${t("Автор", "Muallif")}: ${author ? author.name : "—"} ${task.deadline ? `• ${t("Дедлайн", "Muddat")}: ${task.deadline.replace('T', ' ')}` : ""}</div>
+            </div>
+            ${task.status === "active" && task.authorId === currentUser.id ? `
+              <button type="button" class="btn-orange sm" onclick="markTaskCompleted('${task.id}')">${t("Выполнено", "Bajarildi")}</button>
+            ` : ""}
+          </div>
+          ${(task.todos || []).length ? `
+            <div class="task-todos-mini">
+              ${task.todos.map((td, idx) => `
+                <label class="todo-check-label" style="font-size:12px;">
+                  <input type="checkbox" ${td.done ? "checked" : ""} onchange="toggleTaskTodoItem('${task.id}', ${idx})" />
+                  <span style="${td.done ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${td.text}</span>
+                </label>
+              `).join("")}
+            </div>
+          ` : ""}
+        </div>
+        ${msgs.length ? msgs.map(m => renderChatMessageBubble(m, "task", task.id)).join("") : `<div class="st-meta" style="text-align:center; padding:16px;">${t("Напишите комментарий или прикрепите отчет по заданию.", "Vazifa böyiça izoh yozing yoki hisobot biriktiring.")}</div>`}
+      `;
+      body.scrollTop = body.scrollHeight;
+      return;
+    }
+
+    composer.classList.add("hidden");
+    const visibleTasks = (appState.tasks || []).filter(tk =>
+      hasAdminPrivileges() ||
+      tk.authorId === currentUser.id ||
+      (Array.isArray(tk.assignees) && tk.assignees.includes(currentUser.id))
+    );
+    const activeCount = visibleTasks.filter(tk => tk.status === "active").length;
+    const doneCount = visibleTasks.filter(tk => tk.status === "completed").length;
+    const filtered = visibleTasks.filter(tk => tk.status === activeTasksSubtab);
+
+    body.innerHTML = `
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;">
+        <div class="subtabs-pills" style="padding-bottom:0;">
+          <button type="button" class="subtab-btn ${activeTasksSubtab === 'active' ? 'active' : ''}" onclick="activeTasksSubtab='active'; renderChatDrawerBody()">${t("Активные задачи", "Faol vazifalar")} (${activeCount})</button>
+          <button type="button" class="subtab-btn ${activeTasksSubtab === 'completed' ? 'active' : ''}" onclick="activeTasksSubtab='completed'; renderChatDrawerBody()">${t("Выполненные", "Bajarilgan")} (${doneCount})</button>
+        </div>
+        ${hasAdminPrivileges() ? `<button type="button" class="btn-orange sm" onclick="openChatTaskModal()">+ ${t("Задание", "Vazifa")}</button>` : ""}
+      </div>
+
+      ${!filtered.length ? `<div class="empty-state" style="padding:28px 16px;">${t("Задач в этой вкладке пока нет.", "Uşbu bölimda vazifalar hozirça yöq.")}</div>` : filtered.map(tk => {
+        const author = appState.users.find(u => u.id === tk.authorId);
+        const assigneeNames = (tk.assignees || []).map(id => {
+          const u = appState.users.find(x => x.id === id);
+          return u ? u.name : id;
+        }).join(", ");
+        const isAssignedToMe = (tk.assignees || []).includes(currentUser.id);
+        return `
+          <div class="task-card" style="border-left-color:${tk.color || '#ff6b3d'};">
+            <div class="task-card-head">
+              <div>
+                <div class="task-title" style="display:flex; align-items:center; gap:6px;">
+                  ${tk.status === 'active' && isAssignedToMe ? '<span class="chat-pulse-dot"></span>' : ''}
+                  <span>${tk.title}</span>
+                </div>
+                <div class="st-meta">${t("От", "Kimdan")}: ${author ? author.name : "—"} • ${t("Исполнители", "Ijroçilar")}: ${assigneeNames || "—"}</div>
+                ${tk.deadline ? `<div class="st-meta" style="color:var(--accent); font-weight:600;">${t("Дедлайн", "Muddat")}: ${tk.deadline.replace('T', ' ')}</div>` : ""}
+              </div>
+            </div>
+            ${(tk.todos || []).length ? `
+              <div class="task-todos-mini">
+                ${tk.todos.map((td, idx) => `
+                  <label class="todo-check-label" style="font-size:12px;">
+                    <input type="checkbox" ${td.done ? "checked" : ""} onchange="toggleTaskTodoItem('${tk.id}', ${idx})" />
+                    <span style="${td.done ? 'text-decoration:line-through; color:var(--text-muted);' : ''}">${td.text}</span>
+                  </label>
+                `).join("")}
+              </div>
+            ` : ""}
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:4px;">
+              <button type="button" class="btn-export sm" onclick="activeTaskDiscussionId='${tk.id}'; renderChatDrawerBody()">
+                ${t("Чат задачи", "Vazifa çati")} (${(tk.messages || []).length})
+              </button>
+              ${tk.status === "active" && tk.authorId === currentUser.id ? `
+                <button type="button" class="btn-orange sm" onclick="markTaskCompleted('${tk.id}')">${t("Отметить выполненным", "Bajarildi")}</button>
+              ` : ""}
+            </div>
+          </div>
+        `;
+      }).join("")}
+    `;
+    return;
+  }
+
+  // 2. Обычный или групповой чат
+  const chat = (appState.chats || []).find(c => c.id === activeChatTabId);
+  if (!chat) {
+    activeChatTabId = "tasks";
+    renderChatDrawer();
+    return;
+  }
+
+  composer.classList.remove("hidden");
+  const msgs = chat.messages || [];
+  body.innerHTML = msgs.length
+    ? msgs.map(m => renderChatMessageBubble(m, "chat", chat.id)).join("")
+    : `<div class="empty-state" style="padding:30px 16px;">${t("История чата пуста. Напишите первое сообщение!", "Çat tarixi böş. Birinçi xabarni yozing!")}</div>`;
+  body.scrollTop = body.scrollHeight;
+}
+
+function renderChatMessageBubble(m, scopeType, scopeId) {
+  const isMine = m.senderId === currentUser.id;
+  const sender = appState.users.find(u => u.id === m.senderId);
+  const senderName = sender ? sender.name : t("Пользователь", "Foydalanuvçi");
+
+  let contentHtml = m.text ? `<div>${m.text}</div>` : "";
+
+  if (m.attachment) {
+    if (m.attachment.type === "image") {
+      contentHtml += `<img src="${m.attachment.dataUrl}" class="chat-msg-img" alt="img" onclick="openLightbox('${m.attachment.dataUrl}')" />`;
+    } else if (m.attachment.type === "file") {
+      contentHtml += `<a href="${m.attachment.dataUrl}" download="${m.attachment.name}" class="chat-msg-file">📄 ${m.attachment.name}</a>`;
+    }
+  }
+
+  if (m.poll) {
+    const totalVotes = (m.poll.options || []).reduce((acc, o) => acc + (o.votes || []).length, 0);
+    contentHtml += `
+      <div class="chat-poll-box">
+        <div style="font-weight:700; font-size:13px;">📊 ${m.poll.question}</div>
+        <div style="font-size:11px; opacity:0.75;">${m.poll.multiple ? t("Можно выбрать несколько", "Bir neçta tanlaş mumkin") : t("Один вариант ответа", "Bitta javob")}</div>
+        ${(m.poll.options || []).map((opt, idx) => {
+          const votes = opt.votes || [];
+          const votedByMe = votes.includes(currentUser.id);
+          const pct = totalVotes ? Math.round((votes.length / totalVotes) * 100) : 0;
+          return `
+            <button type="button" class="chat-poll-opt ${votedByMe ? 'voted' : ''}" onclick="voteInChatPoll('${scopeType}', '${scopeId}', '${m.id}', ${idx})">
+              <span>${opt.text}</span>
+              <span>${votes.length} (${pct}%)</span>
+            </button>
+          `;
+        }).join("")}
+      </div>
+    `;
+  }
+
+  return `
+    <div class="chat-msg-bubble ${isMine ? 'mine' : ''}">
+      <div class="chat-msg-meta">
+        <span>${senderName}</span>
+        <span>${m.time || ""}</span>
+      </div>
+      ${contentHtml}
+    </div>
+  `;
+}
+
+// --- Создание чата / группы ---
+function openChatCreateModal() {
+  chatCreateMode = "direct";
+  chatCreateSelectedIds = [];
+  document.getElementById("chatNewGroupName").value = "";
+  document.getElementById("chatMemberSearch").value = "";
+  setChatCreateMode("direct");
+  document.getElementById("chatCreateModal").classList.remove("hidden");
+}
+
+function setChatCreateMode(mode) {
+  chatCreateMode = mode;
+  chatCreateSelectedIds = [];
+  document.getElementById("chatCreateDirectBtn").classList.toggle("active", mode === "direct");
+  document.getElementById("chatCreateGroupBtn").classList.toggle("active", mode === "group");
+  document.getElementById("chatGroupNameWrap").classList.toggle("hidden", mode !== "group");
+  renderChatCreateMembersList();
+}
+
+function renderChatCreateMembersList() {
+  const listEl = document.getElementById("chatCreateMembersList");
+  if (!listEl) return;
+  const q = (document.getElementById("chatMemberSearch").value || "").trim().toLowerCase();
+  const others = (appState.users || []).filter(u => u.id !== currentUser.id);
+  const matched = q ? others.filter(u => (u.name || "").toLowerCase().includes(q)) : others;
+
+  listEl.innerHTML = matched.map(u => {
+    const checked = chatCreateSelectedIds.includes(u.id);
+    return `
+      <label class="social-check-option">
+        <input type="${chatCreateMode === 'direct' ? 'radio' : 'checkbox'}" name="chatMemberPick" ${checked ? "checked" : ""} onchange="toggleChatCreateMember('${u.id}')" />
+        <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+      </label>
+    `;
+  }).join("") || `<div class="st-meta" style="padding:8px;">${t("Пользователи не найдены", "Foydalanuvçilar topilmadi")}</div>`;
+}
+
+function toggleChatCreateMember(uid) {
+  if (chatCreateMode === "direct") {
+    chatCreateSelectedIds = [uid];
+  } else {
+    if (chatCreateSelectedIds.includes(uid)) {
+      chatCreateSelectedIds = chatCreateSelectedIds.filter(x => x !== uid);
+    } else {
+      chatCreateSelectedIds.push(uid);
+    }
+  }
+}
+
+function confirmCreateChat() {
+  if (!chatCreateSelectedIds.length) {
+    showToast(t("Выберите хотя бы одного собеседника", "Kamida bitta suhbatdoş tanlang"));
+    return;
+  }
+
+  if (chatCreateMode === "direct") {
+    const targetId = chatCreateSelectedIds[0];
+    const existing = (appState.chats || []).find(c =>
+      c.type === "direct" && c.members.includes(currentUser.id) && c.members.includes(targetId)
+    );
+    if (existing) {
+      activeChatTabId = existing.id;
+      closeModal("chatCreateModal");
+      renderChatDrawer();
+      return;
+    }
+    const newChat = {
+      id: `chat_${Date.now()}`,
+      type: "direct",
+      title: "",
+      members: [currentUser.id, targetId],
+      messages: []
+    };
+    appState.chats.push(newChat);
+    addSystemNotification([targetId], `${currentUser.name} ${t("начал(а) с вами чат", "siz bilan çat boşladi")}`, "chat", newChat.id);
+    activeChatTabId = newChat.id;
+  } else {
+    const title = document.getElementById("chatNewGroupName").value.trim() || t("Новая группа", "Yangi guruh");
+    const members = [...new Set([currentUser.id, ...chatCreateSelectedIds])];
+    const newGroup = {
+      id: `grp_${Date.now()}`,
+      type: "group",
+      title,
+      members,
+      messages: []
+    };
+    appState.chats.push(newGroup);
+    addSystemNotification(chatCreateSelectedIds, `${currentUser.name} ${t("добавил(а) вас в группу", "sizni guruhga qöşdi")}: «${title}»`, "chat", newGroup.id);
+    activeChatTabId = newGroup.id;
+  }
+
+  saveState();
+  closeModal("chatCreateModal");
+  renderChatDrawer();
+}
+
+function deleteChatById(chatId, btnEl) {
+  askConfirmDelete(btnEl, () => {
+    appState.chats = (appState.chats || []).filter(c => c.id !== chatId);
+    if (activeChatTabId === chatId) activeChatTabId = "tasks";
+    saveState();
+    renderChatDrawer();
+    showToast(t("Чат удален", "Çat öçirildi"));
+  });
+}
+
+// --- Задания (только админ / частичный админ) ---
+function openChatTaskModal() {
+  if (!hasAdminPrivileges()) return;
+  taskDraftColor = "#ef4444";
+  taskDraftAssignees = [];
+  taskDraftTodos = [];
+  taskAssigneeSearch = "";
+
+  document.getElementById("taskTitleInput").value = "";
+  document.getElementById("taskDeadlineInput").value = "";
+  document.getElementById("taskTodoDraftInput").value = "";
+
+  const colorOpts = [
+    { value: "#ef4444", label: t("Красный (Срочно)", "Qizil (Şoşilinç)") },
+    { value: "#ff6b3d", label: t("Оранжевый (Важно)", "Zarg‘aldoq (Muhim)") },
+    { value: "#2563eb", label: t("Синий (Обычная)", "Kök (Oddiy)") },
+    { value: "#10b981", label: t("Зеленый (Низкая)", "Yaşil (Past)") }
+  ];
+  const onColor = (v) => {
+    taskDraftColor = v;
+    renderCustomSelect("taskColorSelectWrap", colorOpts, v, onColor);
+  };
+  renderCustomSelect("taskColorSelectWrap", colorOpts, taskDraftColor, onColor);
+
+  renderTaskAssigneesMultiSelect();
+  renderDraftTaskTodos();
+  document.getElementById("chatTaskModal").classList.remove("hidden");
+}
+
+function renderTaskAssigneesMultiSelect(keepOpen = false) {
+  const wrap = document.getElementById("taskAssigneesWrap");
+  if (!wrap) return;
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+  const label = !taskDraftAssignees.length
+    ? t("Выберите исполнителей...", "Ijroçilarni tanlang...")
+    : `${t("Выбрано", "Tanlandi")}: ${taskDraftAssignees.length}`;
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('taskAssigneesWrap')">
+      <span>${label}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="taskAssSearch" class="tg-tag-search-input" placeholder="${t("Поиск...", "Qidiriş...")}" value="${taskAssigneeSearch}" oninput="taskAssigneeSearch=this.value; renderTaskAssigneesMultiSelect(true)" />
+      <div class="tg-tag-search-list">
+        ${(appState.users || []).filter(u => u.id !== currentUser.id && (u.name || "").toLowerCase().includes(taskAssigneeSearch.trim().toLowerCase())).map(u => `
+          <label class="social-check-option">
+            <input type="checkbox" ${taskDraftAssignees.includes(u.id) ? "checked" : ""} onchange="toggleTaskDraftAssignee('${u.id}')" />
+            <span>${u.name}</span>
+          </label>
+        `).join("")}
+      </div>
+    </div>
+  `;
+  if (wasOpen) wrap.classList.add("open");
+}
+
+function toggleTaskDraftAssignee(uid) {
+  if (taskDraftAssignees.includes(uid)) {
+    taskDraftAssignees = taskDraftAssignees.filter(x => x !== uid);
+  } else {
+    taskDraftAssignees.push(uid);
+  }
+  renderTaskAssigneesMultiSelect(true);
+}
+
+function addDraftTaskTodo() {
+  const inp = document.getElementById("taskTodoDraftInput");
+  if (!inp) return;
+  const val = inp.value.trim();
+  if (!val) return;
+  taskDraftTodos.push({ text: val, done: false });
+  inp.value = "";
+  renderDraftTaskTodos();
+}
+
+function renderDraftTaskTodos() {
+  const el = document.getElementById("taskDraftTodosList");
+  if (!el) return;
+  el.innerHTML = taskDraftTodos.map((td, idx) => `
+    <div class="todo-item-row">
+      <span style="font-size:12px;">${td.text}</span>
+      <button type="button" class="btn-del-icon" onclick="taskDraftTodos.splice(${idx},1); renderDraftTaskTodos();">×</button>
+    </div>
+  `).join("");
+}
+
+function saveNewTask() {
+  const title = document.getElementById("taskTitleInput").value.trim();
+  if (!title || !taskDraftAssignees.length) {
+    showToast(t("Укажите название задачи и исполнителей", "Vazifa nomi va ijroçilarni tanlang"));
+    return;
+  }
+
+  const newTask = {
+    id: `task_${Date.now()}`,
+    title,
+    authorId: currentUser.id,
+    assignees: [...taskDraftAssignees],
+    deadline: document.getElementById("taskDeadlineInput").value || "",
+    color: taskDraftColor,
+    todos: JSON.parse(JSON.stringify(taskDraftTodos)),
+    status: "active",
+    messages: []
+  };
+
+  appState.tasks.unshift(newTask);
+  addSystemNotification(taskDraftAssignees, `${currentUser.name} ${t("назначил(а) новое задание", "yangi vazifa biriktirdi")}: «${title}»`, "task", newTask.id);
+  saveState();
+  closeModal("chatTaskModal");
+  activeChatTabId = "tasks";
+  activeTasksSubtab = "active";
+  renderChatDrawer();
+  showToast(t("Задание назначено", "Vazifa biriktirildi"));
+}
+
+function toggleTaskTodoItem(taskId, todoIdx) {
+  const task = (appState.tasks || []).find(tk => tk.id === taskId);
+  if (!task || !task.todos || !task.todos[todoIdx]) return;
+  task.todos[todoIdx].done = !task.todos[todoIdx].done;
+  saveState();
+  renderChatDrawerBody();
+}
+
+function markTaskCompleted(taskId) {
+  const task = (appState.tasks || []).find(tk => tk.id === taskId);
+  if (!task || task.authorId !== currentUser.id) return;
+  task.status = "completed";
+  addSystemNotification(task.assignees, `${currentUser.name} ${t("отметил(а) задание выполненным", "vazifani bajarildi deb belgiladi")}: «${task.title}»`, "task", task.id);
+  saveState();
+  activeTaskDiscussionId = null;
+  activeTasksSubtab = "completed";
+  renderChatDrawer();
+  showToast(t("Задача перенесена в выполненные", "Vazifa bajarilganlarga ötkazildi"));
+}
+
+// --- Прикрепления (скрепка), Эмодзи, Опросы и Отправка ---
+function toggleChatAttachMenu(e) {
+  if (e) e.stopPropagation();
+  const menu = document.getElementById("chatAttachMenu");
+  if (menu) menu.classList.toggle("hidden");
+}
+
+function triggerChatFilePicker(kind) {
+  const menu = document.getElementById("chatAttachMenu");
+  if (menu) menu.classList.add("hidden");
+  const inp = document.getElementById(kind === "image" ? "chatImageInput" : "chatDocInput");
+  if (inp) {
+    inp.value = "";
+    inp.click();
+  }
+}
+
+function handleChatFileSelected(e, kind) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    chatPendingAttachment = {
+      type: kind,
+      name: file.name,
+      dataUrl: reader.result
+    };
+    renderPendingAttachBar();
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPendingAttachBar() {
+  const bar = document.getElementById("chatPendingAttach");
+  if (!bar) return;
+  if (!chatPendingAttachment) {
+    bar.classList.add("hidden");
+    bar.innerHTML = "";
+    return;
+  }
+  bar.classList.remove("hidden");
+  bar.innerHTML = `
+    <span>${chatPendingAttachment.type === 'image' ? '🖼️' : '📄'} ${chatPendingAttachment.name}</span>
+    <button type="button" class="btn-ghost-sm" onclick="chatPendingAttachment=null; renderPendingAttachBar();">×</button>
+  `;
+}
+
+function toggleChatEmojiPicker(e) {
+  if (e) e.stopPropagation();
+  const pop = document.getElementById("chatEmojiPopover");
+  if (!pop) return;
+  if (!pop.innerHTML) {
+    pop.innerHTML = CHAT_EMOJIS.map(em => `<button type="button" class="chat-emoji-btn" onclick="insertChatEmoji('${em}')">${em}</button>`).join("");
+  }
+  pop.classList.toggle("hidden");
+}
+
+function insertChatEmoji(em) {
+  const inp = document.getElementById("chatMessageInput");
+  if (inp) {
+    inp.value += em;
+    inp.focus();
+  }
+}
+
+function openChatPollModal() {
+  const menu = document.getElementById("chatAttachMenu");
+  if (menu) menu.classList.add("hidden");
+  document.getElementById("pollQuestionInput").value = "";
+  document.getElementById("pollMultipleCheck").checked = false;
+  document.getElementById("pollOptionsInputs").innerHTML = `
+    <input type="text" class="form-input mb-8 poll-opt-inp" placeholder="${t("Вариант 1", "1-variant")}" />
+    <input type="text" class="form-input mb-8 poll-opt-inp" placeholder="${t("Вариант 2", "2-variant")}" />
+  `;
+  document.getElementById("chatPollModal").classList.remove("hidden");
+}
+
+function addPollOptionInput() {
+  const wrap = document.getElementById("pollOptionsInputs");
+  const count = wrap.querySelectorAll(".poll-opt-inp").length + 1;
+  wrap.insertAdjacentHTML("beforeend", `<input type="text" class="form-input mb-8 poll-opt-inp" placeholder="${t("Вариант", "Variant")} ${count}" />`);
+}
+
+function submitChatPoll() {
+  const question = document.getElementById("pollQuestionInput").value.trim();
+  const opts = [...document.querySelectorAll(".poll-opt-inp")].map(i => i.value.trim()).filter(Boolean);
+  if (!question || opts.length < 2) {
+    showToast(t("Введите вопрос и минимум 2 варианта ответа", "Savol va kamida 2 ta variant kiriting"));
+    return;
+  }
+  const pollObj = {
+    question,
+    multiple: document.getElementById("pollMultipleCheck").checked,
+    options: opts.map(text => ({ text, votes: [] }))
+  };
+  closeModal("chatPollModal");
+  sendChatMessage(pollObj);
+}
+
+function voteInChatPoll(scopeType, scopeId, msgId, optIdx) {
+  const container = scopeType === "task"
+    ? (appState.tasks || []).find(tk => tk.id === scopeId)
+    : (appState.chats || []).find(c => c.id === scopeId);
+  if (!container) return;
+  const msg = (container.messages || []).find(m => m.id === msgId);
+  if (!msg || !msg.poll) return;
+
+  const opt = msg.poll.options[optIdx];
+  if (!opt) return;
+  if (!Array.isArray(opt.votes)) opt.votes = [];
+
+  if (msg.poll.multiple) {
+    if (opt.votes.includes(currentUser.id)) {
+      opt.votes = opt.votes.filter(x => x !== currentUser.id);
+    } else {
+      opt.votes.push(currentUser.id);
+    }
+  } else {
+    msg.poll.options.forEach(o => {
+      o.votes = (o.votes || []).filter(x => x !== currentUser.id);
+    });
+    opt.votes.push(currentUser.id);
+  }
+  saveState();
+  renderChatDrawerBody();
+}
+
+function sendChatMessage(pollObj = null) {
+  const inp = document.getElementById("chatMessageInput");
+  const text = inp ? inp.value.trim() : "";
+  if (!text && !chatPendingAttachment && !pollObj) return;
+
+  const msg = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+    senderId: currentUser.id,
+    text,
+    attachment: chatPendingAttachment ? { ...chatPendingAttachment } : null,
+    poll: pollObj || null,
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  };
+
+  if (activeChatTabId === "tasks" && activeTaskDiscussionId) {
+    const task = (appState.tasks || []).find(tk => tk.id === activeTaskDiscussionId);
+    if (!task) return;
+    if (!Array.isArray(task.messages)) task.messages = [];
+    task.messages.push(msg);
+  } else {
+    const chat = (appState.chats || []).find(c => c.id === activeChatTabId);
+    if (!chat) return;
+    if (!Array.isArray(chat.messages)) chat.messages = [];
+    chat.messages.push(msg);
+  }
+
+  if (inp) inp.value = "";
+  chatPendingAttachment = null;
+  renderPendingAttachBar();
+  saveState();
+  renderChatDrawerBody();
+}
+
+// --- Колокольчик уведомлений ---
+function toggleChatNotifications(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById("chatNotifDropdown");
+  if (!dd) return;
+  const willOpen = dd.classList.contains("hidden");
+  dd.classList.toggle("hidden", !willOpen);
+
+  if (willOpen) {
+    const myNotifs = (appState.notifications || []).filter(n => n.userId === currentUser.id);
+    dd.innerHTML = myNotifs.length
+      ? myNotifs.slice(0, 20).map(n => `
+          <div class="chat-notif-item ${n.read ? '' : 'unread'}" onclick="openNotificationTarget('${n.id}')">
+            <div>${n.text}</div>
+            <div class="st-meta">${n.time}</div>
+          </div>
+        `).join("")
+      : `<div class="st-meta" style="padding:10px; text-align:center;">${t("Уведомлений пока нет", "Bildirişnomalar hozirça yöq")}</div>`;
+  }
+}
+
+function openNotificationTarget(notifId) {
+  const n = (appState.notifications || []).find(x => x.id === notifId);
+  if (!n) return;
+  n.read = true;
+  saveState();
+  const dd = document.getElementById("chatNotifDropdown");
+  if (dd) dd.classList.add("hidden");
+
+  if (n.refType === "task") {
+    activeChatTabId = "tasks";
+    activeTaskDiscussionId = n.refId;
+  } else if (n.refType === "chat") {
+    activeChatTabId = n.refId;
+    activeTaskDiscussionId = null;
+  }
+  renderChatDrawer();
 }
