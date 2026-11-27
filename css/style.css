@@ -708,7 +708,7 @@ body.dark .pill-sm.active { background: var(--accent); }
 /* Кастомные выпадающие списки */
 .custom-select {
   position: relative;
-  
+ 
 }
 
 .custom-select.compact { min-width: 135px; }
@@ -3951,4 +3951,390 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   20% { box-shadow: 0 0 0 6px rgba(255, 107, 61, 0.45); transform: scale(1.02); }
   50% { box-shadow: 0 0 0 4px rgba(255, 107, 61, 0.28); transform: scale(1); }
   100% { box-shadow: 0 0 0 0 rgba(255, 107, 61, 0); transform: scale(1); }
+}
+
+
+/* ==================== КАСТОМНЫЙ ПЛАВНЫЙ ТУЛТИП (СЛЕДУЕТ ЗА КУРСОРОМ) ==================== */
+.smart-tooltip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 280px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #ffffff;
+  background: rgba(20, 23, 31, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translate3d(-9999px, -9999px, 0) scale(0.96);
+  transition: opacity 0.14s ease, transform 0.08s cubic-bezier(0.22, 1, 0.36, 1);
+  word-wrap: break-word;
+}
+
+.smart-tooltip.visible {
+  opacity: 1;
+}
+
+body.dark .smart-tooltip {
+  background: rgba(243, 244, 246, 0.96);
+  color: #14171f;
+  border-color: rgba(20, 23, 31, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* ==================== ПАГИНАЦИЯ (РАЗДЕЛЕНИЕ НА СТРАНИЦЫ) ==================== */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.pagination-info {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pagination-btns {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.page-btn:hover:not(:disabled):not(.active) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.page-btn.active {
+  background: #14171f;
+  border-color: #14171f;
+  color: #ffffff;
+}
+
+body.dark .page-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.page-ellipsis {
+  padding: 0 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+/* ==================== МОБИЛЬНОЕ ГАМБУРГЕР-МЕНЮ И АДАПТИВНОСТЬ ==================== */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.mobile-menu-btn {
+  display: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.16s ease, color 0.16s ease;
+}
+
+.mobile-menu-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.mobile-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 17, 23, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 950;
+}
+
+.mobile-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 310px;
+  max-width: 88vw;
+  height: 100vh;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  box-shadow: -12px 0 36px rgba(15, 17, 23, 0.18);
+  z-index: 980;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-drawer.open {
+  transform: translateX(0);
+}
+
+.mobile-drawer-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px 14px;
+}
+
+.mobile-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-nav-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 14px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.mobile-nav-item:hover {
+  background: var(--surface-alt);
+}
+
+.mobile-nav-item.active {
+  background: #14171f;
+  color: #ffffff;
+}
+
+body.dark .mobile-nav-item.active {
+  background: var(--accent);
+}
+
+.mobile-profile-block {
+  margin-top: 10px;
+}
+
+.mobile-profile-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.mobile-profile-block.open #mobileProfileCaret {
+  transform: rotate(180deg);
+}
+
+.mobile-profile-submenu {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-drawer-footer {
+  padding: 12px 14px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.mobile-footer-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+@media (max-width: 960px) {
+  .top-nav,
+  .topbar-right,
+  .floating-controls,
+  .floating-chat-launcher {
+    display: none !important;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .topbar {
+    padding: 10px 14px;
+  }
+
+  .main-container {
+    padding: 16px 12px 36px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .page-title {
+    font-size: 20px;
+  }
+
+  .header-actions,
+  .filter-bar,
+  .st-all-filters,
+  .diary-list-filters {
+    width: 100%;
+  }
+
+  .header-actions > button,
+  .filter-bar > .custom-select,
+  .st-all-filters > .custom-select,
+  .diary-list-filters > .custom-select {
+    flex: 1 1 140px;
+    min-width: 0;
+  }
+
+  .bento-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .kpi-card {
+    padding: 14px;
+    border-radius: 16px;
+  }
+
+  .kpi-value {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+
+  .kpi-bottom {
+    flex-direction: column;
+    gap: 2px;
+    font-size: 11px;
+  }
+
+  .subtabs-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .subtabs-pills {
+    padding-bottom: 4px;
+    gap: 6px;
+  }
+
+  .subtab-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .room-search-box {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .modal-backdrop {
+    padding: 10px;
+  }
+
+  .modal-box,
+  .modal-box.lg {
+    max-width: 100%;
+    border-radius: 18px;
+  }
+
+  .modal-head,
+  .modal-body,
+  .modal-foot {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .chat-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 520px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    padding: 24px 18px;
+  }
 }
