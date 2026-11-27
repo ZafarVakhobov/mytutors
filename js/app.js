@@ -479,8 +479,10 @@ function t(ruText, ozText) {
 const STORAGE_KEY = "mytutors_uz_state_v3";
 const SESSION_USER_KEY = "mytutors_uz_session_user_v1";
 const SESSION_TOKEN_KEY = "mytutors_uz_session_token_v1";
+const CHAT_KEY_STORAGE = "mytutors_uz_chat_key_v1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTLIm6lvnKEE2Ol1JlylHM3QCuhJu_-7Cz0eB_8xBhsFdOhBUQmQ8FrZR4b2hPUq4y/exec";
 let sessionToken = localStorage.getItem(SESSION_TOKEN_KEY) || "";
+let chatEncryptionSecret = localStorage.getItem(CHAT_KEY_STORAGE) || "";
 
 // Учетные записи хранятся исключительно на сервере (users.json в Google Drive)
 const DEFAULT_USERS = [];
@@ -1404,6 +1406,14 @@ async function loadFromGoogleDrive() {
       return;
     }
 
+    if (json.status === "ok" && json.chatKey) {
+      const nextKey = String(json.chatKey);
+      if (nextKey !== chatEncryptionSecret) {
+        chatEncryptionSecret = nextKey;
+        localStorage.setItem(CHAT_KEY_STORAGE, chatEncryptionSecret);
+        _cachedChatCryptoKey = null;
+      }
+    }
     if (json.status === "ok" && json.data) {
       const savedUsers = appState.users;
       const incoming = json.data;
@@ -1501,6 +1511,11 @@ async function handleLogin(e) {
 
     sessionToken = json.token;
     localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+    if (json.chatKey) {
+      chatEncryptionSecret = String(json.chatKey);
+      localStorage.setItem(CHAT_KEY_STORAGE, chatEncryptionSecret);
+      _cachedChatCryptoKey = null;
+    }
     currentUser = json.user;
     if (Array.isArray(json.users) && json.users.length) {
       appState.users = deduplicateById(json.users);
@@ -1548,7 +1563,10 @@ function logout() {
   }
   currentUser = null;
   sessionToken = "";
+  chatEncryptionSecret = "";
+  _cachedChatCryptoKey = null;
   localStorage.removeItem(SESSION_TOKEN_KEY);
+  localStorage.removeItem(CHAT_KEY_STORAGE);
   localStorage.removeItem(SESSION_USER_KEY);
   localStorage.removeItem(STORAGE_KEY);
   appState = sanitizeAppState(null);
@@ -9903,7 +9921,7 @@ function openNotificationTarget(notifId) {
 
 
 // ==================== ОБЩАЯ СИНХРОНИЗАЦИЯ ЧАТОВ, ЗАДАНИЙ И УВЕДОМЛЕНИЙ (GOOGLE DRIVE) ====================
-// ==================== МГНОВЕННАЯ СИНХРОНИЗАЦИЯ ЧАТА ЧЕРЕЗ FIREBASE REALTIME DATABASE ====================
+// ==================== МГНОВЕННАЯ СИНХРОНИЗАЦИЯ ЧАТА ЧЕРЕЗ FIREBASE + ШИФРОВАНИЕ AES-256-GCM ====================
 const FIREBASE_DB_URL = "https://mytutors-chat-default-rtdb.europe-west1.firebasedatabase.app/";
 let firebaseDb = null;
 let firebaseHubRef = null;
@@ -9911,6 +9929,71 @@ let firebasePresenceRef = null;
 let firebaseMyPresenceRef = null;
 let firebaseConnectedRef = null;
 let chatHubLastHash = "";
+let _cachedChatCryptoKey = null;
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(b64) {
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return bytes;
+}
+
+async function getChatCryptoKey() {
+  if (!chatEncryptionSecret || !window.crypto || !window.crypto.subtle) return null;
+  if (_cachedChatCryptoKey) return _cachedChatCryptoKey;
+  const enc = new TextEncoder();
+  const hash = await window.crypto.subtle.digest("SHA-256", enc.encode(chatEncryptionSecret));
+  _cachedChatCryptoKey = await window.crypto.subtle.importKey(
+    "raw",
+    hash,
+    { name: "AES-GCM" },
+    false,
+    ["encrypt", "decrypt"]
+  );
+  return _cachedChatCryptoKey;
+}
+
+async function encryptChatPayload(obj) {
+  const key = await getChatCryptoKey();
+  if (!key) return obj;
+  const iv = window.crypto.getRandomValues(new Uint8Array(12));
+  const plainBytes = new TextEncoder().encode(JSON.stringify(obj));
+  const cipherBuf = await window.crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plainBytes);
+  return {
+    enc: true,
+    v: 1,
+    iv: bytesToBase64(iv),
+    data: bytesToBase64(new Uint8Array(cipherBuf)),
+    updatedAt: Date.now()
+  };
+}
+
+async function decryptChatPayload(val) {
+  if (!val) return null;
+  if (!val.enc) return val;
+  const key = await getChatCryptoKey();
+  if (!key) return null;
+  try {
+    const iv = base64ToBytes(val.iv);
+    const cipherBytes = base64ToBytes(val.data);
+    const plainBuf = await window.crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, cipherBytes);
+    return JSON.parse(new TextDecoder().decode(plainBuf));
+  } catch (err) {
+    console.warn("Не удалось расшифровать данные чата:", err);
+    return null;
+  }
+}
 
 function getFirebaseDb() {
   if (firebaseDb) return firebaseDb;
@@ -9936,7 +10019,7 @@ function normalizeFirebaseArray(val) {
   return [];
 }
 
-function syncChatHubToCloud() {
+async function syncChatHubToCloud() {
   if (!currentUser) return;
   const db = getFirebaseDb();
   if (!db) {
@@ -9958,10 +10041,13 @@ function syncChatHubToCloud() {
     notifications: hubPayload.notifications
   });
 
-  db.ref("chatHub").set(hubPayload).catch((err) => {
+  try {
+    const payloadToStore = await encryptChatPayload(hubPayload);
+    await db.ref("chatHub").set(payloadToStore);
+  } catch (err) {
     console.warn("Firebase save error:", err);
     showToast(t("Ошибка отправки в Firebase. Проверьте правила доступа.", "Firebase ga yuborişda xatolik."));
-  });
+  }
 }
 
 function startChatHubPolling() {
@@ -9974,10 +10060,13 @@ function startChatHubPolling() {
     return;
   }
 
-  // 1. Мгновенная подписка на чаты, задания и уведомления (WebSockets)
+  // 1. Мгновенная подписка на чаты, задания и уведомления (WebSockets + AES-256-GCM)
   firebaseHubRef = db.ref("chatHub");
-  firebaseHubRef.on("value", (snapshot) => {
-    const val = snapshot.val();
+  firebaseHubRef.on("value", async (snapshot) => {
+    const rawVal = snapshot.val();
+    if (!rawVal) return;
+
+    const val = await decryptChatPayload(rawVal);
     if (!val) return;
 
     const incomingHub = {
