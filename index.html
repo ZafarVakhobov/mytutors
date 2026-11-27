@@ -1201,7 +1201,9 @@
     <div class="chat-drawer-body" id="chatDrawerBody"></div>
 
     <!-- Панель ввода сообщения (для чатов и обсуждения задачи) -->
-    <div class="chat-composer hidden" id="chatComposer">
+    <div class="chat-composer hidden" id="chatComposer" style="position:relative;">
+      <div class="chat-mention-popover hidden" id="chatMentionPopover" onclick="event.stopPropagation()"></div>
+      <div class="chat-context-bar hidden" id="chatContextBar"></div>
       <div class="chat-pending-attach hidden" id="chatPendingAttach"></div>
       <div class="chat-composer-row">
         <div class="chat-attach-wrap" id="chatAttachWrap">
@@ -1226,7 +1228,7 @@
           <input type="file" id="chatDocInput" multiple class="hidden" onchange="handleChatFileSelected(event, 'file')" />
         </div>
 
-        <input type="text" id="chatMessageInput" class="chat-text-input" data-i18n-placeholder="chat_ph_msg" placeholder="Сообщение..." onkeydown="if(event.key==='Enter'){event.preventDefault(); sendChatMessage();}" />
+        <input type="text" id="chatMessageInput" class="chat-text-input" data-i18n-placeholder="chat_ph_msg" placeholder="Сообщение..." oninput="handleChatMessageInput(event)" onkeydown="handleChatMessageKeydown(event)" />
 
         <div class="chat-emoji-wrap" id="chatEmojiWrap">
           <button type="button" class="chat-tool-btn" onclick="toggleChatEmojiPicker(event)" title="Эмодзи">
