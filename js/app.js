@@ -904,6 +904,9 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest("#chatNotifWrap")) {
     const nd = document.getElementById("chatNotifDropdown"); if (nd) nd.classList.add("hidden");
   }
+  if (!e.target.closest(".chat-dd-wrap")) {
+    document.querySelectorAll(".chat-dd-menu").forEach(m => m.classList.add("hidden"));
+  }
   if (!e.target.closest(".social-other-dropdown")) {
     document.querySelectorAll(".social-other-dropdown.open").forEach(el => el.classList.remove("open"));
   }
@@ -5980,7 +5983,7 @@ let activeTasksSubtab = "active"; // "active" | "completed"
 let activeTaskDiscussionId = null; // ID задачи, если открыт чат обсуждения конкретной задачи
 let chatCreateMode = "direct";
 let chatCreateSelectedIds = [];
-let chatPendingAttachment = null; // { type: 'image'|'file', name, dataUrl, size }
+let chatPendingAttachments = { images: [], files: [] };
 
 let taskDraftColor = "#ef4444";
 let taskDraftAssignees = [];
@@ -6076,34 +6079,95 @@ function getChatDisplayName(chat) {
   return otherUser ? otherUser.name : (chat.title || t("Чат", "Çat"));
 }
 
+function toggleChatHeaderDropdown(menuId, e) {
+  if (e) e.stopPropagation();
+  const target = document.getElementById(menuId);
+  if (!target) return;
+  const willOpen = target.classList.contains("hidden");
+  document.querySelectorAll(".chat-dd-menu").forEach(m => m.classList.add("hidden"));
+  if (willOpen) target.classList.remove("hidden");
+}
+
+function getChatLastActivity(chat) {
+  if (!chat) return 0;
+  if (chat.lastActivity) return Number(chat.lastActivity) || 0;
+  if (Array.isArray(chat.messages) && chat.messages.length) {
+    const last = chat.messages[chat.messages.length - 1];
+    if (last && last.ts) return Number(last.ts) || 0;
+  }
+  const numFromId = Number(String(chat.id || "").replace(/\D/g, "")) || 0;
+  return numFromId;
+}
+
 function renderChatTabsBar() {
   const bar = document.getElementById("chatTabsBar");
   if (!bar) return;
 
   const myActiveTasks = getMyActiveAssignedTasks();
   const chats = getVisibleChatsForMe();
+  const directChats = chats
+    .filter(c => c.type !== "group")
+    .sort((a, b) => getChatLastActivity(b) - getChatLastActivity(a));
+  const groupChats = chats
+    .filter(c => c.type === "group")
+    .sort((a, b) => getChatLastActivity(b) - getChatLastActivity(a));
 
-  let html = `
-    <div class="chat-tab-pill ${activeChatTabId === 'tasks' ? 'active' : ''}" onclick="selectChatTab('tasks')">
+  const activeChat = chats.find(c => c.id === activeChatTabId);
+  const isDirectActive = Boolean(activeChat && activeChat.type !== "group");
+  const isGroupActive = Boolean(activeChat && activeChat.type === "group");
+
+  const directLabel = isDirectActive
+    ? getChatDisplayName(activeChat)
+    : `${t("Личные", "Şaxsiy")}${directChats.length ? ` (${directChats.length})` : ""}`;
+  const groupLabel = isGroupActive
+    ? getChatDisplayName(activeChat)
+    : `${t("Группы", "Guruhlar")}${groupChats.length ? ` (${groupChats.length})` : ""}`;
+
+  const renderMenuItems = (list, emptyText) => {
+    if (!list.length) {
+      return `<div class="st-meta" style="padding:8px 10px; text-align:center;">${emptyText}</div>`;
+    }
+    return list.map(c => `
+      <div class="chat-dd-item ${activeChatTabId === c.id ? 'active' : ''}" onclick="selectChatTab('${c.id}')">
+        <span class="chat-dd-item-name">${getChatDisplayName(c)}</span>
+        <button type="button" class="chat-tab-del" data-del-trigger="1" onclick="event.stopPropagation(); deleteChatById('${c.id}', this)" title="${t("Удалить чат", "Çatni öçiriş")}">×</button>
+      </div>
+    `).join("");
+  };
+
+  bar.innerHTML = `
+    <div class="chat-tab-pill tasks-tab ${activeChatTabId === 'tasks' ? 'active' : ''}" onclick="selectChatTab('tasks')">
       ${myActiveTasks.length > 0 ? '<span class="chat-pulse-dot"></span>' : ''}
       <span>${t("Задания", "Vazifalar")}</span>
     </div>
-  `;
 
-  html += chats.map(c => `
-    <div class="chat-tab-pill ${activeChatTabId === c.id ? 'active' : ''}" onclick="selectChatTab('${c.id}')">
-      <span>${getChatDisplayName(c)}</span>
-      <button type="button" class="chat-tab-del" data-del-trigger="1" onclick="event.stopPropagation(); deleteChatById('${c.id}', this)" title="${t("Удалить чат", "Çatni öçiriş")}">×</button>
+    <div class="chat-dd-wrap">
+      <button type="button" class="chat-tab-pill ${isDirectActive ? 'active' : ''}" onclick="toggleChatHeaderDropdown('chatDirectDdMenu', event)">
+        <span style="max-width:110px; overflow:hidden; text-overflow:ellipsis;">${directLabel}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6l6 -6"/></svg>
+      </button>
+      <div class="chat-dd-menu hidden" id="chatDirectDdMenu" onclick="event.stopPropagation()">
+        ${renderMenuItems(directChats, t("Нет личных чатов", "Şaxsiy çatlar yöq"))}
+      </div>
     </div>
-  `).join("");
 
-  bar.innerHTML = html;
+    <div class="chat-dd-wrap">
+      <button type="button" class="chat-tab-pill ${isGroupActive ? 'active' : ''}" onclick="toggleChatHeaderDropdown('chatGroupDdMenu', event)">
+        <span style="max-width:110px; overflow:hidden; text-overflow:ellipsis;">${groupLabel}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M6 9l6 6l6 -6"/></svg>
+      </button>
+      <div class="chat-dd-menu hidden" id="chatGroupDdMenu" onclick="event.stopPropagation()">
+        ${renderMenuItems(groupChats, t("Нет групп", "Guruhlar yöq"))}
+      </div>
+    </div>
+  `;
 }
 
 function selectChatTab(tabId) {
+  document.querySelectorAll(".chat-dd-menu").forEach(m => m.classList.add("hidden"));
   activeChatTabId = tabId;
   activeTaskDiscussionId = null;
-  chatPendingAttachment = null;
+  chatPendingAttachments = { images: [], files: [] };
   renderPendingAttachBar();
   renderChatDrawer();
 }
@@ -6240,12 +6304,28 @@ function renderChatMessageBubble(m, scopeType, scopeId) {
 
   let contentHtml = m.text ? `<div>${m.text}</div>` : "";
 
+  const imgs = Array.isArray(m.images) ? [...m.images] : [];
+  const files = Array.isArray(m.files) ? [...m.files] : [];
   if (m.attachment) {
-    if (m.attachment.type === "image") {
-      contentHtml += `<img src="${m.attachment.dataUrl}" class="chat-msg-img" alt="img" onclick="openLightbox('${m.attachment.dataUrl}')" />`;
-    } else if (m.attachment.type === "file") {
-      contentHtml += `<a href="${m.attachment.dataUrl}" download="${m.attachment.name}" class="chat-msg-file">📄 ${m.attachment.name}</a>`;
-    }
+    if (m.attachment.type === "image") imgs.push(m.attachment);
+    else if (m.attachment.type === "file") files.push(m.attachment);
+  }
+
+  if (imgs.length) {
+    const colClass = imgs.length === 1 ? "cols-1" : (imgs.length >= 3 ? "cols-3" : "");
+    contentHtml += `
+      <div class="chat-img-collage ${colClass}">
+        ${imgs.map(im => `<img src="${im.dataUrl}" alt="${im.name || 'img'}" onclick="openLightbox('${im.dataUrl}')" />`).join("")}
+      </div>
+    `;
+  }
+
+  if (files.length) {
+    contentHtml += `
+      <div class="chat-files-stack">
+        ${files.map(fl => `<a href="${fl.dataUrl}" download="${fl.name}" class="chat-msg-file">📄 ${fl.name}</a>`).join("")}
+      </div>
+    `;
   }
 
   if (m.poll) {
@@ -6351,6 +6431,7 @@ function confirmCreateChat() {
       type: "direct",
       title: "",
       members: [currentUser.id, targetId],
+      lastActivity: Date.now(),
       messages: []
     };
     appState.chats.push(newChat);
@@ -6364,6 +6445,7 @@ function confirmCreateChat() {
       type: "group",
       title,
       members,
+      lastActivity: Date.now(),
       messages: []
     };
     appState.chats.push(newGroup);
@@ -6545,33 +6627,56 @@ function triggerChatFilePicker(kind) {
 }
 
 function handleChatFileSelected(e, kind) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    chatPendingAttachment = {
-      type: kind,
-      name: file.name,
-      dataUrl: reader.result
+  const picked = Array.from(e.target.files || []);
+  if (!picked.length) return;
+
+  const bucket = kind === "image" ? chatPendingAttachments.images : chatPendingAttachments.files;
+  const remaining = 10 - bucket.length;
+  if (remaining <= 0) {
+    showToast(t("Можно прикрепить не более 10 файлов этого типа", "Bu turdan köpi bilan 10 ta fayl biriktiriş mumkin"));
+    return;
+  }
+
+  const toRead = picked.slice(0, remaining);
+  if (picked.length > remaining) {
+    showToast(t("Добавлены первые 10 вложений (лимит)", "Faqat birinçi 10 ta fayl qöşildi (limit)"));
+  }
+
+  toRead.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      bucket.push({
+        type: kind,
+        name: file.name,
+        dataUrl: reader.result
+      });
+      renderPendingAttachBar();
     };
-    renderPendingAttachBar();
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+function removePendingChatAttachment(kind, idx) {
+  if (kind === "image") chatPendingAttachments.images.splice(idx, 1);
+  else chatPendingAttachments.files.splice(idx, 1);
+  renderPendingAttachBar();
 }
 
 function renderPendingAttachBar() {
   const bar = document.getElementById("chatPendingAttach");
   if (!bar) return;
-  if (!chatPendingAttachment) {
+  const imgs = chatPendingAttachments.images || [];
+  const files = chatPendingAttachments.files || [];
+  if (!imgs.length && !files.length) {
     bar.classList.add("hidden");
     bar.innerHTML = "";
     return;
   }
   bar.classList.remove("hidden");
-  bar.innerHTML = `
-    <span>${chatPendingAttachment.type === 'image' ? '🖼️' : '📄'} ${chatPendingAttachment.name}</span>
-    <button type="button" class="btn-ghost-sm" onclick="chatPendingAttachment=null; renderPendingAttachBar();">×</button>
-  `;
+  bar.innerHTML = [
+    ...imgs.map((im, i) => `<div class="chat-pending-chip"><span>🖼️ ${im.name}</span><button type="button" onclick="removePendingChatAttachment('image', ${i})">×</button></div>`),
+    ...files.map((fl, i) => `<div class="chat-pending-chip"><span>📄 ${fl.name}</span><button type="button" onclick="removePendingChatAttachment('file', ${i})">×</button></div>`)
+  ].join("");
 }
 
 function toggleChatEmojiPicker(e) {
@@ -6658,13 +6763,18 @@ function voteInChatPoll(scopeType, scopeId, msgId, optIdx) {
 function sendChatMessage(pollObj = null) {
   const inp = document.getElementById("chatMessageInput");
   const text = inp ? inp.value.trim() : "";
-  if (!text && !chatPendingAttachment && !pollObj) return;
+  const imgs = (chatPendingAttachments.images || []).slice(0, 10);
+  const files = (chatPendingAttachments.files || []).slice(0, 10);
+  if (!text && !imgs.length && !files.length && !pollObj) return;
 
+  const nowTs = Date.now();
   const msg = {
-    id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+    id: `msg_${nowTs}_${Math.random().toString(36).slice(2, 5)}`,
+    ts: nowTs,
     senderId: currentUser.id,
     text,
-    attachment: chatPendingAttachment ? { ...chatPendingAttachment } : null,
+    images: imgs,
+    files: files,
     poll: pollObj || null,
     time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
   };
@@ -6679,13 +6789,15 @@ function sendChatMessage(pollObj = null) {
     if (!chat) return;
     if (!Array.isArray(chat.messages)) chat.messages = [];
     chat.messages.push(msg);
+    chat.lastActivity = nowTs;
   }
 
   if (inp) inp.value = "";
-  chatPendingAttachment = null;
+  chatPendingAttachments = { images: [], files: [] };
   renderPendingAttachBar();
   saveState(true);
   syncChatHubToCloud();
+  renderChatTabsBar();
   renderChatDrawerBody();
 }
 
