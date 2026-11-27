@@ -3347,3 +3347,90 @@ body.dark .cal-task-open-btn.completed {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==================== МИНИАТЮРА ФОТО СТУДЕНТА В ТАБЛИЦЕ И ЛАЙТБОКС С ПЛАШКОЙ ==================== */
+.st-name-with-thumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.st-thumb-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  padding: 0;
+}
+
+.st-thumb-box.has-photo {
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease;
+}
+
+.st-thumb-box.has-photo:hover {
+  transform: scale(1.06);
+  border-color: var(--accent);
+}
+
+.st-thumb-box.has-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.st-thumb-box.no-photo {
+  cursor: help;
+  opacity: 0.72;
+}
+
+.lightbox-content-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 92vw;
+  max-height: 90vh;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.lightbox-content-wrap img {
+  max-width: 92vw;
+  max-height: 88vh;
+  border-radius: 16px;
+  display: block;
+}
+
+.lightbox-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 17, 23, 0.75);
+  backdrop-filter: blur(6px);
+  color: #ffffff;
+  padding: 12px 18px;
+  text-align: center;
+}
+
+.lb-cap-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.lb-cap-meta {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 3px;
+}
