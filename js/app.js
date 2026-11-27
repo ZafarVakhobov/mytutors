@@ -2998,6 +2998,7 @@ function openStudentModal(studentId = null, prefillName = "") {
   modalStudentState.selectedSocial = st && Array.isArray(st.social) ? [...st.social] : [];
   isCustomSocialInputOpen = false;
   renderStudentSocialArea();
+
   // Волонтерское направление (drop-up + автопоиск + добавление своего направления)
   volSearchQuery = "";
   renderStudentVolunteerSelect();
@@ -4066,8 +4067,8 @@ function renderTelegramSection() {
             ${(p.tags || []).map(tg => `<button type="button" class="badge-pill clickable-tag ${activeTgTagFilter === tg ? 'active' : ''}" onclick="setTgTagFilter('${tg.replace(/'/g, "\'")}')">${tg}</button>`).join("")}
           </div>
           ${cleanImages.length ? `
-            <div class="post-images">
-              ${cleanImages.map(img => `<img src="${img}" alt="TG" onclick="openLightbox('${img}')" />`).join("")}
+            <div class="post-images" data-post-id="${p.id}">
+              ${cleanImages.map(img => `<img src="${img}" alt="TG" loading="lazy" onclick="openLightbox('${img}')" onerror="refreshExpiredTgPostImages('${p.id}', this)" />`).join("")}
             </div>
           ` : ""}
           <div class="post-collab-bar">
@@ -4098,6 +4099,46 @@ function setTgTagFilter(tag) {
   activeTgTagFilter = tag;
   tgAllTagsSearchQuery = "";
   renderTelegramSection();
+}
+
+
+const tgRefreshingPosts = new Set();
+const tgRefreshedPosts = new Set();
+
+async function refreshExpiredTgPostImages(postId, imgEl) {
+  if (imgEl) imgEl.onerror = null;
+  if (!postId || tgRefreshingPosts.has(postId) || tgRefreshedPosts.has(postId)) return;
+
+  const post = (appState.tgPosts || []).find(p => p.id === postId);
+  if (!post || !post.url) return;
+
+  tgRefreshingPosts.add(postId);
+  try {
+    const endpoint = `${TELEGRAM_WORKER_URL.replace(/\/+$/, "")}/tg?url=${encodeURIComponent(post.url)}`;
+    const res = await fetch(endpoint, { method: "GET", redirect: "follow" });
+    const data = await res.json();
+
+    if (data && data.ok && Array.isArray(data.images)) {
+      const freshImages = data.images.filter(isRealPostPhoto);
+      if (freshImages.length) {
+        post.images = freshImages;
+        saveState();
+        if (post.authorId) syncSpecificTutorFolder(post.authorId);
+
+        const wrap = document.querySelector(`.post-images[data-post-id="${postId}"]`);
+        if (wrap) {
+          wrap.innerHTML = freshImages
+            .map(img => `<img src="${img}" alt="TG" loading="lazy" onclick="openLightbox('${img}')" />`)
+            .join("");
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Не удалось обновить изображения Telegram-поста:", err);
+  } finally {
+    tgRefreshingPosts.delete(postId);
+    tgRefreshedPosts.add(postId);
+  }
 }
 
 function isRealPostPhoto(url) {
