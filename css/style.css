@@ -708,7 +708,7 @@ body.dark .pill-sm.active { background: var(--accent); }
 /* Кастомные выпадающие списки */
 .custom-select {
   position: relative;
-  min-width: 155px;
+  
 }
 
 .custom-select.compact { min-width: 135px; }
