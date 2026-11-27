@@ -5503,8 +5503,154 @@ function saveEditedUser() {
   showToast(`${t("Профиль обновлен и сохранен", "Profil yangilandi va saqlandi")}: ${u.name}`);
 }
 
+let userAdminFilters = { search: "", role: "all", course: "all", group: "all" };
+let revealedUserPassIds = new Set();
+
+function ensureUsersAdminToolbar() {
+  const section = document.getElementById("view-users");
+  if (!section) return;
+  let toolbar = document.getElementById("usersAdminToolbar");
+  if (!toolbar) {
+    const card = section.querySelector(".bento-card");
+    toolbar = document.createElement("div");
+    toolbar.id = "usersAdminToolbar";
+    toolbar.className = "st-all-toolbar";
+    if (card) section.insertBefore(toolbar, card);
+    else section.appendChild(toolbar);
+  }
+
+  const isTutorFilter = userAdminFilters.role === "tutor";
+  toolbar.innerHTML = `
+    <div class="st-search-group">
+      <div class="st-search-box">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+        <input type="text" id="usersAdminSearchInput" placeholder="${t("Поиск по Ф.И.О., логину, группам...", "F.I.Ş., login, guruhlar böyiça qidiriş...")}" value="${(userAdminFilters.search || "").replace(/"/g, '&quot;')}" oninput="onUsersAdminSearchInput(this.value)" />
+      </div>
+    </div>
+    <div class="st-all-filters">
+      <div class="custom-select" id="usersFilterRoleWrap"></div>
+      <div class="custom-select ${isTutorFilter ? '' : 'hidden'}" id="usersFilterCourseWrap"></div>
+      <div class="custom-select ${isTutorFilter ? '' : 'hidden'}" id="usersFilterGroupWrap"></div>
+      <button type="button" id="usersFilterResetBtn" class="btn-export sm hidden" onclick="resetUsersAdminFilters()">${t("Сбросить", "Tozalaş")}</button>
+    </div>
+  `;
+
+  const roleOpts = [{ value: "all", label: t("Все роли", "Barça rollar") }].concat(getUserRoleOptions());
+  renderCustomSelect("usersFilterRoleWrap", roleOpts, userAdminFilters.role, (val) => {
+    userAdminFilters.role = val;
+    if (val !== "tutor") {
+      userAdminFilters.course = "all";
+      userAdminFilters.group = "all";
+    }
+    ensureUsersAdminToolbar();
+    renderUsersAdminTableRows();
+  });
+
+  if (isTutorFilter) {
+    const courseOpts = [{ value: "all", label: t("Все курсы", "Barça kurslar") }].concat(getCourseOptions());
+    renderCustomSelect("usersFilterCourseWrap", courseOpts, userAdminFilters.course, (val) => {
+      userAdminFilters.course = val;
+      userAdminFilters.group = "all";
+      ensureUsersAdminToolbar();
+      renderUsersAdminTableRows();
+    });
+
+    const invalidGroupLabels = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+    const tutorsForGroups = appState.users.filter(u =>
+      u.role === "tutor" &&
+      (userAdminFilters.course === "all" || String(u.course || "") === String(userAdminFilters.course))
+    );
+    const groupSet = new Set();
+    tutorsForGroups.forEach(tr => {
+      String(tr.groups || "")
+        .split(",")
+        .map(g => g.trim())
+        .filter(g => g && !invalidGroupLabels.has(g))
+        .forEach(g => groupSet.add(g));
+    });
+    const uniqueGroups = [...groupSet].sort((a, b) => a.localeCompare(b));
+    if (userAdminFilters.group !== "all" && !uniqueGroups.includes(userAdminFilters.group)) {
+      userAdminFilters.group = "all";
+    }
+    const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
+      .concat(uniqueGroups.map(g => ({ value: g, label: g })));
+    renderCustomSelect("usersFilterGroupWrap", groupOpts, userAdminFilters.group, (val) => {
+      userAdminFilters.group = val;
+      renderUsersAdminTableRows();
+    });
+  }
+}
+
+function onUsersAdminSearchInput(val) {
+  userAdminFilters.search = val || "";
+  renderUsersAdminTableRows();
+}
+
+function resetUsersAdminFilters() {
+  userAdminFilters = { search: "", role: "all", course: "all", group: "all" };
+  ensureUsersAdminToolbar();
+  renderUsersAdminTableRows();
+}
+
+function toggleUserPassVisibility(userId) {
+  if (revealedUserPassIds.has(userId)) {
+    revealedUserPassIds.delete(userId);
+  } else {
+    revealedUserPassIds.add(userId);
+  }
+  renderUsersAdminTableRows();
+}
+
 function renderUsersAdminTable() {
+  ensureUsersAdminToolbar();
+  renderUsersAdminTableRows();
+}
+
+function renderUsersAdminTableRows() {
   const table = document.getElementById("usersAdminTable");
+  const resetBtn = document.getElementById("usersFilterResetBtn");
+  if (!table) return;
+
+  const q = (userAdminFilters.search || "").trim().toLowerCase();
+  let list = [...(appState.users || [])];
+
+  if (userAdminFilters.role !== "all") {
+    list = list.filter(u => u.role === userAdminFilters.role);
+  }
+  if (userAdminFilters.role === "tutor") {
+    if (userAdminFilters.course !== "all") {
+      list = list.filter(u => String(u.course || "") === String(userAdminFilters.course));
+    }
+    if (userAdminFilters.group !== "all") {
+      list = list.filter(u =>
+        String(u.groups || "")
+          .split(",")
+          .map(g => g.trim())
+          .includes(userAdminFilters.group)
+      );
+    }
+  }
+  if (q) {
+    list = list.filter(u =>
+      (u.name || "").toLowerCase().includes(q) ||
+      (u.login || "").toLowerCase().includes(q) ||
+      (u.groups || "").toLowerCase().includes(q) ||
+      (u.driveFolder || "").toLowerCase().includes(q) ||
+      localizeRoleTitle(u.role, u.roleTitle).toLowerCase().includes(q)
+    );
+  }
+
+  const hasFilter = Boolean(
+    q ||
+    userAdminFilters.role !== "all" ||
+    userAdminFilters.course !== "all" ||
+    userAdminFilters.group !== "all"
+  );
+  if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
+
+  const eyeSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0"/><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6"/></svg>';
+  const eyeOffSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.585 10.587a2 2 0 0 0 2.829 2.828"/><path d="M16.681 16.673a8.717 8.717 0 0 1 -4.681 1.327c-3.6 0 -6.6 -2 -9 -6c1.272 -2.12 2.712 -3.678 4.32 -4.674m2.86 -1.146a9.055 9.055 0 0 1 1.82 -.18c3.6 0 6.6 2 9 6c-.666 1.11 -1.379 2.067 -2.138 2.87"/><path d="M3 3l18 18"/></svg>';
+
   table.innerHTML = `
     <thead>
       <tr>
@@ -5512,13 +5658,16 @@ function renderUsersAdminTable() {
         <th>${t("Роль", "Roli")}</th>
         <th>${t("Группы", "Guruhlar")}</th>
         <th>${t("Логин", "Login")}</th>
-        <th>${t("Пароль (изменить)", "Parol (özgartiriş)")}</th>
+        <th>${t("Пароль", "Parol")}</th>
         <th>${t("Папка Google Drive", "Google Drive papkasi")}</th>
         <th></th>
       </tr>
     </thead>
     <tbody>
-      ${appState.users.map(u => `
+      ${list.length ? list.map(u => {
+        const isRevealed = revealedUserPassIds.has(u.id);
+        const safePass = String(u.pass || "").replace(/"/g, '&quot;');
+        return `
         <tr>
           <td><strong>${u.name}</strong></td>
           <td>
@@ -5528,9 +5677,11 @@ function renderUsersAdminTable() {
           <td>${u.role === "tutor" ? `${u.course ? `<span class="badge-pill" style="margin-right:6px;">${u.course} ${t("курс", "kurs")}</span>` : ""}${u.groups || "—"}` : `<span class="st-meta">—</span>`}</td>
           <td><code>${u.login}</code></td>
           <td>
-            <div style="display:flex; gap:6px; align-items:center;">
-              <input type="text" id="passField_${u.id}" class="form-input" style="padding:6px 10px; width:130px;" value="${u.pass}" />
-              <button type="button" class="btn-export sm" onclick="updateUserPassword('${u.id}')">${t("Обновить", "Yangilaş")}</button>
+            <div class="pass-mask-wrap">
+              <input type="${isRevealed ? 'text' : 'password'}" id="passField_${u.id}" class="form-input pass-mask-input" value="${safePass}" readonly />
+              <button type="button" class="pass-eye-btn" onclick="toggleUserPassVisibility('${u.id}')" title="${isRevealed ? t("Скрыть пароль", "Parolni yaşiriş") : t("Показать пароль", "Parolni körsatiş")}">
+                ${isRevealed ? eyeOffSvg : eyeSvg}
+              </button>
             </div>
           </td>
           <td><span class="st-meta">${u.driveFolder}</span></td>
@@ -5546,7 +5697,14 @@ function renderUsersAdminTable() {
             ` : ""}
           </td>
         </tr>
-      `).join("")}
+      `;
+      }).join("") : `
+        <tr>
+          <td colspan="7" style="text-align:center; padding:28px; color:var(--text-muted);">
+            ${t("Пользователи по выбранным фильтрам не найдены.", "Tanlangan filtrlar böyiça foydalanuvçilar topilmadi.")}
+          </td>
+        </tr>
+      `}
     </tbody>
   `;
 }
@@ -5998,6 +6156,7 @@ function renderStudentSocialArea() {
 
   wrap.innerHTML = html;
 }
+
 // ==================== АВТОКОНВЕРТАЦИЯ НОВОГО УЗБЕКСКОГО ЛАТИНСКОГО АЛФАВИТА ====================
 function formatPassportInput(el) {
   if (!el) return;
