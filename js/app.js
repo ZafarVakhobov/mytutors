@@ -5025,6 +5025,50 @@ function deleteTodoItem(todoId, btnEl) {
   });
 }
 
+function getCalendarSyncedTasks() {
+  if (!currentUser) return [];
+  return (appState.tasks || [])
+    .filter(tk =>
+      tk &&
+      tk.deadline &&
+      (
+        (Array.isArray(tk.assignees) && tk.assignees.includes(currentUser.id)) ||
+        tk.authorId === currentUser.id
+      )
+    )
+    .map(tk => {
+      const parts = String(tk.deadline).split("T");
+      const dateStr = parts[0] || "";
+      const timeStr = (parts[1] || "").slice(0, 5);
+      const isDone = tk.status === "completed";
+      return {
+        id: `caltask_${tk.id}`,
+        taskId: tk.id,
+        isTask: true,
+        status: tk.status || "active",
+        date: dateStr,
+        time: timeStr,
+        color: isDone ? "#10b981" : (tk.color || "#ff6b3d"),
+        title: tk.title || "",
+        authorId: tk.authorId,
+        assignees: tk.assignees || []
+      };
+    })
+    .filter(item => item.date);
+}
+
+function openTaskFromCalendar(taskId) {
+  const task = (appState.tasks || []).find(tk => tk.id === taskId);
+  if (!task) {
+    showToast(t("Задание не найдено или было удалено", "Vazifa topilmadi yoki öçirilgan"));
+    return;
+  }
+  activeChatTabId = "tasks";
+  activeTasksSubtab = task.status === "completed" ? "completed" : "active";
+  activeTaskDiscussionId = task.id;
+  toggleChatDrawer(true);
+}
+
 function renderCalendarAndBlog() {
   const monthNames = currentLang === "oz"
     ? ["Yanvar", "Fevral", "Mart", "Aprel", "May", "Iyun", "Iyul", "Avgust", "Sentabr", "Oktabr", "Noyabr", "Dekabr"]
@@ -5040,42 +5084,78 @@ function renderCalendarAndBlog() {
   const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
 
   const myEvents = appState.calendarEvents.filter(ev => ev.userId === currentUser.id);
+  const myTaskEvents = getCalendarSyncedTasks();
+  const allCalendarItems = [...myEvents, ...myTaskEvents];
+
   let cells = "";
   for (let i = 0; i < offset; i++) cells += `<div></div>`;
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${calYear}-${String(calMonth + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const dayEvs = myEvents.filter(ev => ev.date === dateStr);
+    const dayEvs = allCalendarItems.filter(ev => ev.date === dateStr);
     const isSelected = dateStr === selectedCalDate;
 
     cells += `
       <div class="cal-day-cell ${isSelected ? 'selected' : ''}" onclick="selectCalDate('${dateStr}')">
         <div class="cal-day-num">${d}</div>
         <div class="cal-dots">
-          ${dayEvs.map(ev => `<span class="cal-dot" style="background:${ev.color}"></span>`).join("")}
+          ${dayEvs.map(ev => `<span class="cal-dot ${ev.isTask && ev.status === 'completed' ? 'done-task' : ''}" style="background:${ev.color}"></span>`).join("")}
         </div>
       </div>
     `;
   }
   document.getElementById("calDaysGrid").innerHTML = cells;
 
-  // Список событий выбранного дня
-  const selectedEvents = myEvents.filter(ev => ev.date === selectedCalDate);
+  // Список событий и заданий выбранного дня
+  const selectedEvents = allCalendarItems
+    .filter(ev => ev.date === selectedCalDate)
+    .sort((a, b) => String(a.time || "").localeCompare(String(b.time || "")));
   document.getElementById("selectedDayLabel").textContent = `${selectedCalDate} • ${t("ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ", "REJALASHTIRILGAN TADBIRLAR")} (${selectedEvents.length})`;
 
   const listEl = document.getElementById("selectedDayEventsList");
   listEl.innerHTML = selectedEvents.length
-    ? selectedEvents.map(ev => `
-        <div class="day-event-row">
-          <div>
-            <div style="font-weight:700; font-size:13px;"><span style="color:${ev.color}">●</span> ${ev.time} — ${ev.title}</div>
-            <div class="st-meta">${ev.desc || ""}</div>
+    ? selectedEvents.map(ev => {
+        if (ev.isTask) {
+          const isDone = ev.status === "completed";
+          const author = appState.users.find(u => u.id === ev.authorId);
+          const assigneeNames = (ev.assignees || []).map(id => {
+            const u = appState.users.find(x => x.id === id);
+            return u ? u.name : id;
+          }).join(", ");
+          const statusIcon = isDone
+            ? `<span class="cal-task-done-icon" title="${t("Выполнено", "Bajarildi")}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M9 12l2 2l4 -4"/></svg></span>`
+            : `<span style="color:${ev.color}; font-size:14px; line-height:1;">●</span>`;
+          return `
+            <div class="day-event-row cal-task-row ${isDone ? 'completed' : ''}" style="border-left: 3.5px solid ${ev.color};">
+              <div style="min-width:0; flex:1;">
+                <div class="cal-task-head-line">
+                  ${statusIcon}
+                  <button type="button" class="cal-task-title-btn ${isDone ? 'done' : ''}" onclick="openTaskFromCalendar('${ev.taskId}')">
+                    ${ev.time ? `${ev.time} — ` : ""}${ev.title}
+                  </button>
+                  ${isDone ? `<span class="cal-task-status-badge">${t("Выполнено", "Bajarildi")}</span>` : ""}
+                </div>
+                <div class="st-meta">${t("Задание от", "Vazifa muallifi")}: ${author ? author.name : "—"}${assigneeNames ? ` • ${t("Исполнители", "Ijroçilar")}: ${assigneeNames}` : ""}</div>
+              </div>
+              <button type="button" class="cal-task-open-btn ${isDone ? 'completed' : ''}" onclick="openTaskFromCalendar('${ev.taskId}')" title="${t("Открыть чат задачи", "Vazifa çatini oçiş")}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10"/><path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2"/></svg>
+                <span>${t("Чат задачи", "Vazifa çati")}</span>
+              </button>
+            </div>
+          `;
+        }
+        return `
+          <div class="day-event-row">
+            <div>
+              <div style="font-weight:700; font-size:13px;"><span style="color:${ev.color}">●</span> ${ev.time} — ${ev.title}</div>
+              <div class="st-meta">${ev.desc || ""}</div>
+            </div>
+            ${canDeleteData(ev.userId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteCalendarEvent('${ev.id}', this)" title="${t("Удалить событие", "Tadbirni öçiriş")}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+            </button>` : ""}
           </div>
-          ${canDeleteData(ev.userId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteCalendarEvent('${ev.id}', this)" title="${t("Удалить событие", "Tadbirni öçiriş")}">
-            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-          </button>` : ""}
-        </div>
-      `).join("")
+        `;
+      }).join("")
     : `<div class="st-meta">${t("На выбранную дату событий пока не запланировано.", "Tanlangan sanaga tadbirlar hozirça rejalashtirilmagan.")}</div>`;
 
   renderTodoList();
@@ -5918,7 +5998,6 @@ function renderStudentSocialArea() {
 
   wrap.innerHTML = html;
 }
-
 // ==================== АВТОКОНВЕРТАЦИЯ НОВОГО УЗБЕКСКОГО ЛАТИНСКОГО АЛФАВИТА ====================
 function formatPassportInput(el) {
   if (!el) return;
@@ -5998,6 +6077,7 @@ document.addEventListener("input", (e) => {
     }
   }
 }, true);
+
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", restoreSession);
@@ -6640,6 +6720,7 @@ function saveNewTask() {
     syncChatHubToCloud();
     closeModal("chatTaskModal");
     renderChatDrawer();
+    if (activeTab === "calendar") renderCalendarAndBlog();
     showToast(t("Задание обновлено", "Vazifa yangilandi"));
     return;
   }
@@ -6664,6 +6745,7 @@ function saveNewTask() {
   activeChatTabId = "tasks";
   activeTasksSubtab = "active";
   renderChatDrawer();
+  if (activeTab === "calendar") renderCalendarAndBlog();
   showToast(t("Задание назначено", "Vazifa biriktirildi"));
 }
 
@@ -6686,6 +6768,7 @@ function markTaskCompleted(taskId) {
   activeTaskDiscussionId = null;
   activeTasksSubtab = "completed";
   renderChatDrawer();
+  if (activeTab === "calendar") renderCalendarAndBlog();
   showToast(t("Задача перенесена в выполненные", "Vazifa bajarilganlarga ötkazildi"));
 }
 
@@ -6702,6 +6785,7 @@ function deleteTaskById(taskId, btnEl) {
     saveState(true);
     syncChatHubToCloud();
     renderChatDrawer();
+    if (activeTab === "calendar") renderCalendarAndBlog();
     showToast(t("Задание удалено", "Vazifa öçirildi"));
   });
 }
@@ -7017,6 +7101,9 @@ async function loadChatHubFromCloud() {
         if (chatDrawerOpen) {
           renderChatTabsBar();
           renderChatDrawerBody();
+        }
+        if (activeTab === "calendar") {
+          renderCalendarAndBlog();
         }
       }
     }
