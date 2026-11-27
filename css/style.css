@@ -2074,3 +2074,32 @@ body.dark ::-webkit-scrollbar-thumb:hover {
     grid-template-columns: 1fr;
   }
 }
+
+/* ==================== БЛОКИРОВКА И ОДНОСТРОЧНАЯ ШИРИНА СПИСКА ТЮТОРОВ ==================== */
+.custom-select.disabled {
+  pointer-events: none;
+  opacity: 0.72;
+}
+
+.custom-select.disabled .cs-trigger {
+  background: var(--surface-alt);
+  cursor: not-allowed;
+}
+
+.cs-trigger span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#stTutorSelectWrap .cs-menu {
+  left: auto;
+  right: 0;
+  width: max-content;
+  min-width: 100%;
+  max-width: none;
+}
+
+#stTutorSelectWrap .cs-option {
+  white-space: nowrap;
+}
