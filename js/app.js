@@ -211,7 +211,29 @@ const I18N = {
     poll_btn_add_opt: "Добавить вариант",
     poll_lbl_multi: "Несколько вариантов ответа",
     poll_desc_multi: "Участники смогут выбрать сразу несколько пунктов",
-    poll_btn_send: "Отправить опрос"
+    poll_btn_send: "Отправить опрос",
+    ph_st_fio: "Иванов Иван Иванович",
+    ph_fio: "Ф.И.О.",
+    ph_mon_custom: "Например: Систематические опоздания...",
+    ph_mon_debt: "Например: 3500000",
+    ph_mon_note: "Опишите ситуацию и проведенную беседу...",
+    ph_auto_student: "Автоматически из карточки студента...",
+    ph_hemis_bulk: "Азизбек Тошпулатов | TR-101 | 1 | М | +998 90 411 22 01\nНилуфар Бобоева | MH-202 | 2 | Ж | +998 90 911 77 07",
+    ph_ev_title: "Кураторский час в группе TR-101",
+    ph_ev_desc: "Аудитория 204, главный корпус...",
+    ph_nu_name: "А. Каримов",
+    ph_chat_group_name: "Например: Тюторы 1 курса",
+    ph_chat_member_search: "Поиск пользователя...",
+    ph_task_title: "Например: Проверить посещаемость в общежитии",
+    ph_task_todo: "Добавить пункт...",
+    ph_poll_q: "Задайте вопрос...",
+    ttl_theme: "Сменить тему",
+    ttl_new_chat: "Новый чат / Группа",
+    ttl_notifs: "Уведомления",
+    ttl_close: "Закрыть",
+    ttl_attach: "Прикрепить",
+    ttl_emoji: "Эмодзи",
+    ttl_send: "Отправить"
   },
   oz: {
     auth_title: "Kabinetga kiriş",
@@ -233,7 +255,7 @@ const I18N = {
     kpi_students: "JAMI TALABALAR",
     kpi_posts: "TELEGRAM POSTLARI",
     kpi_channel: "Kanal: studlifeuniv",
-    kpi_gdoc_ready: "Google Doc uşun tayyor",
+    kpi_gdoc_ready: "Google Doc uçun tayyor",
     kpi_volunteers: "VOLONTYORLAR",
     kpi_vol_tags: "Volontyorlik yönalişlari",
     kpi_monitoring: "MONITORING / IJTIMOIY REESTR",
@@ -328,7 +350,7 @@ const I18N = {
     lbl_edu: "Ma’lumoti / Ilmiy daraja",
     lbl_bio: "Iş tajribasi va yutuqlar",
     cal_title: "Tadbirlar taqvimi va Şaxsiy kundalik",
-    cal_sub: "Tadbirlarni rejalashtiriş, eslatmalar va tyutorning erkin qaydları",
+    cal_sub: "Tadbirlarni rejalaştiriş, eslatmalar va tyutorning erkin qaydlari",
     btn_add_event: "Tadbir qöşiş",
     blog_title: "Şaxsiy mini-blog va To-Do",
     mode_note: "Qayd / Blog",
@@ -368,20 +390,20 @@ const I18N = {
     lbl_emp_boss_phone: "Rahbar telefon raqami",
     lbl_emp_from: "Iş vaqti (dan)",
     lbl_emp_to: "Iş vaqti (gaça)",
-    lbl_emp_salary: "Oylik maosh (UZS)",
+    lbl_emp_salary: "Oylik maoş (UZS)",
     sec_family: "OTA-ONALAR VA QARINDOŞLAR MA’LUMOTLARI",
     btn_add_short: "Qöşiş",
     lbl_soc_cats: "Ijtimoiy toifalar",
     lbl_vol_dir: "Volontyorlik yönalişi",
     btn_cancel: "Bekor qiliş",
-    btn_save_changes: "Özgarishlarni saqlaş",
+    btn_save_changes: "Özgarişlarni saqlaş",
     btn_save: "Saqlaş",
     mon_modal_title: "Talabani monitoringga qöyiş",
     lbl_student: "Talaba",
     lbl_mon_cat: "Monitoring toifasi",
     lbl_mon_custom: "Toifani qölda kiriting",
     lbl_mon_note: "Kundalikdagi dastlabki qayd",
-    hemis_desc: "HEMIS tizimidan talabalar röyxatini joylaştirinq (har bir qatorda: F.I.Ş. | Guruh | Kurs | Jinsi (E/A) | Telefon) yoki HEMIS API tokenini ulang.",
+    hemis_desc: "HEMIS tizimidan talabalar röyxatini joylaştiring (har bir qatorda: F.I.Ş. | Guruh | Kurs | Jinsi (E/A) | Telefon) yoki HEMIS API tokenini ulang.",
     lbl_hemis_url: "API Token / tyutor.hemis.uz profil havolasi",
     lbl_hemis_bulk: "Talabalar röyxatini ommaviy import qiliş",
     btn_import_db: "Bazaga import qiliş",
@@ -403,14 +425,14 @@ const I18N = {
     chat_btn_label: "Çat va Vazifalar",
     chat_att_photo: "Rasm / Foto",
     chat_att_file: "Hujjat / Fayl",
-    chat_att_poll: "Sörovnoma yaratish",
+    chat_att_poll: "Sörovnoma yaratiş",
     chat_ph_msg: "Xabar...",
     chat_new_modal_title: "Yangi çat yoki guruh",
     chat_mode_direct: "Şaxsiy çat",
-    chat_mode_group: "Guruh yaratish",
+    chat_mode_group: "Guruh yaratiş",
     chat_lbl_group_name: "Guruh nomi",
     chat_lbl_members: "Suhbatdoşlarni tanlang",
-    chat_btn_create: "Yaratish",
+    chat_btn_create: "Yaratiş",
     task_modal_title: "Yangi vazifa",
     task_lbl_title: "Vazifa nomi *",
     task_lbl_deadline: "Muddat (dedlayn)",
@@ -418,13 +440,35 @@ const I18N = {
     task_lbl_assignees: "Ijroçilar (bir neçta tanlaş) *",
     task_lbl_todos: "Vazifa bandlari (To-Do)",
     task_btn_assign: "Vazifa biriktiriş",
-    poll_modal_title: "Sörovnoma yaratish",
+    poll_modal_title: "Sörovnoma yaratiş",
     poll_lbl_question: "Savol *",
     poll_lbl_options: "Javob variantlari",
     poll_btn_add_opt: "Variant qöşiş",
     poll_lbl_multi: "Bir neçta javob tanlaş",
     poll_desc_multi: "Iştirokçilar bir vaqtda bir neçta bandni tanlaşi mumkin",
-    poll_btn_send: "Sörovnomani yuboriş"
+    poll_btn_send: "Sörovnomani yuboriş",
+    ph_st_fio: "Karimov Alişer Botiroviç",
+    ph_fio: "F.I.Ş.",
+    ph_mon_custom: "Masalan: Muntazam keçikişlar...",
+    ph_mon_debt: "Masalan: 3500000",
+    ph_mon_note: "Vaziyat va ötkazilgan suhbatni yozing...",
+    ph_auto_student: "Talaba kartasidan avtomatik olinadi...",
+    ph_hemis_bulk: "Azizbek Toşpölatov | TR-101 | 1 | E | +998 90 411 22 01\nNilufar Boboyeva | MH-202 | 2 | A | +998 90 911 77 07",
+    ph_ev_title: "TR-101 guruhida tyutorlik soati",
+    ph_ev_desc: "204-auditoriya, asosiy bino...",
+    ph_nu_name: "A. Karimov",
+    ph_chat_group_name: "Masalan: 1-kurs tyutorlari",
+    ph_chat_member_search: "Foydalanuvçini qidiriş...",
+    ph_task_title: "Masalan: Yotoqxonada davomatni tekşiriş",
+    ph_task_todo: "Band qöşiş...",
+    ph_poll_q: "Savol kiriting...",
+    ttl_theme: "Mavzuni özgartiriş",
+    ttl_new_chat: "Yangi çat / Guruh",
+    ttl_notifs: "Bildirişnomalar",
+    ttl_close: "Yopiş",
+    ttl_attach: "Fayl biriktiriş",
+    ttl_emoji: "Emozi",
+    ttl_send: "Yuboriş"
   }
 };
 
@@ -1278,6 +1322,18 @@ function setLanguage(lang) {
     }
   });
 
+  document.querySelectorAll("[data-i18n-title]").forEach(el => {
+    const key = el.dataset.i18nTitle;
+    if (I18N[lang] && I18N[lang][key]) {
+      const txt = I18N[lang][key];
+      if (el.hasAttribute("data-smart-title")) {
+        el.setAttribute("data-smart-title", txt);
+      } else {
+        el.setAttribute("title", txt);
+      }
+    }
+  });
+
   if (currentUser) {
     updateHeaderAndGreeting();
     renderAllViews();
@@ -1389,7 +1445,7 @@ async function loadFromGoogleDrive() {
       showToast(t("База синхронизирована с Google Drive", "Baza Google Drive dan sinxronlandi"));
     }
   } catch (err) {
-    showToast(t("Работаем с локальной копией данных", "Lokal keshdan foydalanilmoqda"));
+    showToast(t("Работаем с локальной копией данных", "Lokal keşdan foydalanilmoqda"));
   }
 }
 
@@ -2349,7 +2405,7 @@ function renderStudentsSection() {
               <div><strong>${t("Адрес", "Manzil")}:</strong> ${s.empAddress || "—"}</div>
               <div><strong>${t("Руководитель", "Rahbar")}:</strong> ${s.empBossName || "—"} ${s.empBossPhone ? `(${s.empBossPhone})` : ""}</div>
               <div><strong>${t("График", "Iş vaqti")}:</strong> ${s.empTimeFrom || "—"} – ${s.empTimeTo || "—"}</div>
-              <div><strong>${t("Зарплата", "Maosh")}:</strong> ${formatSalaryUZS(s.empSalary)}</div>
+              <div><strong>${t("Зарплата", "Maoş")}:</strong> ${formatSalaryUZS(s.empSalary)}</div>
             </div>
           ` : `
             <div class="roommates-panel">
@@ -2664,7 +2720,7 @@ function renderStudentsAllTable() {
               const tutorCellHtml = tutor
                 ? (isTutorOnly()
                     ? renderUserBadgeHtml(tutor)
-                    : renderUserBadgeHtml(tutor, { clickable: true, active: isTutorActive, onclick: `filterStudentsByTutorClick('${tutor.id}')`, title: t("Фильтровать по этому тютору", "Uşbu tyutor böyiça filtrlash") }))
+                    : renderUserBadgeHtml(tutor, { clickable: true, active: isTutorActive, onclick: `filterStudentsByTutorClick('${tutor.id}')`, title: t("Фильтровать по этому тютору", "Uşbu tyutor böyiça filtrlaş") }))
                 : "—";
               return `
                 <tr>
@@ -2942,7 +2998,6 @@ function openStudentModal(studentId = null, prefillName = "") {
   modalStudentState.selectedSocial = st && Array.isArray(st.social) ? [...st.social] : [];
   isCustomSocialInputOpen = false;
   renderStudentSocialArea();
-
   // Волонтерское направление (drop-up + автопоиск + добавление своего направления)
   volSearchQuery = "";
   renderStudentVolunteerSelect();
@@ -3260,7 +3315,7 @@ function saveStudent() {
 function deleteStudent(id, btnEl) {
   const checkTarget = appState.students.find(s => s.id === id);
   if (!checkTarget || !canDeleteData(checkTarget.tutorId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -3568,7 +3623,7 @@ function renderTgCollabOptionsList() {
   let html = "";
 
   if (customSelected.length && !q) {
-    html += `<div class="cs-divider-label">${t("Внешние партнёры (для этого поста)", "Taşqi hamkorlar (uşbu post uşun)")}</div>`;
+    html += `<div class="cs-divider-label">${t("Внешние партнёры (для этого поста)", "Taşqi hamkorlar (uşbu post uçun)")}</div>`;
     html += customSelected.map(c => `
       <label class="social-check-option">
         <input type="checkbox" checked onchange="removeCustomTgCollab('${c.name.replace(/'/g, "\\'")}')" />
@@ -3961,7 +4016,7 @@ function renderTelegramSection() {
   const authorFilterBannerHtml = activeAuthorObj ? `
     <div class="tg-author-filter-banner">
       <span>${t("Фильтр по автору / партнёру", "Muallif / hamkor böyiça filtr")}: <strong>${activeAuthorObj.name}</strong></span>
-      <button type="button" class="btn-export sm" onclick="resetTgAuthorFilter()">${t("Сбросить фильтр", "Filtrni tozalash")}</button>
+      <button type="button" class="btn-export sm" onclick="resetTgAuthorFilter()">${t("Сбросить фильтр", "Filtrni tozalaş")}</button>
     </div>
   ` : "";
 
@@ -4127,7 +4182,7 @@ async function parseTelegramPost() {
 // ==================== РЕДАКТИРОВАНИЕ ПОСТА TELEGRAM (ТОЛЬКО АДМИН / ЧАСТ. АДМИН) ====================
 function openEditTgPostModal(postId) {
   if (!hasAdminPrivileges()) {
-    showToast(t("Недостаточно прав для редактирования", "Tahrirlaş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для редактирования", "Tahrirlaş uçun ruxsat yetarli emas"));
     return;
   }
   const post = appState.tgPosts.find(p => p.id === postId);
@@ -4450,7 +4505,7 @@ function saveEditedTgPost() {
 function deleteTgPost(id, btnEl) {
   const checkTarget = appState.tgPosts.find(p => p.id === id);
   if (!checkTarget || !canDeleteData(checkTarget.authorId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -4490,7 +4545,7 @@ function updateReportPreview() {
 async function exportToGoogleDoc() {
   const matched = getFilteredReportPosts();
   if (!matched.length) {
-    showToast(t("За выбранный период нет публикаций для отчета", "Tanlangan davrda hisobot uşun postlar yöq"));
+    showToast(t("За выбранный период нет публикаций для отчета", "Tanlangan davrda hisobot uçun postlar yöq"));
     return;
   }
 
@@ -4504,7 +4559,7 @@ async function exportToGoogleDoc() {
   }).join("\n\n");
 
   if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) {
-    showToast("Не задан APPS_SCRIPT_URL в js/app.js");
+    showToast(t("Не задан APPS_SCRIPT_URL в js/app.js", "js/app.js faylida APPS_SCRIPT_URL kiritilmagan"));
     return;
   }
 
@@ -5067,7 +5122,7 @@ function renderParentMeetingsCardsList() {
   if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
 
   if (!meetings.length) {
-    container.innerHTML = `<div class="empty-state">${t("Записей о встречах с родителями не найдено.", "Ota-onalar bilan uçraşuv qaydları topilmadi.")}</div>`;
+    container.innerHTML = `<div class="empty-state">${t("Записей о встречах с родителями не найдено.", "Ota-onalar bilan uçraşuv qaydlari topilmadi.")}</div>`;
     return;
   }
 
@@ -5509,7 +5564,7 @@ function reopenMonitoringRecord(recId) {
 function deleteMonitoringRecord(id, btnEl) {
   const checkTarget = appState.monitoring.find(m => m.id === id);
   if (!checkTarget || !canDeleteData(checkTarget.tutorId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -5551,7 +5606,7 @@ function addParentMeeting() {
 function deleteParentMeeting(id, btnEl) {
   const checkTarget = appState.parentMeetings.find(m => m.id === id);
   if (!checkTarget || !canDeleteData(checkTarget.tutorId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -6096,7 +6151,7 @@ function addDormQuickEntry(logId) {
 function deleteDormLog(id, btnEl) {
   const target = (appState.dormLogs || []).find(d => d.id === id);
   if (!target || !canDeleteData(target.tutorId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -6639,7 +6694,7 @@ function addRentQuickEntry(logId) {
 function deleteRentLog(id, btnEl) {
   const target = (appState.rentLogs || []).find(r => r.id === id);
   if (!target || !canDeleteData(target.tutorId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -6958,7 +7013,7 @@ function toggleTodoItem(todoId) {
 function deleteTodoItem(todoId, btnEl) {
   const checkItem = appState.todos.find(td => td.id === todoId);
   if (!checkItem || !canDeleteData(checkItem.userId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -7054,7 +7109,7 @@ function renderCalendarAndBlog() {
   const selectedEvents = allCalendarItems
     .filter(ev => ev.date === selectedCalDate)
     .sort((a, b) => String(a.time || "").localeCompare(String(b.time || "")));
-  document.getElementById("selectedDayLabel").textContent = `${selectedCalDate} • ${t("ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ", "REJALASHTIRILGAN TADBIRLAR")} (${selectedEvents.length})`;
+  document.getElementById("selectedDayLabel").textContent = `${selectedCalDate} • ${t("ЗАПЛАНИРОВАННЫЕ СОБЫТИЯ", "REJALAŞTIRILGAN TADBIRLAR")} (${selectedEvents.length})`;
 
   const listEl = document.getElementById("selectedDayEventsList");
   listEl.innerHTML = selectedEvents.length
@@ -7100,7 +7155,7 @@ function renderCalendarAndBlog() {
           </div>
         `;
       }).join("")
-    : `<div class="st-meta">${t("На выбранную дату событий пока не запланировано.", "Tanlangan sanaga tadbirlar hozirça rejalashtirilmagan.")}</div>`;
+    : `<div class="st-meta">${t("На выбранную дату событий пока не запланировано.", "Tanlangan sanaga tadbirlar hozirça rejalaştirilmagan.")}</div>`;
 
   renderTodoList();
 
@@ -7136,7 +7191,7 @@ function selectCalDate(dateStr) {
 
 function openEventModal() {
   const colorOpts = [
-    { value: "#ff6b3d", label: t("Оранжевый (Важно)", "Zarg‘aldoq (Muhim)") },
+    { value: "#ff6b3d", label: t("Оранжевый (Важно)", "Zarğaldoq (Muhim)") },
     { value: "#2563eb", label: t("Синий (Учебный процесс)", "Kök (Öquv jarayoni)") },
     { value: "#10b981", label: t("Зеленый (Мероприятие)", "Yaşil (Tadbir)") },
     { value: "#7c3aed", label: t("Фиолетовый (Личное)", "Binafşa (Şaxsiy)") }
@@ -7175,7 +7230,7 @@ function saveCalendarEvent() {
 function deleteCalendarEvent(id, btnEl) {
   const checkEv = appState.calendarEvents.find(ev => ev.id === id);
   if (!checkEv || !canDeleteData(checkEv.userId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -7207,7 +7262,7 @@ function addBlogPost() {
 function deleteBlogPost(id, btnEl) {
   const checkPost = appState.blogPosts.find(b => b.id === id);
   if (!checkPost || !canDeleteData(checkPost.userId)) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -7527,7 +7582,7 @@ function ensureEditUserModal() {
 
         <div class="modal-foot">
           <button type="button" class="btn-ghost" onclick="closeEditUserModal()">${t("Отмена", "Bekor qiliş")}</button>
-          <button type="button" class="btn-orange" onclick="saveEditedUser()">${t("Сохранить изменения", "Özgarishlarni saqlaş")}</button>
+          <button type="button" class="btn-orange" onclick="saveEditedUser()">${t("Сохранить изменения", "Özgarişlarni saqlaş")}</button>
         </div>
       </div>
     </div>
@@ -7942,7 +7997,7 @@ function createNewUser() {
 
 function deleteUserAccount(userId, btnEl) {
   if (!isFullAdmin()) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
@@ -7998,6 +8053,7 @@ function renderStudentVolunteerSelect(keepOpen = false) {
   const allDirs = getAllVolunteerDirections();
   const selected = modalStudentState.volunteers || [];
   const triggerText = formatVolunteerTriggerLabel(selected, allDirs);
+
   wrap.innerHTML = `
     <div class="cs-trigger" onclick="toggleCustomSelect('stVolunteerWrap'); setTimeout(() => { const i = document.getElementById('volSearchInput'); if(i) i.focus(); }, 30);">
       <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${triggerText}</span>
@@ -8759,7 +8815,7 @@ function formatChatTextWithMentions(text, mentionIds) {
         clickable: true,
         prefix: "@",
         onclick: `event.stopPropagation(); insertMentionIntoChatInput('${u.id}')`,
-        title: t("Нажмите, чтобы отметить в ответе", "Javobda belgilash uşun bosing")
+        title: t("Нажмите, чтобы отметить в ответе", "Javobda belgilaş uçun bosing")
       });
       safe = safe.split(token).join(pill);
     }
@@ -8965,7 +9021,7 @@ function renderChatContextBar() {
     bar.innerHTML = `
       <div class="chat-context-bar-text">
         <div class="chat-context-bar-title">${t("Редактирование сообщения", "Xabarni tahrirlaş")}</div>
-        <div class="chat-context-bar-sub">${t("Измените текст и нажмите Enter", "Matnni özgaltiring va Enter bosing")}</div>
+        <div class="chat-context-bar-sub">${t("Измените текст и нажмите Enter", "Matnni özgartiring va Enter bosing")}</div>
       </div>
       <button type="button" class="icon-circle-btn sm" onclick="cancelChatContextMode()">×</button>
     `;
@@ -9281,7 +9337,7 @@ function openChatTaskModal(taskId = null) {
   }
   if (submitBtn) {
     submitBtn.textContent = existing
-      ? t("Сохранить изменения", "Özgarishlarni saqlaş")
+      ? t("Сохранить изменения", "Özgarişlarni saqlaş")
       : t("Назначить задание", "Vazifa biriktiriş");
   }
 
@@ -9291,7 +9347,7 @@ function openChatTaskModal(taskId = null) {
 
   const colorOpts = [
     { value: "#ef4444", label: t("Красный (Срочно)", "Qizil (Şoşilinç)") },
-    { value: "#ff6b3d", label: t("Оранжевый (Важно)", "Zarg‘aldoq (Muhim)") },
+    { value: "#ff6b3d", label: t("Оранжевый (Важно)", "Zarğaldoq (Muhim)") },
     { value: "#2563eb", label: t("Синий (Обычная)", "Kök (Oddiy)") },
     { value: "#10b981", label: t("Зеленый (Низкая)", "Yaşil (Past)") }
   ];
@@ -9444,7 +9500,7 @@ function deleteTaskById(taskId, btnEl) {
   const task = (appState.tasks || []).find(tk => tk.id === taskId);
   if (!task) return;
   if (!hasAdminPrivileges() && task.authorId !== currentUser.id) {
-    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
     return;
   }
   askConfirmDelete(btnEl, () => {
