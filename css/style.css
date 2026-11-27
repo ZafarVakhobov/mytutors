@@ -3843,3 +3843,8 @@ body.dark .user-role-pill.role-womens_council { color: #f472b6; }
   background: var(--danger);
   color: #ffffff;
 }
+
+/* Фикс: чтобы поле ввода новой группы не пряталось под шапкой модального окна */
+.user-groups-editor-dd .tg-tag-search-list {
+  max-height: 120px;
+}
