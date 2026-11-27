@@ -80,6 +80,15 @@ const I18N = {
     tab_monitoring: "Мониторинг студентов",
     tab_parents: "Работа с родителями",
     tab_dorm_logs: "Записи по общежитию",
+    tab_rent_logs: "Заметки по съемным квартирам",
+    rent_modal_title: "Фиксация изучения съемной квартиры",
+    lbl_rent_student: "Студент (съемное жилье) *",
+    lbl_rent_address: "Адрес съемной квартиры",
+    lbl_rent_landlord: "Владелец квартиры (Ф.И.О., тел.)",
+    lbl_rent_relocation: "Комментарий по переселению",
+    ph_rent_relocation: "Новый адрес или причина переселения...",
+    lbl_rent_conflict: "Конфликт с... (свободный ввод)",
+    ph_rent_conflict: "Укажите с кем возник конфликт (владелец, сосед и т.д.)...",
     lbl_mon_debt: "Сумма долга по контракту (UZS)",
     dorm_modal_title: "Фиксация изучения комнаты общежития",
     lbl_dorm_room: "Комната общежития *",
@@ -284,6 +293,15 @@ const I18N = {
     tab_monitoring: "Talabalar monitoringi",
     tab_parents: "Ota-onalar bilan işlaş",
     tab_dorm_logs: "Yotoqxona qaydlari",
+    tab_rent_logs: "Ijara xonadon qaydlari",
+    rent_modal_title: "Ijara xonadonni örganişni qayd etiş",
+    lbl_rent_student: "Talaba (ijara xonadon) *",
+    lbl_rent_address: "Ijara xonadon manzili",
+    lbl_rent_landlord: "Uy egasi (F.I.Ş., telefon)",
+    lbl_rent_relocation: "Köçiş böyiça izoh",
+    ph_rent_relocation: "Yangi manzil yoki köçiş sababi...",
+    lbl_rent_conflict: "... bilan nizo (erkin matn)",
+    ph_rent_conflict: "Kim bilan nizo çiqqanini yozing (uy egasi, qöşni va h.k.)...",
     lbl_mon_debt: "Kontrakt qarzi summasi (UZS)",
     dorm_modal_title: "Yotoqxona xonasini örganişni qayd etiş",
     lbl_dorm_room: "Yotoqxona xonasi *",
@@ -776,6 +794,7 @@ function sanitizeAppState(rawObj) {
     monitoring: deduplicateById(base.monitoring || []),
     parentMeetings: deduplicateById(base.parentMeetings || []),
     dormLogs: deduplicateById(base.dormLogs || []),
+    rentLogs: deduplicateById(base.rentLogs || []),
     schedule: deduplicateById(base.schedule || []),
     calendarEvents: deduplicateById(base.calendarEvents || []),
     blogPosts: deduplicateById(base.blogPosts || []),
@@ -810,8 +829,8 @@ function buildPayloadForCurrentUser() {
       tgPosts: appState.tgPosts.filter(p => p.authorId === currentUser.id),
       monitoring: appState.monitoring.filter(m => m.tutorId === currentUser.id),
       parentMeetings: appState.parentMeetings.filter(m => m.tutorId === currentUser.id),
-    dormLogs: appState.dormLogs.filter(d => d.tutorId === currentUser.id),
       dormLogs: appState.dormLogs.filter(d => d.tutorId === currentUser.id),
+      rentLogs: appState.rentLogs.filter(r => r.tutorId === currentUser.id),
       schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === currentUser.id),
       calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
       blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
@@ -829,6 +848,8 @@ function buildPayloadForCurrentUser() {
     tgPosts: appState.tgPosts.filter(p => p.authorId === currentUser.id),
     monitoring: appState.monitoring.filter(m => m.tutorId === currentUser.id),
     parentMeetings: appState.parentMeetings.filter(m => m.tutorId === currentUser.id),
+    dormLogs: appState.dormLogs.filter(d => d.tutorId === currentUser.id),
+    rentLogs: appState.rentLogs.filter(r => r.tutorId === currentUser.id),
     schedule: appState.schedule,
     calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
     blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
@@ -870,6 +891,7 @@ function syncSpecificTutorFolder(tutorId) {
     monitoring: appState.monitoring.filter(m => m.tutorId === tutorId),
     parentMeetings: appState.parentMeetings.filter(m => m.tutorId === tutorId),
     dormLogs: appState.dormLogs.filter(d => d.tutorId === tutorId),
+    rentLogs: appState.rentLogs.filter(r => r.tutorId === tutorId),
     schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === tutorId),
     calendarEvents: appState.calendarEvents.filter(ev => ev.userId === tutorId),
     blogPosts: appState.blogPosts.filter(b => b.userId === tutorId),
@@ -1067,6 +1089,7 @@ async function loadFromGoogleDrive() {
           monitoring: (incoming.monitoring || []).filter(m => m.tutorId === currentUser.id),
           parentMeetings: (incoming.parentMeetings || []).filter(m => m.tutorId === currentUser.id),
           dormLogs: (incoming.dormLogs || []).filter(d => d.tutorId === currentUser.id),
+          rentLogs: (incoming.rentLogs || []).filter(r => r.tutorId === currentUser.id),
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
@@ -1088,6 +1111,7 @@ async function loadFromGoogleDrive() {
           monitoring: incoming.monitoring || [],
           parentMeetings: incoming.parentMeetings || [],
           dormLogs: incoming.dormLogs || [],
+          rentLogs: incoming.rentLogs || [],
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
@@ -2380,7 +2404,12 @@ function renderStudentsAllTable() {
                 : "—";
               return `
                 <tr>
-                  <td><strong>${s.name}</strong></td>
+                  <td>
+                    <div class="st-name-with-thumb">
+                      ${renderStudentThumbHtml(s)}
+                      <strong>${s.name}</strong>
+                    </div>
+                  </td>
                   <td>${s.group} • ${s.course} ${t("курс", "kurs")}</td>
                   <td>${formatGenderShort(s.gender)}</td>
                   <td>${formatHousingBadge(s)}</td>
@@ -4240,9 +4269,45 @@ async function exportToGoogleDoc() {
   }
 }
 
-function openLightbox(src) {
+function openLightbox(src, captionHtml = "") {
   document.getElementById("lightboxImg").src = src;
+  const capEl = document.getElementById("lightboxCaption");
+  if (capEl) {
+    if (captionHtml) {
+      capEl.innerHTML = captionHtml;
+      capEl.classList.remove("hidden");
+    } else {
+      capEl.innerHTML = "";
+      capEl.classList.add("hidden");
+    }
+  }
   document.getElementById("lightboxModal").classList.remove("hidden");
+}
+
+function openStudentPhotoLightbox(studentId) {
+  const s = (appState.students || []).find(x => x.id === studentId);
+  if (!s || !s.photo) return;
+  const tutor = appState.users.find(u => u.id === s.tutorId);
+  const caption = `
+    <div class="lb-cap-name">${s.name}</div>
+    <div class="lb-cap-meta">${s.course} ${t("курс", "kurs")} • ${s.group} • ${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : "—"}</div>
+  `;
+  openLightbox(s.photo, caption);
+}
+
+function renderStudentThumbHtml(s) {
+  if (s && s.photo) {
+    return `
+      <button type="button" class="st-thumb-box has-photo" onclick="openStudentPhotoLightbox('${s.id}')" title="${t("Открыть фото", "Rasmni oçiş")}">
+        <img src="${s.photo}" alt="${(s.name || "").replace(/"/g, '&quot;')}" />
+      </button>
+    `;
+  }
+  return `
+    <span class="st-thumb-box no-photo" title="${t("Фото не загружено", "Rasm yuklanmagan")}">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 8h.01"/><path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z"/><path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5"/><path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3"/></svg>
+    </span>
+  `;
 }
 
 // ==================== 4. ДНЕВНИКИ (МОНИТОРИНГ + РОДИТЕЛИ) ====================
@@ -4256,6 +4321,8 @@ function setDiarySubtab(sub) {
   document.getElementById("diaryTabParents").classList.toggle("active", sub === "parents");
   const dormBtn = document.getElementById("diaryTabDorm");
   if (dormBtn) dormBtn.classList.toggle("active", sub === "dorm");
+  const rentBtn = document.getElementById("diaryTabRent");
+  if (rentBtn) rentBtn.classList.toggle("active", sub === "rent");
   renderDiariesSection();
 }
 
@@ -4423,6 +4490,38 @@ function renderDiariesSection() {
 
     renderDormListFilterControls();
     renderDormLogsList();
+    return;
+  }
+
+  if (activeDiarySubtab === "rent") {
+    area.innerHTML = `
+      <div class="subtabs-row">
+        <div>
+          <h3 class="card-title">${t("Дневник проверок съемных квартир", "Ijara xonadonlarni tekşiriş kundaligi")}</h3>
+          <p class="card-sub">${t("Учет условий проживания, владельцев, коммунальных и воспитательных вопросов", "Yaşaş şaroitlari, uy egalari, kommunal va tarbiyaviy masalalar hisobi")}</p>
+        </div>
+        <button type="button" class="btn-orange" onclick="openRentLogModal()">+ ${t("Зафиксировать изучение", "Örganişni qayd etiş")}</button>
+      </div>
+
+      <div class="diary-list-toolbar">
+        <div class="st-search-box diary-list-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+          <input type="text" id="rentListSearchInput" placeholder="${t("Поиск по студенту, адресу, владельцу, тексту...", "Talaba, manzil, uy egasi, matn böyiça qidiriş...")}" value="${rentListFilters.search.replace(/"/g, '&quot;')}" oninput="rentListFilters.search=this.value; renderRentLogsList()" />
+        </div>
+        <div class="diary-list-filters">
+          <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="rentListTutorFilterWrap"></div>
+          <div class="custom-select" id="rentListCatFilterWrap"></div>
+          <input type="date" id="rentListDateFrom" class="form-input diary-date-input" value="${rentListFilters.dateFrom}" title="${t("Дата с", "Sana (dan)")}" onchange="rentListFilters.dateFrom=this.value; renderRentLogsList()" />
+          <input type="date" id="rentListDateTo" class="form-input diary-date-input" value="${rentListFilters.dateTo}" title="${t("Дата по", "Sana (gaça)")}" onchange="rentListFilters.dateTo=this.value; renderRentLogsList()" />
+          <button type="button" id="rentListResetBtn" class="btn-export sm hidden" onclick="resetRentListFilters()">${t("Сбросить", "Tozalaş")}</button>
+        </div>
+      </div>
+
+      <div id="rentLogsCardsContainer"></div>
+    `;
+
+    renderRentListFilterControls();
+    renderRentLogsList();
     return;
   }
 
@@ -5336,7 +5435,7 @@ function openDormLogModal() {
   }
 
   dormModalState = {
-    room: rooms[0],
+    room: "",
     roomSearch: "",
     roomTutorFilter: "all",
     category: DORM_CHECK_CATEGORIES[0].value,
@@ -5603,6 +5702,21 @@ function selectDormConflictStudent(stId) {
   }
 }
 
+function getDormLogEntries(d) {
+  if (Array.isArray(d.entries) && d.entries.length) return d.entries;
+  return [{
+    date: d.date || "",
+    time: d.time || "",
+    authorId: d.tutorId,
+    category: d.category || "",
+    problemResidents: d.problemResidents || [],
+    relocationNote: d.relocationNote || "",
+    collaborators: d.collaborators || [],
+    conflictStudent: d.conflictStudent || null,
+    notes: d.notes || ""
+  }];
+}
+
 function saveDormLog() {
   const room = String(dormModalState.room || "").trim();
   const notes = document.getElementById("dormNotesInput").value.trim();
@@ -5634,13 +5748,13 @@ function saveDormLog() {
     }
   }
 
-  const rec = {
-    id: `dorm_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
-    tutorId: currentUser.id,
-    room,
-    date: document.getElementById("dormDateInput").value || new Date().toISOString().slice(0, 10),
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const entryDate = document.getElementById("dormDateInput").value || new Date().toISOString().slice(0, 10);
+  const newEntry = {
+    date: entryDate,
+    time: nowTime,
+    authorId: currentUser.id,
     category: dormModalState.category,
-    residents: split.all.map(s => ({ id: s.id, name: s.name, group: s.group, tutorId: s.tutorId })),
     problemResidents: problemNames,
     relocationNote: dormModalState.category === "Запрос о переселении" ? document.getElementById("dormRelocationInput").value.trim() : "",
     collaborators: dormModalState.category === "Профилактическая беседа" ? [...dormModalState.collaborators] : [],
@@ -5648,12 +5762,65 @@ function saveDormLog() {
     notes
   };
 
-  appState.dormLogs.unshift(rec);
-  saveState();
-  syncSpecificTutorFolder(rec.tutorId);
+  // Если карточка по этой комнате уже существует — продолжаем дневник в ней
+  const existing = (appState.dormLogs || []).find(d => String(d.room || "").trim() === room);
+  if (existing) {
+    if (!Array.isArray(existing.entries)) existing.entries = getDormLogEntries(existing);
+    existing.entries.push(newEntry);
+    existing.date = entryDate;
+    existing.category = dormModalState.category;
+    existing.residents = split.all.map(s => ({ id: s.id, name: s.name, group: s.group, tutorId: s.tutorId }));
+    saveState();
+    syncSpecificTutorFolder(existing.tutorId);
+  } else {
+    const rec = {
+      id: `dorm_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      tutorId: currentUser.id,
+      room,
+      date: entryDate,
+      category: dormModalState.category,
+      residents: split.all.map(s => ({ id: s.id, name: s.name, group: s.group, tutorId: s.tutorId })),
+      entries: [newEntry]
+    };
+    appState.dormLogs.unshift(rec);
+    saveState();
+    syncSpecificTutorFolder(rec.tutorId);
+  }
+
   closeModal("dormDiaryModal");
   renderDiariesSection();
-  showToast(t("Запись по общежитию сохранена", "Yotoqxona qaydi saqlandi"));
+  showToast(t("Запись добавлена в дневник комнаты", "Qayd xona kundaligiga qöşildi"));
+}
+
+function addDormQuickEntry(logId) {
+  const rec = (appState.dormLogs || []).find(d => d.id === logId);
+  if (!rec) return;
+  const catSel = document.getElementById(`dormQuickCat_${logId}`);
+  const inp = document.getElementById(`dormQuickNote_${logId}`);
+  const text = inp ? inp.value.trim() : "";
+  if (!text) {
+    showToast(t("Введите текст новой записи", "Yangi qayd matnini kiriting"));
+    return;
+  }
+  const cat = catSel ? catSel.value : DORM_CHECK_CATEGORIES[0].value;
+  const nowDate = new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (!Array.isArray(rec.entries)) rec.entries = getDormLogEntries(rec);
+  rec.entries.push({
+    date: nowDate,
+    time: nowTime,
+    authorId: currentUser.id,
+    category: cat,
+    notes: text
+  });
+  rec.date = nowDate;
+  rec.category = cat;
+
+  saveState();
+  syncSpecificTutorFolder(rec.tutorId);
+  renderDormLogsList();
+  showToast(t("Запись добавлена в дневник комнаты", "Qayd xona kundaligiga qöşildi"));
 }
 
 function deleteDormLog(id, btnEl) {
@@ -5733,23 +5900,27 @@ function renderDormLogsList() {
     list = list.filter(d => dormListFilters.rooms.includes(String(d.room || "").trim()));
   }
   if (dormListFilters.categories.length > 0) {
-    list = list.filter(d => dormListFilters.categories.includes(d.category));
+    list = list.filter(d => getDormLogEntries(d).some(e => dormListFilters.categories.includes(e.category)));
   }
-  if (dormListFilters.dateFrom) {
-    list = list.filter(d => (d.date || "") >= dormListFilters.dateFrom);
-  }
-  if (dormListFilters.dateTo) {
-    list = list.filter(d => (d.date || "") <= dormListFilters.dateTo);
+  if (dormListFilters.dateFrom || dormListFilters.dateTo) {
+    list = list.filter(d => getDormLogEntries(d).some(e => {
+      const dt = e.date || "";
+      if (dormListFilters.dateFrom && dt < dormListFilters.dateFrom) return false;
+      if (dormListFilters.dateTo && dt > dormListFilters.dateTo) return false;
+      return true;
+    }));
   }
   const q = (dormListFilters.search || "").trim().toLowerCase();
   if (q) {
     list = list.filter(d => {
       const roomMatch = String(d.room || "").toLowerCase().includes(q);
-      const notesMatch = (d.notes || "").toLowerCase().includes(q);
-      const catMatch = (d.category || "").toLowerCase().includes(q);
       const resMatch = (d.residents || []).some(r => (r.name || "").toLowerCase().includes(q));
-      const conflictMatch = d.conflictStudent && (d.conflictStudent.name || "").toLowerCase().includes(q);
-      return roomMatch || notesMatch || catMatch || resMatch || conflictMatch;
+      const entriesMatch = getDormLogEntries(d).some(e =>
+        (e.notes || "").toLowerCase().includes(q) ||
+        (e.category || "").toLowerCase().includes(q) ||
+        (e.conflictStudent && (e.conflictStudent.name || "").toLowerCase().includes(q))
+      );
+      return roomMatch || resMatch || entriesMatch;
     });
   }
 
@@ -5761,38 +5932,589 @@ function renderDormLogsList() {
     return;
   }
 
+  const availCats = DORM_CHECK_CATEGORIES.filter(c => !c.adminOnly || hasAdminPrivileges());
+
   container.innerHTML = `
     <div class="diary-grid">
       ${list.map(d => {
-        const author = appState.users.find(u => u.id === d.tutorId);
+        const entries = getDormLogEntries(d);
         const resNames = (d.residents || []).map(r => `${r.name} (${r.group})`).join(", ");
         return `
           <div class="diary-card">
             <div class="st-card-top">
               <div>
                 <div class="st-name">${t("Комната №", "Xona №")} ${d.room}</div>
-                <div class="st-meta">${d.date} • ${t("Автор", "Muallif")}: ${author ? author.name : "—"}</div>
+                <div class="st-meta">${t("Записей в дневнике", "Kundalik qaydlari")}: ${entries.length}</div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
-                <span class="badge-pill">${getLabelFromDict(DORM_CHECK_CATEGORIES, d.category)}</span>
-                ${canDeleteData(d.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteDormLog('${d.id}', this)" title="${t("Удалить", "Öçiriş")}">
+                ${canDeleteData(d.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteDormLog('${d.id}', this)" title="${t("Удалить дневник комнаты", "Xona kundaligini öçiriş")}">
                   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
                 </button>` : ""}
               </div>
             </div>
 
             ${resNames ? `<div class="st-meta mb-8"><strong>${t("Жильцы", "Xonadoşlar")}:</strong> ${resNames}</div>` : ""}
-            ${(d.problemResidents || []).length ? `<div class="mon-debt-badge mb-8"><span>${t("Жильцы по вопросу", "Muammoli xonadoşlar")}:</span> <strong>${d.problemResidents.join(", ")}</strong></div>` : ""}
-            ${d.relocationNote ? `<div class="mon-debt-badge mb-8"><span>${t("Переселение", "Köçiriş")}:</span> <strong>${d.relocationNote}</strong></div>` : ""}
-            ${(d.collaborators || []).length ? `<div class="st-meta mb-8"><strong>${t("Совместно с", "Hamkorlikda")}:</strong> ${d.collaborators.map(c => c.name).join(", ")}</div>` : ""}
-            ${d.conflictStudent ? `
-              <div class="mon-partner-card mb-8">
-                <div class="mon-partner-card-title">${t("Конфликт со студентом", "Nizo iştirokçisi")}: ${d.conflictStudent.name}</div>
-                <div class="st-meta">${t("Курс", "Kurs")}: <strong>${d.conflictStudent.course}</strong> • ${t("Группа", "Guruh")}: <strong>${d.conflictStudent.group}</strong> • ${t("Тютор", "Tyutor")}: <strong>${d.conflictStudent.tutorName}</strong></div>
-              </div>
-            ` : ""}
 
-            <p style="font-size:13px; white-space:pre-line;">${d.notes}</p>
+            <div class="diary-entries">
+              ${entries.map(ent => {
+                const entAuthor = appState.users.find(u => u.id === ent.authorId);
+                return `
+                  <div class="diary-entry-item">
+                    <div class="diary-entry-date" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+                      <span>${ent.date}${ent.time ? ` ${ent.time}` : ""}</span>
+                      <span class="badge-pill" style="font-size:10px; padding:2px 8px;">${getLabelFromDict(DORM_CHECK_CATEGORIES, ent.category)}</span>
+                      ${entAuthor ? `<span>• ${entAuthor.name}</span>` : ""}
+                    </div>
+                    ${(ent.problemResidents || []).length ? `<div class="mon-debt-badge mb-8"><span>${t("Жильцы по вопросу", "Muammoli xonadoşlar")}:</span> <strong>${ent.problemResidents.join(", ")}</strong></div>` : ""}
+                    ${ent.relocationNote ? `<div class="mon-debt-badge mb-8"><span>${t("Переселение", "Köçiriş")}:</span> <strong>${ent.relocationNote}</strong></div>` : ""}
+                    ${(ent.collaborators || []).length ? `<div class="st-meta mb-8"><strong>${t("Совместно с", "Hamkorlikda")}:</strong> ${ent.collaborators.map(c => c.name).join(", ")}</div>` : ""}
+                    ${ent.conflictStudent ? `
+                      <div class="mon-partner-card mb-8">
+                        <div class="mon-partner-card-title">${t("Конфликт со студентом", "Nizo iştirokçisi")}: ${ent.conflictStudent.name}</div>
+                        <div class="st-meta">${t("Курс", "Kurs")}: <strong>${ent.conflictStudent.course}</strong> • ${t("Группа", "Guruh")}: <strong>${ent.conflictStudent.group}</strong> • ${t("Тютор", "Tyutor")}: <strong>${ent.conflictStudent.tutorName}</strong></div>
+                      </div>
+                    ` : ""}
+                    <div style="white-space:pre-line;">${ent.notes}</div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+
+            <div class="mt-10" style="padding-top:10px; border-top:1px solid var(--border);">
+              <select id="dormQuickCat_${d.id}" class="form-input mb-8" style="padding:7px 10px; font-size:12px;">
+                ${availCats.map(c => `<option value="${c.value}">${currentLang === "oz" ? c.oz : c.ru}</option>`).join("")}
+              </select>
+              <textarea id="dormQuickNote_${d.id}" class="form-textarea" rows="2" style="min-height:66px;" placeholder="${t("Продолжить дневник проверки комнаты...", "Xona tekşiruvi kundaligini davom ettiriş...")}"></textarea>
+              <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                <button type="button" class="btn-dark" onclick="addDormQuickEntry('${d.id}')">${t("Добавить запись", "Qayd qöşiş")}</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// ==================== ЗАМЕТКИ ПО СЪЕМНЫМ КВАРТИРАМ ====================
+let rentListFilters = { search: "", tutors: [], categories: [], dateFrom: "", dateTo: "" };
+let rentModalState = {
+  studentId: "",
+  studentSearch: "",
+  studentTutorFilter: "all",
+  category: "Санитарно-гигиеническая ситуация",
+  collaborators: [],
+  collabSearch: ""
+};
+
+function getRentCheckCategories() {
+  return DORM_CHECK_CATEGORIES
+    .filter(c => c.value !== "Проблема с конкретными жильцами")
+    .map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+}
+
+function getAvailableRentStudents(tutorFilterId = "all") {
+  let scoped = getRoleScopedStudents().filter(s => s.housingType === "rent");
+  if (!isTutorOnly() && tutorFilterId && tutorFilterId !== "all") {
+    scoped = scoped.filter(s => s.tutorId === tutorFilterId);
+  }
+  return scoped;
+}
+
+function openRentLogModal() {
+  const rentStudents = getAvailableRentStudents();
+  if (!rentStudents.length) {
+    showToast(t("Нет студентов, проживающих на съемной квартире", "Ijara xonadonda yaşovçi talabalar topilmadi"));
+    return;
+  }
+
+  rentModalState = {
+    studentId: "",
+    studentSearch: "",
+    studentTutorFilter: "all",
+    category: DORM_CHECK_CATEGORIES[0].value,
+    collaborators: [],
+    collabSearch: ""
+  };
+
+  document.getElementById("rentDateInput").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("rentAddressInput").value = "";
+  document.getElementById("rentLandlordInput").value = "";
+  document.getElementById("rentRelocationInput").value = "";
+  document.getElementById("rentConflictTextInput").value = "";
+  document.getElementById("rentNotesInput").value = "";
+
+  renderRentStudentSelect(false);
+
+  const catOpts = getRentCheckCategories();
+  const onCatChange = (v) => {
+    rentModalState.category = v;
+    renderCustomSelect("rentCategorySelectWrap", catOpts, v, onCatChange);
+    updateRentCategoryFieldsVisibility();
+  };
+  renderCustomSelect("rentCategorySelectWrap", catOpts, rentModalState.category, onCatChange);
+
+  renderRentCollabSelect(false);
+  updateRentCategoryFieldsVisibility();
+  document.getElementById("rentDiaryModal").classList.remove("hidden");
+}
+
+function renderRentStudentSelect(keepOpen = false) {
+  const wrap = document.getElementById("rentStudentSelectWrap");
+  if (!wrap) return;
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+  const picked = (appState.students || []).find(s => s.id === rentModalState.studentId);
+  const currentLabel = picked
+    ? `${picked.name} (${picked.group})`
+    : t("Выберите студента...", "Talabani tanlang...");
+
+  const tutors = (appState.users || []).filter(u => u.role === "tutor");
+  const tutorSelectHtml = hasAdminPrivileges() ? `
+    <select id="rentStudentTutorFilterSelect" class="tg-tag-search-input" style="cursor:pointer;" onchange="onRentStudentTutorFilterChange(this.value)">
+      <option value="all" ${rentModalState.studentTutorFilter === "all" ? "selected" : ""}>${t("Все тюторы", "Barça tyutorlar")}</option>
+      ${tutors.map(tr => `<option value="${tr.id}" ${rentModalState.studentTutorFilter === tr.id ? "selected" : ""}>${tr.name}</option>`).join("")}
+    </select>
+  ` : "";
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('rentStudentSelectWrap'); setTimeout(() => { const i = document.getElementById('rentStudentSearchDropdown'); if(i) i.focus(); }, 30);">
+      <span>${currentLabel}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" style="max-height:none; overflow:visible; min-width:100%; width:max-content; max-width:340px; padding:8px;" onclick="event.stopPropagation()">
+      <input type="text" id="rentStudentSearchDropdown" class="tg-tag-search-input" placeholder="${t("Поиск по Ф.И.О., группе или адресу...", "F.I.Ş., guruh yoki manzil böyiça qidiriş...")}" value="${(rentModalState.studentSearch || "").replace(/"/g, '&quot;')}" oninput="onRentStudentDropdownSearch(this.value)" />
+      ${tutorSelectHtml}
+      <div id="rentStudentOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+
+  if (wasOpen) wrap.classList.add("open");
+  renderRentStudentOptionsList();
+}
+
+function onRentStudentDropdownSearch(val) {
+  rentModalState.studentSearch = val || "";
+  renderRentStudentOptionsList();
+}
+
+function onRentStudentTutorFilterChange(tutorId) {
+  rentModalState.studentTutorFilter = tutorId || "all";
+  renderRentStudentOptionsList();
+}
+
+function renderRentStudentOptionsList() {
+  const listEl = document.getElementById("rentStudentOptionsList");
+  if (!listEl) return;
+
+  const list = getAvailableRentStudents(rentModalState.studentTutorFilter);
+  const q = (rentModalState.studentSearch || "").trim().toLowerCase();
+  const checkSvg = '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;"><path d="M5 12l5 5l10 -10"/></svg>';
+
+  const filtered = list.filter(s => {
+    if (!q) return true;
+    return (
+      (s.name || "").toLowerCase().includes(q) ||
+      (s.group || "").toLowerCase().includes(q) ||
+      (s.address || "").toLowerCase().includes(q)
+    );
+  });
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Студенты не найдены", "Talabalar topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(s => `
+    <div class="cs-option ${rentModalState.studentId === s.id ? 'selected' : ''}" style="align-items:flex-start;" onclick="selectRentModalStudent('${s.id}')">
+      <div style="min-width:0; flex:1;">
+        <div style="font-weight:700;">${s.name}</div>
+        <div class="st-meta" style="white-space:normal; font-size:11px; line-height:1.25;">${s.group} • ${s.address || t("Адрес не указан", "Manzil kiritilmagan")}</div>
+      </div>
+      ${rentModalState.studentId === s.id ? checkSvg : ''}
+    </div>
+  `).join("");
+}
+
+function selectRentModalStudent(stId) {
+  const st = (appState.students || []).find(s => s.id === stId);
+  if (!st) return;
+  rentModalState.studentId = st.id;
+  rentModalState.studentSearch = "";
+  const wrap = document.getElementById("rentStudentSelectWrap");
+  if (wrap) wrap.classList.remove("open");
+
+  // Автоматический парсинг адреса и владельца из карточки выбранного студента
+  document.getElementById("rentAddressInput").value = st.address || "";
+  document.getElementById("rentLandlordInput").value = st.landlord || "";
+  renderRentStudentSelect(false);
+}
+
+function updateRentCategoryFieldsVisibility() {
+  const cat = rentModalState.category;
+  const rWrap = document.getElementById("rentRelocationWrap");
+  const cWrap = document.getElementById("rentCollabWrap");
+  const cfWrap = document.getElementById("rentConflictWrap");
+
+  if (rWrap) rWrap.classList.toggle("hidden", cat !== "Запрос о переселении");
+  if (cWrap) cWrap.classList.toggle("hidden", cat !== "Профилактическая беседа");
+  if (cfWrap) cfWrap.classList.toggle("hidden", cat !== "Конфликт с...");
+}
+
+function formatRentCollabTrigger() {
+  if (!rentModalState.collaborators.length) {
+    return t("Выберите сотрудников или введите вручную...", "Xodimlarni tanlang yoki qölda kiriting...");
+  }
+  const names = rentModalState.collaborators.map(c => c.name);
+  if (names.length <= 2) return names.join(", ");
+  return `${names[0]}, ${names[1]} (+${names.length - 2})`;
+}
+
+function renderRentCollabSelect(keepOpen = false) {
+  const wrap = document.getElementById("rentCollabSelectWrap");
+  if (!wrap) return;
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('rentCollabSelectWrap'); setTimeout(() => { const i = document.getElementById('rentCollabSearchInput'); if(i) i.focus(); }, 30);">
+      <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${formatRentCollabTrigger()}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()" style="max-height:none; overflow:visible; width:100%; max-width:none; padding:8px;">
+      <input type="text" id="rentCollabSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск сотрудника или введите участника...", "Xodimni qidiriş yoki qölda kiritiş...")}" value="${rentModalState.collabSearch}" oninput="renderRentCollabOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addRentCustomCollab(this.value);}" />
+      <div id="rentCollabOptionsList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  if (wasOpen) wrap.classList.add("open");
+  renderRentCollabOptions();
+}
+
+function renderRentCollabOptions() {
+  const listEl = document.getElementById("rentCollabOptionsList");
+  const inp = document.getElementById("rentCollabSearchInput");
+  if (!listEl) return;
+
+  rentModalState.collabSearch = inp ? inp.value : "";
+  const q = rentModalState.collabSearch.trim().toLowerCase();
+  const users = (appState.users || []).filter(u => u.id !== currentUser.id);
+  const matchedUsers = q ? users.filter(u => (u.name || "").toLowerCase().includes(q)) : users;
+  const exactUserMatch = users.some(u => (u.name || "").toLowerCase() === q);
+  const customSelected = rentModalState.collaborators.filter(c => c.type === "custom");
+
+  let html = "";
+  if (customSelected.length && !q) {
+    html += `<div class="cs-divider-label">${t("Введенные вручную", "Qölda kiritilganlar")}</div>`;
+    html += customSelected.map(c => `
+      <label class="social-check-option">
+        <input type="checkbox" checked onchange="removeRentCustomCollab('${c.name.replace(/'/g, "\'")}')" />
+        <span>${c.name}</span>
+      </label>
+    `).join("");
+  }
+
+  if (matchedUsers.length) {
+    html += `<div class="cs-divider-label">${t("Пользователи системы", "Tizim foydalanuvçilari")}</div>`;
+    html += matchedUsers.map(u => {
+      const checked = rentModalState.collaborators.some(c => c.type === "user" && c.id === u.id);
+      return `
+        <label class="social-check-option">
+          <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleRentCollabUser('${u.id}')" />
+          <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+        </label>
+      `;
+    }).join("");
+  }
+
+  const cleanQ = rentModalState.collabSearch.trim();
+  if (cleanQ && !exactUserMatch) {
+    html += `
+      <div class="tag-ac-item create-new" onclick="addRentCustomCollab('${cleanQ.replace(/'/g, "\'")}')">
+        <span>+ ${t("Добавить участника", "Iştirokçi qöşiş")}: <strong>${cleanQ}</strong></span>
+      </div>
+    `;
+  }
+
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function toggleRentCollabUser(uid) {
+  const user = appState.users.find(u => u.id === uid);
+  if (!user) return;
+  const exists = rentModalState.collaborators.some(c => c.type === "user" && c.id === uid);
+  if (exists) {
+    rentModalState.collaborators = rentModalState.collaborators.filter(c => !(c.type === "user" && c.id === uid));
+  } else {
+    rentModalState.collaborators.push({ type: "user", id: user.id, name: user.name });
+  }
+  renderRentCollabSelect(true);
+}
+
+function addRentCustomCollab(rawName) {
+  const clean = convertUzbekLatinText(String(rawName || "").trim());
+  if (!clean) return;
+  if (!rentModalState.collaborators.some(c => c.type === "custom" && c.name.toLowerCase() === clean.toLowerCase())) {
+    rentModalState.collaborators.push({ type: "custom", name: clean });
+  }
+  rentModalState.collabSearch = "";
+  renderRentCollabSelect(true);
+}
+
+function removeRentCustomCollab(name) {
+  rentModalState.collaborators = rentModalState.collaborators.filter(c => !(c.type === "custom" && c.name === name));
+  renderRentCollabSelect(true);
+}
+
+function getRentLogEntries(r) {
+  if (Array.isArray(r.entries) && r.entries.length) return r.entries;
+  return [{
+    date: r.date || "",
+    time: r.time || "",
+    authorId: r.tutorId,
+    category: r.category || "",
+    relocationNote: r.relocationNote || "",
+    collaborators: r.collaborators || [],
+    conflictText: r.conflictText || "",
+    notes: r.notes || ""
+  }];
+}
+
+function saveRentLog() {
+  const st = (appState.students || []).find(s => s.id === rentModalState.studentId);
+  const notes = document.getElementById("rentNotesInput").value.trim();
+  if (!st || !notes) {
+    showToast(t("Выберите студента и введите текст дневника", "Talabani tanlang va kundalik matnini kiriting"));
+    return;
+  }
+
+  const address = document.getElementById("rentAddressInput").value.trim() || st.address || "";
+  const landlord = document.getElementById("rentLandlordInput").value.trim() || st.landlord || "";
+  const entryDate = document.getElementById("rentDateInput").value || new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  const newEntry = {
+    date: entryDate,
+    time: nowTime,
+    authorId: currentUser.id,
+    category: rentModalState.category,
+    relocationNote: rentModalState.category === "Запрос о переселении" ? document.getElementById("rentRelocationInput").value.trim() : "",
+    collaborators: rentModalState.category === "Профилактическая беседа" ? [...rentModalState.collaborators] : [],
+    conflictText: rentModalState.category === "Конфликт с..." ? document.getElementById("rentConflictTextInput").value.trim() : "",
+    notes
+  };
+
+  // Если карточка по этой квартире/студенту уже существует — продолжаем дневник в ней
+  const existing = (appState.rentLogs || []).find(r => r.studentId === st.id);
+  if (existing) {
+    if (!Array.isArray(existing.entries)) existing.entries = getRentLogEntries(existing);
+    existing.entries.push(newEntry);
+    existing.date = entryDate;
+    existing.category = rentModalState.category;
+    if (address) existing.address = address;
+    if (landlord) existing.landlord = landlord;
+    saveState();
+    syncSpecificTutorFolder(existing.tutorId);
+  } else {
+    const rec = {
+      id: `rent_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      tutorId: st.tutorId || currentUser.id,
+      studentId: st.id,
+      studentName: st.name,
+      studentGroup: st.group,
+      address,
+      landlord,
+      date: entryDate,
+      category: rentModalState.category,
+      entries: [newEntry]
+    };
+    appState.rentLogs.unshift(rec);
+    saveState();
+    syncSpecificTutorFolder(rec.tutorId);
+  }
+
+  closeModal("rentDiaryModal");
+  renderDiariesSection();
+  showToast(t("Запись добавлена в дневник съемной квартиры", "Qayd ijara xonadon kundaligiga qöşildi"));
+}
+
+function addRentQuickEntry(logId) {
+  const rec = (appState.rentLogs || []).find(r => r.id === logId);
+  if (!rec) return;
+  const catSel = document.getElementById(`rentQuickCat_${logId}`);
+  const inp = document.getElementById(`rentQuickNote_${logId}`);
+  const text = inp ? inp.value.trim() : "";
+  if (!text) {
+    showToast(t("Введите текст новой записи", "Yangi qayd matnini kiriting"));
+    return;
+  }
+  const cat = catSel ? catSel.value : DORM_CHECK_CATEGORIES[0].value;
+  const nowDate = new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (!Array.isArray(rec.entries)) rec.entries = getRentLogEntries(rec);
+  rec.entries.push({
+    date: nowDate,
+    time: nowTime,
+    authorId: currentUser.id,
+    category: cat,
+    notes: text
+  });
+  rec.date = nowDate;
+  rec.category = cat;
+
+  saveState();
+  syncSpecificTutorFolder(rec.tutorId);
+  renderRentLogsList();
+  showToast(t("Запись добавлена в дневник съемной квартиры", "Qayd ijara xonadon kundaligiga qöşildi"));
+}
+
+function deleteRentLog(id, btnEl) {
+  const target = (appState.rentLogs || []).find(r => r.id === id);
+  if (!target || !canDeleteData(target.tutorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uşun ruxsat yetarli emas"));
+    return;
+  }
+  askConfirmDelete(btnEl, () => {
+    const ownerId = target.tutorId;
+    appState.rentLogs = (appState.rentLogs || []).filter(r => r.id !== id);
+    saveState();
+    if (ownerId) syncSpecificTutorFolder(ownerId);
+    renderRentLogsList();
+    showToast(t("Запись удалена", "Qayd öçirildi"));
+  });
+}
+
+function renderRentListFilterControls(keepOpenId = null) {
+  if (!isTutorOnly()) {
+    const tutorOpts = appState.users.filter(u => u.role === "tutor" || hasAdminPrivileges(u)).map(tr => ({ value: tr.id, label: tr.name }));
+    renderDiaryMultiSelect("rentListTutorFilterWrap", t("Тюторы", "Tyutorlar"), tutorOpts, rentListFilters.tutors, (val) => {
+      rentListFilters.tutors = rentListFilters.tutors.includes(val)
+        ? rentListFilters.tutors.filter(x => x !== val)
+        : [...rentListFilters.tutors, val];
+      renderRentListFilterControls("rentListTutorFilterWrap");
+      renderRentLogsList();
+    }, keepOpenId === "rentListTutorFilterWrap");
+  }
+
+  const catOpts = getRentCheckCategories();
+  renderDiaryMultiSelect("rentListCatFilterWrap", t("Категории", "Toifalar"), catOpts, rentListFilters.categories, (val) => {
+    rentListFilters.categories = rentListFilters.categories.includes(val)
+      ? rentListFilters.categories.filter(x => x !== val)
+      : [...rentListFilters.categories, val];
+    renderRentListFilterControls("rentListCatFilterWrap");
+    renderRentLogsList();
+  }, keepOpenId === "rentListCatFilterWrap");
+}
+
+function resetRentListFilters() {
+  rentListFilters = { search: "", tutors: [], categories: [], dateFrom: "", dateTo: "" };
+  const s = document.getElementById("rentListSearchInput"); if (s) s.value = "";
+  const df = document.getElementById("rentListDateFrom"); if (df) df.value = "";
+  const dt = document.getElementById("rentListDateTo"); if (dt) dt.value = "";
+  renderRentListFilterControls();
+  renderRentLogsList();
+}
+
+function renderRentLogsList() {
+  const container = document.getElementById("rentLogsCardsContainer");
+  const resetBtn = document.getElementById("rentListResetBtn");
+  if (!container) return;
+
+  let list = isTutorOnly()
+    ? (appState.rentLogs || []).filter(r => r.tutorId === currentUser.id)
+    : (appState.rentLogs || []);
+
+  if (!isTutorOnly() && rentListFilters.tutors.length > 0) {
+    list = list.filter(r => rentListFilters.tutors.includes(r.tutorId));
+  }
+  if (rentListFilters.categories.length > 0) {
+    list = list.filter(r => getRentLogEntries(r).some(e => rentListFilters.categories.includes(e.category)));
+  }
+  if (rentListFilters.dateFrom || rentListFilters.dateTo) {
+    list = list.filter(r => getRentLogEntries(r).some(e => {
+      const dt = e.date || "";
+      if (rentListFilters.dateFrom && dt < rentListFilters.dateFrom) return false;
+      if (rentListFilters.dateTo && dt > rentListFilters.dateTo) return false;
+      return true;
+    }));
+  }
+  const q = (rentListFilters.search || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(r => {
+      const baseMatch =
+        (r.studentName || "").toLowerCase().includes(q) ||
+        (r.studentGroup || "").toLowerCase().includes(q) ||
+        (r.address || "").toLowerCase().includes(q) ||
+        (r.landlord || "").toLowerCase().includes(q);
+      const entriesMatch = getRentLogEntries(r).some(e =>
+        (e.notes || "").toLowerCase().includes(q) ||
+        (e.category || "").toLowerCase().includes(q) ||
+        (e.conflictText || "").toLowerCase().includes(q)
+      );
+      return baseMatch || entriesMatch;
+    });
+  }
+
+  const hasFilter = Boolean(q || rentListFilters.tutors.length || rentListFilters.categories.length || rentListFilters.dateFrom || rentListFilters.dateTo);
+  if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state">${t("Заметок по съемным квартирам пока нет.", "Ijara xonadonlar böyiça qaydlar hozirça yöq.")}</div>`;
+    return;
+  }
+
+  const catOpts = getRentCheckCategories();
+
+  container.innerHTML = `
+    <div class="diary-grid">
+      ${list.map(r => {
+        const entries = getRentLogEntries(r);
+        const tutor = appState.users.find(u => u.id === r.tutorId);
+        return `
+          <div class="diary-card">
+            <div class="st-card-top">
+              <div>
+                <div class="st-name">${r.studentName} <span class="st-meta" style="font-weight:500;">(${r.studentGroup || ""})</span></div>
+                <div class="st-meta">${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : "—"} • ${t("Записей", "Qaydlar")}: ${entries.length}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                ${canDeleteData(r.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteRentLog('${r.id}', this)" title="${t("Удалить дневник", "Kundalikni öçiriş")}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                </button>` : ""}
+              </div>
+            </div>
+
+            <div class="roommates-panel mb-10">
+              <div><strong>${t("Адрес", "Manzil")}:</strong> ${r.address || t("Не указан", "Kiritilmagan")}</div>
+              <div><strong>${t("Владелец", "Uy egasi")}:</strong> ${r.landlord || t("Не указан", "Kiritilmagan")}</div>
+            </div>
+
+            <div class="diary-entries">
+              ${entries.map(ent => {
+                const entAuthor = appState.users.find(u => u.id === ent.authorId);
+                return `
+                  <div class="diary-entry-item">
+                    <div class="diary-entry-date" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+                      <span>${ent.date}${ent.time ? ` ${ent.time}` : ""}</span>
+                      <span class="badge-pill rent" style="font-size:10px; padding:2px 8px;">${getLabelFromDict(DORM_CHECK_CATEGORIES, ent.category)}</span>
+                      ${entAuthor ? `<span>• ${entAuthor.name}</span>` : ""}
+                    </div>
+                    ${ent.relocationNote ? `<div class="mon-debt-badge mb-8"><span>${t("Переселение", "Köçiriş")}:</span> <strong>${ent.relocationNote}</strong></div>` : ""}
+                    ${(ent.collaborators || []).length ? `<div class="st-meta mb-8"><strong>${t("Совместно с", "Hamkorlikda")}:</strong> ${ent.collaborators.map(c => c.name).join(", ")}</div>` : ""}
+                    ${ent.conflictText ? `<div class="mon-debt-badge mb-8"><span>${t("Конфликт с", "Nizo")}:</span> <strong>${ent.conflictText}</strong></div>` : ""}
+                    <div style="white-space:pre-line;">${ent.notes}</div>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+
+            <div class="mt-10" style="padding-top:10px; border-top:1px solid var(--border);">
+              <select id="rentQuickCat_${r.id}" class="form-input mb-8" style="padding:7px 10px; font-size:12px;">
+                ${catOpts.map(c => `<option value="${c.value}">${c.label}</option>`).join("")}
+              </select>
+              <textarea id="rentQuickNote_${r.id}" class="form-textarea" rows="2" style="min-height:66px;" placeholder="${t("Продолжить дневник проверки квартиры...", "Xonadon tekşiruvi kundaligini davom ettiriş...")}"></textarea>
+              <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+                <button type="button" class="btn-dark" onclick="addRentQuickEntry('${r.id}')">${t("Добавить запись", "Qayd qöşiş")}</button>
+              </div>
+            </div>
           </div>
         `;
       }).join("")}
@@ -6998,6 +7720,7 @@ function updateCustomSocialAutocomplete() {
       ${(modalStudentState.selectedSocial || []).includes(c.value) ? '<span style="color:var(--accent)">✓</span>' : ''}
     </div>
   `).join("");
+
   if (inp.value.trim() && !exactExists) {
     const cleanNew = inp.value.trim();
     html += `
