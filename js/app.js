@@ -8805,7 +8805,7 @@ function renderChatMentionPopover() {
   );
 
   pop.innerHTML = `
-    <input type="text" id="chatMentionSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск пользователя для отметки...", "Belgilash uşun foydalanuvçini qidiriş...")}" value="${chatMentionSearch.replace(/"/g, '&quot;')}" oninput="chatMentionSearch=this.value; renderChatMentionPopover()" />
+    <input type="text" id="chatMentionSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск пользователя для отметки...", "Belgilaş uçun foydalanuvçini qidiriş...")}" value="${chatMentionSearch.replace(/"/g, '&quot;')}" oninput="chatMentionSearch=this.value; renderChatMentionPopover()" />
     <div class="chat-mention-list">
       ${users.length ? users.map(u => {
         const checked = chatPendingMentions.includes(u.id);
@@ -8821,7 +8821,7 @@ function renderChatMentionPopover() {
       <span class="st-meta">${t("Выбрано", "Tanlandi")}: ${chatPendingMentions.length}</span>
       <div style="display:flex; gap:6px;">
         <button type="button" class="btn-ghost-sm" onclick="closeChatMentionPopover()">${t("Отмена", "Bekor")}</button>
-        <button type="button" class="btn-orange sm" onclick="applySelectedChatMentions()">${t("Отметить", "Belgilash")}</button>
+        <button type="button" class="btn-orange sm" onclick="applySelectedChatMentions()">${t("Отметить", "Belgilaş")}</button>
       </div>
     </div>
   `;
