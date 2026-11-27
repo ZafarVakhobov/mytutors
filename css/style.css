@@ -2278,6 +2278,8 @@ body.dark ::-webkit-scrollbar-thumb:hover {
   }
 }
 
+
+/* ==================== ССЫЛКА TELEGRAM НА НОМЕР ТЕЛЕФОНА ==================== */
 .phone-tg-link {
   color: var(--blue);
   font-weight: 600;
@@ -2287,4 +2289,40 @@ body.dark ::-webkit-scrollbar-thumb:hover {
 
 .phone-tg-link:hover {
   text-decoration: underline;
+}
+
+/* ==================== ФИЛЬТРЫ ВЫБОРА СТУДЕНТА В МОНИТОРИНГЕ И РОДИТЕЛЯХ ==================== */
+.diary-st-filters {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 0.9fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.diary-st-filters.tutor-only {
+  grid-template-columns: 1.4fr 1fr;
+}
+
+.diary-st-filters .custom-select {
+  min-width: 0;
+}
+
+.diary-st-filters .form-input,
+.diary-st-filters .cs-trigger {
+  height: 40px;
+}
+
+#pmParentWhoWrap .cs-menu {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  max-width: none;
+  padding: 8px;
+}
+
+@media (max-width: 720px) {
+  .diary-st-filters,
+  .diary-st-filters.tutor-only {
+    grid-template-columns: 1fr;
+  }
 }
