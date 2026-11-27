@@ -3956,11 +3956,110 @@ function openLightbox(src) {
 }
 
 // ==================== 4. ДНЕВНИКИ (МОНИТОРИНГ + РОДИТЕЛИ) ====================
+let monListFilters = { search: "", tutors: [], groups: [], categories: [], dateFrom: "", dateTo: "" };
+let pmListFilters = { search: "", tutors: [], groups: [], dateFrom: "", dateTo: "" };
+let diaryMultiSearchMap = {};
+
 function setDiarySubtab(sub) {
   activeDiarySubtab = sub;
   document.getElementById("diaryTabMonitoring").classList.toggle("active", sub === "monitoring");
   document.getElementById("diaryTabParents").classList.toggle("active", sub === "parents");
   renderDiariesSection();
+}
+
+function getDiaryMultiGroups(selectedTutorIds) {
+  const invalid = new Set(["Все группы", "Не назначены", "Biriktirilmagan", "—", ""]);
+  const parseG = (u) => {
+    if (!u || !u.groups) return [];
+    return String(u.groups).split(",").map(g => g.trim()).filter(g => g && !invalid.has(g));
+  };
+  if (isTutorOnly()) {
+    return [...new Set(parseG(currentUser))];
+  }
+  let targetTutors = [];
+  if (Array.isArray(selectedTutorIds) && selectedTutorIds.length > 0) {
+    targetTutors = appState.users.filter(u => selectedTutorIds.includes(u.id));
+  } else {
+    targetTutors = appState.users.filter(u => u.role === "tutor");
+  }
+  const set = new Set();
+  targetTutors.forEach(tr => parseG(tr).forEach(g => set.add(g)));
+  return [...set].sort((a, b) => a.localeCompare(b));
+}
+
+function getAllMonitoringCategoriesForFilter() {
+  const base = MONITORING_CATEGORIES.filter(c => c.value !== "Другое...");
+  const baseVals = new Set(base.map(c => c.value));
+  const opts = base.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  (appState.monitoring || []).forEach(m => {
+    if (m.category && !baseVals.has(m.category)) {
+      baseVals.add(m.category);
+      opts.push({ value: m.category, label: m.category });
+    }
+  });
+  return opts;
+}
+
+function renderDiaryMultiSelect(containerId, placeholder, options, selectedArr, onToggle, keepOpen = false) {
+  const wrap = document.getElementById(containerId);
+  if (!wrap) return;
+  wrap.classList.add("diary-multi-menu");
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+  const searchKey = containerId;
+  const searchVal = diaryMultiSearchMap[searchKey] || "";
+
+  let triggerLabel = placeholder;
+  if (selectedArr.length === 1) {
+    const found = options.find(o => o.value === selectedArr[0]);
+    triggerLabel = found ? found.label : selectedArr[0];
+  } else if (selectedArr.length > 1) {
+    triggerLabel = `${placeholder}: ${selectedArr.length}`;
+  }
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('${containerId}'); setTimeout(() => { const i = document.getElementById('${containerId}_search'); if(i) i.focus(); }, 30);">
+      <span>${triggerLabel}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="${containerId}_search" class="tg-tag-search-input" placeholder="${t("Поиск...", "Qidiriş...")}" value="${searchVal.replace(/"/g, '&quot;')}" />
+      <div id="${containerId}_list" class="tg-tag-search-list"></div>
+    </div>
+  `;
+
+  const renderOpts = () => {
+    const q = (diaryMultiSearchMap[searchKey] || "").trim().toLowerCase();
+    const listEl = document.getElementById(`${containerId}_list`);
+    if (!listEl) return;
+    const matched = q ? options.filter(o => o.label.toLowerCase().includes(q)) : options;
+    if (!matched.length) {
+      listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+      return;
+    }
+    listEl.innerHTML = matched.map(o => {
+      const checked = selectedArr.includes(o.value);
+      return `
+        <label class="social-check-option">
+          <input type="checkbox" ${checked ? "checked" : ""} data-val="${o.value.replace(/"/g, '&quot;')}" />
+          <span>${o.label}</span>
+        </label>
+      `;
+    }).join("");
+    listEl.querySelectorAll("input[type='checkbox']").forEach(cb => {
+      cb.addEventListener("change", () => onToggle(cb.dataset.val));
+    });
+  };
+
+  const inp = document.getElementById(`${containerId}_search`);
+  if (inp) {
+    inp.addEventListener("input", () => {
+      diaryMultiSearchMap[searchKey] = inp.value;
+      renderOpts();
+    });
+  }
+
+  if (wasOpen) wrap.classList.add("open");
+  renderOpts();
 }
 
 function renderDiariesSection() {
@@ -3969,8 +4068,6 @@ function renderDiariesSection() {
     let list = isTutorOnly()
       ? appState.monitoring.filter(m => m.tutorId === currentUser.id)
       : appState.monitoring;
-
-    const filtered = list.filter(m => m.status === activeMonitoringFilter);
 
     area.innerHTML = `
       <div class="subtabs-row">
@@ -3981,63 +4078,30 @@ function renderDiariesSection() {
         <button type="button" class="btn-orange" onclick="openMonitoringModal()">+ ${t("Поставить на мониторинг", "Monitoringga qöyiş")}</button>
       </div>
 
-      ${!filtered.length ? `<div class="empty-state">${t("В данной вкладке записей мониторинга пока нет.", "Uşbu bölimda monitoring yozuvlari hozirça yöq.")}</div>` : `
-        <div class="diary-grid">
-          ${filtered.map(rec => {
-            const st = appState.students.find(s => s.id === rec.studentId);
-            const tutor = appState.users.find(u => u.id === rec.tutorId);
-            return `
-              <div class="diary-card">
-                <div class="st-card-top">
-                  <div>
-                    <div class="st-name">${st ? st.name : rec.studentName}</div>
-                    <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : ""}</div>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, rec.category)}</span>
-                    ${canDeleteData(rec.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteMonitoringRecord('${rec.id}', this)" title="${t("Удалить карточку", "Kartani öçiriş")}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-                    </button>` : ""}
-                  </div>
-                </div>
-
-                <div class="diary-entries">
-                  ${(rec.entries || []).map(ent => `
-                    <div class="diary-entry-item ${ent.type || ''}">
-                      <div class="diary-entry-date">${ent.date} ${ent.type === 'positive' ? `• ${t("Положительный результат (снят с учета)", "Ijobiy natija (hisobdan çiqarildi)")}` : ''} ${ent.type === 'reopened' ? `• ${t("Повторная постановка на учет", "Qayta hisobga olindi")}` : ''}</div>
-                      <div>${ent.text}</div>
-                    </div>
-                  `).join("")}
-                </div>
-
-                ${rec.status === "active" ? `
-                  <textarea id="noteInput_${rec.id}" class="form-textarea mt-10" rows="2" placeholder="${t("Запись о проведенной беседе...", "Ötkazilgan suhbat haqida qayd...")}"></textarea>
-                  <div class="st-card-actions">
-                    <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--emerald); font-weight:600; cursor:pointer;">
-                      <input type="checkbox" id="posCheck_${rec.id}" /> ${t("Положительный результат (снять с учета)", "Ijobiy natija (hisobdan çiqariş)")}
-                    </label>
-                    <button type="button" class="btn-dark" onclick="addMonitoringEntry('${rec.id}')">${t("Добавить запись", "Qayd qöşiş")}</button>
-                  </div>
-                ` : `
-                  <div class="st-card-actions">
-                    <span class="st-meta">${t("Все записи сохранены в БД", "Barça qaydlar bazada saqlangan")}</span>
-                    <button type="button" class="btn-orange sm" onclick="reopenMonitoringRecord('${rec.id}')">${t("Вернуть на учет повторно", "Qayta hisobga qaytariş")}</button>
-                  </div>
-                `}
-              </div>
-            `;
-          }).join("")}
+      <div class="diary-list-toolbar">
+        <div class="st-search-box diary-list-search">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+          <input type="text" id="monListSearchInput" placeholder="${t("Поиск по студенту, группе, тексту...", "Talaba, guruh, matn böyiça qidiriş...")}" value="${monListFilters.search.replace(/"/g, '&quot;')}" oninput="monListFilters.search=this.value; renderMonitoringCardsList()" />
         </div>
-      `}
+        <div class="diary-list-filters">
+          <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="monListTutorFilterWrap"></div>
+          <div class="custom-select" id="monListGroupFilterWrap"></div>
+          <div class="custom-select" id="monListCatFilterWrap"></div>
+          <input type="date" id="monListDateFrom" class="form-input diary-date-input" value="${monListFilters.dateFrom}" title="${t("Дата с", "Sana (dan)")}" onchange="monListFilters.dateFrom=this.value; renderMonitoringCardsList()" />
+          <input type="date" id="monListDateTo" class="form-input diary-date-input" value="${monListFilters.dateTo}" title="${t("Дата по", "Sana (gaça)")}" onchange="monListFilters.dateTo=this.value; renderMonitoringCardsList()" />
+          <button type="button" id="monListResetBtn" class="btn-export sm hidden" onclick="resetMonListFilters()">${t("Сбросить", "Tozalaş")}</button>
+        </div>
+      </div>
+
+      <div id="monitoringCardsContainer"></div>
     `;
+
+    renderMonListFilterControls();
+    renderMonitoringCardsList();
     return;
   }
 
   // Вкладка: Работа с родителями
-  const meetings = isTutorOnly()
-    ? appState.parentMeetings.filter(m => m.tutorId === currentUser.id)
-    : appState.parentMeetings;
-
   area.innerHTML = `
     <div class="bento-card mb-16">
       <h3 class="card-title mb-12">${t("Зафиксировать встречу / беседу с родителями", "Ota-onalar bilan uçraşuv / suhbatni qayd etiş")}</h3>
@@ -4048,7 +4112,7 @@ function renderDiariesSection() {
         <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="pmFilterTutorWrap"></div>
         <div class="custom-select" id="pmFilterGroupWrap"></div>
       </div>
-      <div class="form-grid-3">
+      <div class="pm-entry-grid">
         <div class="custom-select" id="pmStudentSelectWrap"></div>
         <input type="date" id="pmDateInput" class="form-input" value="${new Date().toISOString().slice(0, 10)}" />
         <div class="custom-select" id="pmParentWhoWrap"></div>
@@ -4060,27 +4124,264 @@ function renderDiariesSection() {
       <button type="button" class="btn-orange mt-10" onclick="addParentMeeting()">${t("Сохранить запись встречи", "Uçraşuv qaydini saqlaş")}</button>
     </div>
 
-    ${!meetings.length ? `<div class="empty-state">${t("Записей о встречах с родителями пока нет.", "Ota-onalar bilan uçraşuv qaydları hozirça yöq.")}</div>` : `
-      <div class="diary-grid">
-        ${meetings.map(m => `
-          <div class="diary-card">
-            <div class="st-card-top">
-              <div>
-                <div class="st-name">${m.studentName}</div>
-                <div class="st-meta">${m.date} • ${m.who}</div>
-              </div>
-              ${canDeleteData(m.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-              </button>` : ""}
-            </div>
-            <p style="font-size:13px;">${m.notes}</p>
-          </div>
-        `).join("")}
+    <div class="diary-list-toolbar">
+      <div class="st-search-box diary-list-search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+        <input type="text" id="pmListSearchInput" placeholder="${t("Поиск по студенту, родителю, тексту...", "Talaba, ota-ona, matn böyiça qidiriş...")}" value="${pmListFilters.search.replace(/"/g, '&quot;')}" oninput="pmListFilters.search=this.value; renderParentMeetingsCardsList()" />
       </div>
-    `}
+      <div class="diary-list-filters">
+        <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="pmListTutorFilterWrap"></div>
+        <div class="custom-select" id="pmListGroupFilterWrap"></div>
+        <input type="date" id="pmListDateFrom" class="form-input diary-date-input" value="${pmListFilters.dateFrom}" title="${t("Дата с", "Sana (dan)")}" onchange="pmListFilters.dateFrom=this.value; renderParentMeetingsCardsList()" />
+        <input type="date" id="pmListDateTo" class="form-input diary-date-input" value="${pmListFilters.dateTo}" title="${t("Дата по", "Sana (gaça)")}" onchange="pmListFilters.dateTo=this.value; renderParentMeetingsCardsList()" />
+        <button type="button" id="pmListResetBtn" class="btn-export sm hidden" onclick="resetPmListFilters()">${t("Сбросить", "Tozalaş")}</button>
+      </div>
+    </div>
+
+    <div id="parentMeetingsCardsContainer"></div>
   `;
 
   renderPmStudentFiltersAndList();
+  renderPmListFilterControls();
+  renderParentMeetingsCardsList();
+}
+
+function renderMonListFilterControls(keepOpenId = null) {
+  if (!isTutorOnly()) {
+    const tutorOpts = appState.users.filter(u => u.role === "tutor").map(tr => ({ value: tr.id, label: tr.name }));
+    renderDiaryMultiSelect("monListTutorFilterWrap", t("Тюторы", "Tyutorlar"), tutorOpts, monListFilters.tutors, (val) => {
+      monListFilters.tutors = monListFilters.tutors.includes(val)
+        ? monListFilters.tutors.filter(x => x !== val)
+        : [...monListFilters.tutors, val];
+      renderMonListFilterControls("monListTutorFilterWrap");
+      renderMonitoringCardsList();
+    }, keepOpenId === "monListTutorFilterWrap");
+  }
+
+  const availGroups = getDiaryMultiGroups(monListFilters.tutors);
+  monListFilters.groups = monListFilters.groups.filter(g => availGroups.includes(g));
+  const groupOpts = availGroups.map(g => ({ value: g, label: g }));
+  renderDiaryMultiSelect("monListGroupFilterWrap", t("Группы", "Guruhlar"), groupOpts, monListFilters.groups, (val) => {
+    monListFilters.groups = monListFilters.groups.includes(val)
+      ? monListFilters.groups.filter(x => x !== val)
+      : [...monListFilters.groups, val];
+    renderMonListFilterControls("monListGroupFilterWrap");
+    renderMonitoringCardsList();
+  }, keepOpenId === "monListGroupFilterWrap");
+
+  const catOpts = getAllMonitoringCategoriesForFilter();
+  renderDiaryMultiSelect("monListCatFilterWrap", t("Категории", "Toifalar"), catOpts, monListFilters.categories, (val) => {
+    monListFilters.categories = monListFilters.categories.includes(val)
+      ? monListFilters.categories.filter(x => x !== val)
+      : [...monListFilters.categories, val];
+    renderMonListFilterControls("monListCatFilterWrap");
+    renderMonitoringCardsList();
+  }, keepOpenId === "monListCatFilterWrap");
+}
+
+function resetMonListFilters() {
+  monListFilters = { search: "", tutors: [], groups: [], categories: [], dateFrom: "", dateTo: "" };
+  const s = document.getElementById("monListSearchInput"); if (s) s.value = "";
+  const df = document.getElementById("monListDateFrom"); if (df) df.value = "";
+  const dt = document.getElementById("monListDateTo"); if (dt) dt.value = "";
+  renderMonListFilterControls();
+  renderMonitoringCardsList();
+}
+
+function renderMonitoringCardsList() {
+  const container = document.getElementById("monitoringCardsContainer");
+  const resetBtn = document.getElementById("monListResetBtn");
+  if (!container) return;
+
+  let list = isTutorOnly()
+    ? appState.monitoring.filter(m => m.tutorId === currentUser.id)
+    : appState.monitoring;
+
+  list = list.filter(m => m.status === activeMonitoringFilter);
+
+  if (!isTutorOnly() && monListFilters.tutors.length > 0) {
+    list = list.filter(m => monListFilters.tutors.includes(m.tutorId));
+  }
+  if (monListFilters.groups.length > 0) {
+    list = list.filter(m => {
+      const st = appState.students.find(s => s.id === m.studentId);
+      return st && monListFilters.groups.includes(st.group);
+    });
+  }
+  if (monListFilters.categories.length > 0) {
+    list = list.filter(m => monListFilters.categories.includes(m.category));
+  }
+  if (monListFilters.dateFrom || monListFilters.dateTo) {
+    list = list.filter(m => (m.entries || []).some(ent => {
+      const d = ent.date || "";
+      if (monListFilters.dateFrom && d < monListFilters.dateFrom) return false;
+      if (monListFilters.dateTo && d > monListFilters.dateTo) return false;
+      return true;
+    }));
+  }
+  const q = (monListFilters.search || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(m => {
+      const st = appState.students.find(s => s.id === m.studentId);
+      const stName = (st ? st.name : m.studentName || "").toLowerCase();
+      const stGroup = (st ? st.group : "").toLowerCase();
+      const cat = (m.category || "").toLowerCase();
+      const notesMatch = (m.entries || []).some(ent => (ent.text || "").toLowerCase().includes(q));
+      return stName.includes(q) || stGroup.includes(q) || cat.includes(q) || notesMatch;
+    });
+  }
+
+  const hasFilter = Boolean(q || monListFilters.tutors.length || monListFilters.groups.length || monListFilters.categories.length || monListFilters.dateFrom || monListFilters.dateTo);
+  if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state">${t("В данной вкладке записей мониторинга не найдено.", "Uşbu bölimda monitoring yozuvlari topilmadi.")}</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="diary-grid">
+      ${list.map(rec => {
+        const st = appState.students.find(s => s.id === rec.studentId);
+        const tutor = appState.users.find(u => u.id === rec.tutorId);
+        return `
+          <div class="diary-card">
+            <div class="st-card-top">
+              <div>
+                <div class="st-name">${st ? st.name : rec.studentName}</div>
+                <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${tutor ? tutor.name : ""}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, rec.category)}</span>
+                ${canDeleteData(rec.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteMonitoringRecord('${rec.id}', this)" title="${t("Удалить карточку", "Kartani öçiriş")}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                </button>` : ""}
+              </div>
+            </div>
+
+            <div class="diary-entries">
+              ${(rec.entries || []).map(ent => `
+                <div class="diary-entry-item ${ent.type || ''}">
+                  <div class="diary-entry-date">${ent.date} ${ent.type === 'positive' ? `• ${t("Положительный результат (снят с учета)", "Ijobiy natija (hisobdan çiqarildi)")}` : ''} ${ent.type === 'reopened' ? `• ${t("Повторная постановка на учет", "Qayta hisobga olindi")}` : ''}</div>
+                  <div>${ent.text}</div>
+                </div>
+              `).join("")}
+            </div>
+
+            ${rec.status === "active" ? `
+              <textarea id="noteInput_${rec.id}" class="form-textarea mt-10" rows="2" placeholder="${t("Запись о проведенной беседе...", "Ötkazilgan suhbat haqida qayd...")}"></textarea>
+              <div class="st-card-actions">
+                <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--emerald); font-weight:600; cursor:pointer;">
+                  <input type="checkbox" id="posCheck_${rec.id}" /> ${t("Положительный результат (снять с учета)", "Ijobiy natija (hisobdan çiqariş)")}
+                </label>
+                <button type="button" class="btn-dark" onclick="addMonitoringEntry('${rec.id}')">${t("Добавить запись", "Qayd qöşiş")}</button>
+              </div>
+            ` : `
+              <div class="st-card-actions">
+                <span class="st-meta">${t("Все записи сохранены в БД", "Barça qaydlar bazada saqlangan")}</span>
+                <button type="button" class="btn-orange sm" onclick="reopenMonitoringRecord('${rec.id}')">${t("Вернуть на учет повторно", "Qayta hisobga qaytariş")}</button>
+              </div>
+            `}
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderPmListFilterControls(keepOpenId = null) {
+  if (!isTutorOnly()) {
+    const tutorOpts = appState.users.filter(u => u.role === "tutor").map(tr => ({ value: tr.id, label: tr.name }));
+    renderDiaryMultiSelect("pmListTutorFilterWrap", t("Тюторы", "Tyutorlar"), tutorOpts, pmListFilters.tutors, (val) => {
+      pmListFilters.tutors = pmListFilters.tutors.includes(val)
+        ? pmListFilters.tutors.filter(x => x !== val)
+        : [...pmListFilters.tutors, val];
+      renderPmListFilterControls("pmListTutorFilterWrap");
+      renderParentMeetingsCardsList();
+    }, keepOpenId === "pmListTutorFilterWrap");
+  }
+
+  const availGroups = getDiaryMultiGroups(pmListFilters.tutors);
+  pmListFilters.groups = pmListFilters.groups.filter(g => availGroups.includes(g));
+  const groupOpts = availGroups.map(g => ({ value: g, label: g }));
+  renderDiaryMultiSelect("pmListGroupFilterWrap", t("Группы", "Guruhlar"), groupOpts, pmListFilters.groups, (val) => {
+    pmListFilters.groups = pmListFilters.groups.includes(val)
+      ? pmListFilters.groups.filter(x => x !== val)
+      : [...pmListFilters.groups, val];
+    renderPmListFilterControls("pmListGroupFilterWrap");
+    renderParentMeetingsCardsList();
+  }, keepOpenId === "pmListGroupFilterWrap");
+}
+
+function resetPmListFilters() {
+  pmListFilters = { search: "", tutors: [], groups: [], dateFrom: "", dateTo: "" };
+  const s = document.getElementById("pmListSearchInput"); if (s) s.value = "";
+  const df = document.getElementById("pmListDateFrom"); if (df) df.value = "";
+  const dt = document.getElementById("pmListDateTo"); if (dt) dt.value = "";
+  renderPmListFilterControls();
+  renderParentMeetingsCardsList();
+}
+
+function renderParentMeetingsCardsList() {
+  const container = document.getElementById("parentMeetingsCardsContainer");
+  const resetBtn = document.getElementById("pmListResetBtn");
+  if (!container) return;
+
+  let meetings = isTutorOnly()
+    ? appState.parentMeetings.filter(m => m.tutorId === currentUser.id)
+    : appState.parentMeetings;
+
+  if (!isTutorOnly() && pmListFilters.tutors.length > 0) {
+    meetings = meetings.filter(m => pmListFilters.tutors.includes(m.tutorId));
+  }
+  if (pmListFilters.groups.length > 0) {
+    meetings = meetings.filter(m => {
+      const st = appState.students.find(s => s.id === m.studentId);
+      if (st && pmListFilters.groups.includes(st.group)) return true;
+      return pmListFilters.groups.some(g => (m.studentName || "").includes(`(${g})`));
+    });
+  }
+  if (pmListFilters.dateFrom) {
+    meetings = meetings.filter(m => (m.date || "") >= pmListFilters.dateFrom);
+  }
+  if (pmListFilters.dateTo) {
+    meetings = meetings.filter(m => (m.date || "") <= pmListFilters.dateTo);
+  }
+  const q = (pmListFilters.search || "").trim().toLowerCase();
+  if (q) {
+    meetings = meetings.filter(m =>
+      (m.studentName || "").toLowerCase().includes(q) ||
+      (m.who || "").toLowerCase().includes(q) ||
+      (m.notes || "").toLowerCase().includes(q)
+    );
+  }
+
+  const hasFilter = Boolean(q || pmListFilters.tutors.length || pmListFilters.groups.length || pmListFilters.dateFrom || pmListFilters.dateTo);
+  if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
+
+  if (!meetings.length) {
+    container.innerHTML = `<div class="empty-state">${t("Записей о встречах с родителями не найдено.", "Ota-onalar bilan uçraşuv qaydları topilmadi.")}</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="diary-grid">
+      ${meetings.map(m => `
+        <div class="diary-card">
+          <div class="st-card-top">
+            <div>
+              <div class="st-name">${m.studentName}</div>
+              <div class="st-meta">${m.date} • ${m.who}</div>
+            </div>
+            ${canDeleteData(m.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+            </button>` : ""}
+          </div>
+          <p style="font-size:13px;">${m.notes}</p>
+        </div>
+      `).join("")}
+    </div>
+  `;
 }
 
 let monModalStudentId = "";
@@ -4998,6 +5299,7 @@ function saveEditedUser() {
   u.login = login;
   u.pass = pass;
   u.partialAdmin = partialAdmin;
+
   if (currentUser && currentUser.id === u.id) {
     currentUser = u;
     document.getElementById("navUsersBtn").classList.toggle("hidden", !isFullAdmin());
