@@ -368,27 +368,12 @@ function t(ruText, ozText) {
 
 const STORAGE_KEY = "mytutors_uz_state_v3";
 const SESSION_USER_KEY = "mytutors_uz_session_user_v1";
+const SESSION_TOKEN_KEY = "mytutors_uz_session_token_v1";
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyTLIm6lvnKEE2Ol1JlylHM3QCuhJu_-7Cz0eB_8xBhsFdOhBUQmQ8FrZR4b2hPUq4y/exec";
+let sessionToken = localStorage.getItem(SESSION_TOKEN_KEY) || "";
 
-// ==================== ПРЕДУСТАНОВЛЕННЫЕ 16 ПРОФИЛЕЙ ====================
-const DEFAULT_USERS = [
-  { id: "admin", login: "admin", pass: "admin2026", name: "Зафар Вахобов", role: "admin", roleTitle: "Главный администратор", dept: "Отдел по работе со студентами", groups: "Все группы", driveFolder: "MyTutors_Root_Master", phone: "+998 90 100 00 01", email: "z.vakhobov@univ-silkroad.uz", edu: "Магистр, НИР (ВАК)", bio: "Координация тюторской службы, цифровой мониторинг и студенческие медиа-проекты.", photo: "" },
-  { id: "head", login: "head", pass: "head2026", name: "Гульмира Рашидова", role: "management", roleTitle: "Начальница отдела", dept: "Отдел по работе со студентами", groups: "Все группы", driveFolder: "MyTutors_Management_Head", phone: "+998 90 100 00 02", email: "g.rashidova@univ-silkroad.uz", edu: "Высшее педагогическое", bio: "Руководство отделом по работе со студентами и координация воспитательных программ.", photo: "" },
-  { id: "dean", login: "dean", pass: "dean2026", name: "Баходир Тураев", role: "management", roleTitle: "Декан факультета", dept: "Факультет туризма и культурного наследия", groups: "Все группы", driveFolder: "MyTutors_Dean_Office", phone: "+998 90 100 00 03", email: "b.turaev@univ-silkroad.uz", edu: "Кандидат наук, доцент", bio: "Контроль успеваемости, дисциплины и социальной поддержки студентов факультета.", photo: "" },
-  { id: "staff", login: "staff", pass: "staff2026", name: "Дилноза Хасанова", role: "management", roleTitle: "Сотрудница отдела", dept: "Отдел по работе со студентами", groups: "Все группы", driveFolder: "MyTutors_Staff_Monitor", phone: "+998 90 100 00 04", email: "d.khasanova@univ-silkroad.uz", edu: "Высшее", bio: "Мониторинг сводных отчетов, волонтерских групп и реестра общежитий.", photo: "" },
-  { id: "tutor1", login: "tutor1", pass: "t12026", name: "Ш. Зайнидинова", role: "tutor", roleTitle: "Тютор", dept: "Факультет туризма", groups: "TR-101, TR-102", driveFolder: "MyTutors_Private_Tutor_01", phone: "+998 90 201 01 01", email: "sh.zaynidinova@univ-silkroad.uz", edu: "Высшее", bio: "Тютор академических групп TR-101 и TR-102.", photo: "" },
-  { id: "tutor2", login: "tutor2", pass: "t22026", name: "М. Рахимбердиева", role: "tutor", roleTitle: "Тютор", dept: "Факультет менеджмента", groups: "MH-201, MH-202", driveFolder: "MyTutors_Private_Tutor_02", phone: "+998 90 201 01 02", email: "m.rahimberdiyeva@univ-silkroad.uz", edu: "Высшее", bio: "Тютор академических групп MH-201 и MH-202.", photo: "" },
-  { id: "tutor3", login: "tutor3", pass: "t32026", name: "М. Абдурахманова", role: "tutor", roleTitle: "Тютор", dept: "Факультет культурного наследия", groups: "GD-301, GD-302", driveFolder: "MyTutors_Private_Tutor_03", phone: "+998 90 201 01 03", email: "m.abduraxmanova@univ-silkroad.uz", edu: "Высшее", bio: "Тютор академических групп GD-301 и GD-302.", photo: "" },
-  { id: "tutor4", login: "tutor4", pass: "t42026", name: "Д. Каримов", role: "tutor", roleTitle: "Тютор", dept: "Факультет гостиничного дела", groups: "HT-101, HT-201", driveFolder: "MyTutors_Private_Tutor_04", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor5", login: "tutor5", pass: "t52026", name: "Н. Саидова", role: "tutor", roleTitle: "Тютор", dept: "Факультет туризма", groups: "TR-201, TR-202", driveFolder: "MyTutors_Private_Tutor_05", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor6", login: "tutor6", pass: "t62026", name: "А. Усманов", role: "tutor", roleTitle: "Тютор", dept: "Факультет менеджмента", groups: "MG-301, MG-302", driveFolder: "MyTutors_Private_Tutor_06", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor7", login: "tutor7", pass: "t72026", name: "Ф. Холматова", role: "tutor", roleTitle: "Тютор", dept: "Факультет археологии", groups: "AR-101, AR-102", driveFolder: "MyTutors_Private_Tutor_07", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor8", login: "tutor8", pass: "t82026", name: "С. Исмоилов", role: "tutor", roleTitle: "Тютор", dept: "Факультет гидов", groups: "GD-201, GD-202", driveFolder: "MyTutors_Private_Tutor_08", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor9", login: "tutor9", pass: "t92026", name: "З. Назарова", role: "tutor", roleTitle: "Тютор", dept: "Факультет менеджмента", groups: "MH-101, MH-102", driveFolder: "MyTutors_Private_Tutor_09", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor10", login: "tutor10", pass: "t102026", name: "О. Рустамов", role: "tutor", roleTitle: "Тютор", dept: "Факультет гостиничного дела", groups: "HT-301, HT-302", driveFolder: "MyTutors_Private_Tutor_10", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor11", login: "tutor11", pass: "t112026", name: "Л. Шарипова", role: "tutor", roleTitle: "Тютор", dept: "Факультет туризма", groups: "TR-301, TR-302", driveFolder: "MyTutors_Private_Tutor_11", phone: "", email: "", edu: "Высшее", bio: "", photo: "" },
-  { id: "tutor12", login: "tutor12", pass: "t122026", name: "Б. Юлдашев", role: "tutor", roleTitle: "Тютор", dept: "Факультет менеджмента", groups: "MG-101, MG-102", driveFolder: "MyTutors_Private_Tutor_12", phone: "", email: "", edu: "Высшее", bio: "", photo: "" }
-];
+// Учетные записи хранятся исключительно на сервере (users.json в Google Drive)
+const DEFAULT_USERS = [];
 
 const TG_TAGS = [
   "#Ma’rifatUlaşib", "#YaşilMakon", "#HealthWeek", "#BeşTaşabbus",
@@ -802,6 +787,7 @@ function saveState(skipCloudSync = false) {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "saveUserData",
+        token: sessionToken,
         userId: currentUser.id,
         data: scopedData
       })
@@ -830,6 +816,7 @@ function syncSpecificTutorFolder(tutorId) {
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({
       action: "saveUserData",
+      token: sessionToken,
       userId: tutorId,
       data: tutorPayload
     })
@@ -984,14 +971,23 @@ function showToast(msg) {
 }
 
 // ==================== АВТОРИЗАЦИЯ И СИНХРОНИЗАЦИЯ ====================
+function handleSessionExpired() {
+  if (!currentUser) return;
+  logout();
+  showToast(t("Сессия истекла. Войдите снова.", "Sessiya muddati tugadi. Qayta kiring."));
+}
+
 async function loadFromGoogleDrive() {
-  if (!currentUser || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (!currentUser || !sessionToken || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
   showToast(t("Загрузка базы из Google Drive...", "Google Drive dan ma’lumotlar yuklanmoqda..."));
   try {
-    const reqRole = hasAdminPrivileges() ? "admin" : currentUser.role;
-    const url = `${APPS_SCRIPT_URL}?userId=${encodeURIComponent(currentUser.id)}&role=${encodeURIComponent(reqRole)}&t=${Date.now()}`;
+    const url = `${APPS_SCRIPT_URL}?token=${encodeURIComponent(sessionToken)}&t=${Date.now()}`;
     const res = await fetch(url, { method: "GET", redirect: "follow" });
     const json = await res.json();
+    if (json && json.status === "unauthorized") {
+      handleSessionExpired();
+      return;
+    }
 
     if (json.status === "ok" && json.data) {
       const savedUsers = appState.users;
@@ -1020,7 +1016,7 @@ async function loadFromGoogleDrive() {
       } else {
         // Админ/руководство получает объединенный и дедуплицированный реестр по всем папкам
         appState = sanitizeAppState({
-          users: (currentUser.role === "admin" && Array.isArray(incoming.users) && incoming.users.length) ? incoming.users : savedUsers,
+          users: (Array.isArray(incoming.users) && incoming.users.length) ? incoming.users : savedUsers,
           students: incoming.students || [],
           tgPosts: incoming.tgPosts || [],
           monitoring: incoming.monitoring || [],
@@ -1067,56 +1063,76 @@ async function handleLogin(e) {
   if (submitBtn) submitBtn.disabled = true;
 
   try {
-    if (typeof APPS_SCRIPT_URL !== "undefined" && APPS_SCRIPT_URL.includes("/exec")) {
-      const res = await fetch(`${APPS_SCRIPT_URL}?action=getUsers&t=${Date.now()}`, {
-        method: "GET",
-        redirect: "follow"
-      });
-      const json = await res.json();
-      if (json.status === "ok" && Array.isArray(json.users) && json.users.length) {
-        appState.users = deduplicateById(json.users);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
-      }
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        action: "login",
+        login,
+        pass
+      })
+    });
+    const json = await res.json();
+
+    if (!json || json.status !== "ok" || !json.token || !json.user) {
+      errEl.textContent = t("Неверный логин или пароль профиля.", "Login yoki parol notöğri kiritildi.");
+      errEl.classList.remove("hidden");
+      return;
     }
+
+    sessionToken = json.token;
+    localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+    currentUser = json.user;
+    if (Array.isArray(json.users) && json.users.length) {
+      appState.users = deduplicateById(json.users);
+    } else {
+      appState.users = [json.user];
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+
+    selectedPostAuthorId = currentUser.id;
+    localStorage.setItem(SESSION_USER_KEY, currentUser.id);
+    document.getElementById("authScreen").classList.add("hidden");
+    document.getElementById("appShell").classList.remove("hidden");
+    const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.remove("hidden");
+    document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
+
+    dashFilters = {
+      tutor: isTutorOnly() ? currentUser.id : "all",
+      course: "all",
+      group: "all",
+      gender: "all"
+    };
+
+    updateHeaderAndGreeting();
+    loadProfileForm();
+    switchTab("dashboard");
+    loadFromGoogleDrive();
+    startChatHubPolling();
   } catch (err) {
-    console.warn("Используем локальный список пользователей:", err);
+    errEl.textContent = t("Ошибка соединения с сервером авторизации.", "Avtorizatsiya serveri bilan ulanişda xatolik.");
+    errEl.classList.remove("hidden");
   } finally {
     if (submitBtn) submitBtn.disabled = false;
   }
-
-  const found = appState.users.find(u => u.login === login && u.pass === pass);
-  if (!found) {
-    errEl.textContent = t("Неверный логин или пароль профиля.", "Login yoki parol notöğri kiritildi.");
-    errEl.classList.remove("hidden");
-    return;
-  }
-
-  errEl.classList.add("hidden");
-  currentUser = found;
-  selectedPostAuthorId = found.id;
-  localStorage.setItem(SESSION_USER_KEY, found.id);
-  document.getElementById("authScreen").classList.add("hidden");
-  document.getElementById("appShell").classList.remove("hidden");
-  const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.remove("hidden");
-  document.getElementById("navUsersBtn").classList.toggle("hidden", currentUser.role !== "admin");
-
-  dashFilters = {
-    tutor: isTutorOnly() ? currentUser.id : "all",
-    course: "all",
-    group: "all",
-    gender: "all"
-  };
-
-  updateHeaderAndGreeting();
-  loadProfileForm();
-  switchTab("dashboard");
-  loadFromGoogleDrive();
-  startChatHubPolling();
 }
 
 function logout() {
+  const tokenToRevoke = sessionToken;
+  if (tokenToRevoke && typeof APPS_SCRIPT_URL !== "undefined" && APPS_SCRIPT_URL.includes("/exec")) {
+    fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "logout", token: tokenToRevoke })
+    }).catch(() => {});
+  }
   currentUser = null;
+  sessionToken = "";
+  localStorage.removeItem(SESSION_TOKEN_KEY);
   localStorage.removeItem(SESSION_USER_KEY);
+  localStorage.removeItem(STORAGE_KEY);
+  appState = sanitizeAppState(null);
+
   document.getElementById("appShell").classList.add("hidden");
   const chatLaunch = document.getElementById("floatingChatLauncher"); if (chatLaunch) chatLaunch.classList.add("hidden");
   stopChatHubPolling();
@@ -1131,8 +1147,9 @@ function restoreSession() {
     setLanguage(savedLang);
   }
 
+  sessionToken = localStorage.getItem(SESSION_TOKEN_KEY) || "";
   const savedId = localStorage.getItem(SESSION_USER_KEY);
-  if (!savedId || !Array.isArray(appState.users)) return;
+  if (!savedId || !sessionToken || !Array.isArray(appState.users)) return;
 
   const found = appState.users.find(u => u.id === savedId);
   if (!found) return;
@@ -4009,6 +4026,7 @@ async function exportToGoogleDoc() {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "appendReportToDoc",
+        token: sessionToken,
         userId: currentUser.id,
         tutorName: currentUser.name,
         period: periodStr,
@@ -5193,14 +5211,27 @@ function getCourseOptions() {
 }
 
 function syncUsersToGoogleDrive() {
-  if (typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  if (!currentUser || !sessionToken || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
+  const bodyObj = isFullAdmin()
+    ? { action: "saveUsers", token: sessionToken, users: appState.users }
+    : {
+        action: "updateOwnProfile",
+        token: sessionToken,
+        profile: {
+          name: currentUser.name,
+          roleTitle: currentUser.roleTitle,
+          dept: currentUser.dept,
+          phone: currentUser.phone,
+          email: currentUser.email,
+          edu: currentUser.edu,
+          bio: currentUser.bio,
+          photo: currentUser.photo
+        }
+      };
   fetch(APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      action: "saveUsers",
-      users: appState.users
-    })
+    body: JSON.stringify(bodyObj)
   }).catch(() => {});
 }
 
@@ -5967,7 +5998,6 @@ document.addEventListener("input", (e) => {
     }
   }
 }, true);
-
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", restoreSession);
@@ -6932,6 +6962,7 @@ function syncChatHubToCloud() {
     headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify({
       action: "saveChatHub",
+      token: sessionToken,
       hub: hubPayload
     })
   })
@@ -6954,11 +6985,16 @@ async function loadChatHubFromCloud() {
   const reqVersion = chatHubSyncVersion;
 
   try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=getChatHub&t=${Date.now()}`, {
+    if (!sessionToken) return;
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=getChatHub&token=${encodeURIComponent(sessionToken)}&t=${Date.now()}`, {
       method: "GET",
       redirect: "follow"
     });
     const json = await res.json();
+    if (json && json.status === "unauthorized") {
+      handleSessionExpired();
+      return;
+    }
 
     // Если во время загрузки пользователь отправил новое сообщение — игнорируем устаревший ответ
     if (reqVersion !== chatHubSyncVersion || chatHubSaveInFlight > 0) return;
