@@ -264,14 +264,8 @@
             <div class="card-head">
               <div>
                 <h3 class="card-title" data-i18n="chart_dist_title">Распределение студентов</h3>
-                <div class="pill-tabs-sm" id="distModeTabs">
-                  <button type="button" class="pill-sm active" data-mode="housing" onclick="setDistMode('housing')" data-i18n="dist_housing">По жилью</button>
-                  <button type="button" class="pill-sm" data-mode="social" onclick="setDistMode('social')" data-i18n="dist_social">По соцреестру</button>
-                  <button type="button" class="pill-sm" data-mode="employment" onclick="setDistMode('employment')" data-i18n="dist_employment">По работе</button>
-                  <button type="button" class="pill-sm" data-mode="studyForm" onclick="setDistMode('studyForm')" data-i18n="dist_study_form">По форме обучения</button>
-                  <button type="button" class="pill-sm" data-mode="volunteers" onclick="setDistMode('volunteers')" data-i18n="dist_volunteers">По волонтерству</button>
-                  <button type="button" class="pill-sm" data-mode="region" onclick="setDistMode('region')" data-i18n="dist_region">По регионам</button>
-                  <button type="button" class="pill-sm" data-mode="marital" onclick="setDistMode('marital')" data-i18n="dist_marital">Семейный статус</button>
+                <div class="mt-10">
+                  <div class="custom-select compact" id="distModeSelectWrap" style="width: fit-content; min-width: 210px;"></div>
                 </div>
               </div>
               <div class="export-btns">
