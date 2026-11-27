@@ -9903,206 +9903,190 @@ function openNotificationTarget(notifId) {
 
 
 // ==================== ОБЩАЯ СИНХРОНИЗАЦИЯ ЧАТОВ, ЗАДАНИЙ И УВЕДОМЛЕНИЙ (GOOGLE DRIVE) ====================
-let chatHubPollTimer = null;
+// ==================== МГНОВЕННАЯ СИНХРОНИЗАЦИЯ ЧАТА ЧЕРЕЗ FIREBASE REALTIME DATABASE ====================
+const FIREBASE_DB_URL = "https://mytutors-chat-default-rtdb.europe-west1.firebasedatabase.app/";
+let firebaseDb = null;
+let firebaseHubRef = null;
+let firebasePresenceRef = null;
+let firebaseMyPresenceRef = null;
+let firebaseConnectedRef = null;
 let chatHubLastHash = "";
-let chatHubSyncInFlight = false;
-let chatHubSaveInFlight = 0;
-let chatHubSyncVersion = 0;
 
-let chatHubSaveQueued = false;
-
-function mergeMessagesLists(localMsgs = [], remoteMsgs = []) {
-  const byId = new Map();
-  [...remoteMsgs, ...localMsgs].forEach(m => {
-    if (!m || !m.id) return;
-    const prev = byId.get(m.id);
-    if (!prev) {
-      byId.set(m.id, m);
-    } else {
-      // Объединяем голоса в опросах и берем более свежую правку текста
-      const merged = { ...prev, ...m };
-      if (prev.poll && m.poll && Array.isArray(prev.poll.options) && Array.isArray(m.poll.options)) {
-        merged.poll = {
-          ...m.poll,
-          options: m.poll.options.map((opt, idx) => {
-            const pVotes = (prev.poll.options[idx] && prev.poll.options[idx].votes) || [];
-            const mVotes = opt.votes || [];
-            return { ...opt, votes: [...new Set([...pVotes, ...mVotes])] };
-          })
-        };
-      }
-      byId.set(m.id, merged);
+function getFirebaseDb() {
+  if (firebaseDb) return firebaseDb;
+  if (typeof firebase === "undefined" || !firebase.initializeApp || !firebase.database) {
+    return null;
+  }
+  try {
+    if (!firebase.apps || !firebase.apps.length) {
+      firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
     }
-  });
-  return [...byId.values()].sort((a, b) => (Number(a.ts) || 0) - (Number(b.ts) || 0));
+    firebaseDb = firebase.database();
+    return firebaseDb;
+  } catch (err) {
+    console.warn("Firebase init error:", err);
+    return null;
+  }
 }
 
-function mergeChatHubs(localHub, remoteHub) {
-  const mergeCollection = (localArr = [], remoteArr = []) => {
-    const map = new Map();
-    remoteArr.forEach(item => { if (item && item.id) map.set(item.id, item); });
-    localArr.forEach(item => {
-      if (!item || !item.id) return;
-      const remote = map.get(item.id);
-      if (!remote) {
-        map.set(item.id, item);
-      } else {
-        const merged = { ...remote, ...item };
-        if (Array.isArray(remote.messages) || Array.isArray(item.messages)) {
-          merged.messages = mergeMessagesLists(item.messages || [], remote.messages || []);
-        }
-        if (remote.lastActivity || item.lastActivity) {
-          merged.lastActivity = Math.max(Number(remote.lastActivity) || 0, Number(item.lastActivity) || 0);
-        }
-        map.set(item.id, merged);
-      }
-    });
-    return [...map.values()];
-  };
-
-  return {
-    chats: mergeCollection(localHub.chats, remoteHub.chats),
-    tasks: mergeCollection(localHub.tasks, remoteHub.tasks),
-    notifications: deduplicateById([...(remoteHub.notifications || []), ...(localHub.notifications || [])]).slice(0, 150)
-  };
+function normalizeFirebaseArray(val) {
+  if (!val) return [];
+  if (Array.isArray(val)) return val.filter(Boolean);
+  if (typeof val === "object") return Object.values(val).filter(Boolean);
+  return [];
 }
 
 function syncChatHubToCloud() {
-  if (!currentUser || !sessionToken || typeof APPS_SCRIPT_URL === "undefined" || !APPS_SCRIPT_URL.includes("/exec")) return;
-  if (chatHubSaveInFlight > 0) {
-    chatHubSaveQueued = true;
+  if (!currentUser) return;
+  const db = getFirebaseDb();
+  if (!db) {
+    showToast(t("Нет подключения к серверу чата (Firebase)", "Çat serveriga ulaniş yöq (Firebase)"));
     return;
   }
 
-  const hubPayload = {
+  // Firebase не допускает undefined в полях — очищаем через JSON-сериализацию
+  const hubPayload = JSON.parse(JSON.stringify({
     chats: appState.chats || [],
     tasks: appState.tasks || [],
-    notifications: appState.notifications || []
-  };
-  chatHubLastHash = JSON.stringify(hubPayload);
-  chatHubSyncVersion++;
-  chatHubSaveInFlight++;
+    notifications: (appState.notifications || []).slice(0, 150),
+    updatedAt: Date.now()
+  }));
 
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({
-      action: "saveChatHub",
-      token: sessionToken,
-      hub: hubPayload
-    })
-  })
-    .then(res => res.json())
-    .then(json => {
-      if (json && json.status === "unauthorized") {
-        handleSessionExpired();
-      } else if (json && json.status !== "ok") {
-        console.warn("Ошибка сохранения чата:", json);
-        showToast(t("Не удалось синхронизировать сообщение с сервером", "Xabarni server bilan sinxronlab bölmadi"));
-      }
-    })
-    .catch((err) => {
-      console.warn("Сетевая ошибка сохранения чата:", err);
-      showToast(t("Ошибка сети при отправке сообщения", "Xabar yuborişda tarmoq xatoligi"));
-    })
-    .finally(() => {
-      chatHubSaveInFlight = Math.max(0, chatHubSaveInFlight - 1);
-      if (chatHubSaveQueued) {
-        chatHubSaveQueued = false;
-        syncChatHubToCloud();
-      }
-    });
-}
+  chatHubLastHash = JSON.stringify({
+    chats: hubPayload.chats,
+    tasks: hubPayload.tasks,
+    notifications: hubPayload.notifications
+  });
 
-async function loadChatHubFromCloud() {
-  if (
-    !currentUser ||
-    chatHubSyncInFlight ||
-    chatHubSaveInFlight > 0 ||
-    typeof APPS_SCRIPT_URL === "undefined" ||
-    !APPS_SCRIPT_URL.includes("/exec")
-  ) return;
-
-  chatHubSyncInFlight = true;
-  const reqVersion = chatHubSyncVersion;
-
-  try {
-    if (!sessionToken) return;
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=getChatHub&token=${encodeURIComponent(sessionToken)}&t=${Date.now()}`, {
-      method: "GET",
-      redirect: "follow"
-    });
-    const json = await res.json();
-    if (json && json.status === "unauthorized") {
-      handleSessionExpired();
-      return;
-    }
-
-    // Если во время загрузки пользователь отправил новое сообщение — игнорируем устаревший ответ
-    if (reqVersion !== chatHubSyncVersion || chatHubSaveInFlight > 0) return;
-
-    if (json && json.status === "ok") {
-      if (Array.isArray(json.onlineUserIds)) {
-        const nextSet = new Set(json.onlineUserIds);
-        if (currentUser && currentUser.id) nextSet.add(currentUser.id);
-        const prevKey = [...onlineUserIds].sort().join(",");
-        const nextKey = [...nextSet].sort().join(",");
-        if (prevKey !== nextKey) {
-          onlineUserIds = nextSet;
-          if (chatDrawerOpen) {
-            renderChatTabsBar();
-            renderChatDrawerBody();
-          }
-          const activeEl = document.activeElement;
-          const isTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
-          if (!isTyping) renderAllViews();
-        }
-      }
-    }
-    if (json && json.status === "ok" && json.hub) {
-      const incomingHub = {
-        chats: deduplicateById(json.hub.chats || []),
-        tasks: deduplicateById(json.hub.tasks || []),
-        notifications: deduplicateById(json.hub.notifications || [])
-      };
-      const nextHash = JSON.stringify(incomingHub);
-      if (nextHash !== chatHubLastHash) {
-        chatHubLastHash = nextHash;
-        appState.chats = incomingHub.chats;
-        appState.tasks = incomingHub.tasks;
-        appState.notifications = incomingHub.notifications;
-        safeSaveLocalState();
-
-        updateChatIndicators();
-        if (chatDrawerOpen) {
-          renderChatTabsBar();
-          renderChatDrawerBody();
-        }
-        if (activeTab === "calendar") {
-          renderCalendarAndBlog();
-        }
-      }
-    }
-  } catch (err) {
-    // Тихо игнорируем временные сетевые сбои при фоновом опросе
-  } finally {
-    chatHubSyncInFlight = false;
-  }
+  db.ref("chatHub").set(hubPayload).catch((err) => {
+    console.warn("Firebase save error:", err);
+    showToast(t("Ошибка отправки в Firebase. Проверьте правила доступа.", "Firebase ga yuborişda xatolik."));
+  });
 }
 
 function startChatHubPolling() {
   stopChatHubPolling();
-  loadChatHubFromCloud();
-  chatHubPollTimer = setInterval(() => {
-    if (currentUser && !document.hidden && chatHubSaveInFlight === 0) {
-      loadChatHubFromCloud();
+  if (!currentUser) return;
+
+  const db = getFirebaseDb();
+  if (!db) {
+    console.warn("Firebase SDK не загружен — чат работает локально.");
+    return;
+  }
+
+  // 1. Мгновенная подписка на чаты, задания и уведомления (WebSockets)
+  firebaseHubRef = db.ref("chatHub");
+  firebaseHubRef.on("value", (snapshot) => {
+    const val = snapshot.val();
+    if (!val) return;
+
+    const incomingHub = {
+      chats: deduplicateById(normalizeFirebaseArray(val.chats)).map(c => ({
+        ...c,
+        members: normalizeFirebaseArray(c.members),
+        messages: normalizeFirebaseArray(c.messages).map(m => ({
+          ...m,
+          images: normalizeFirebaseArray(m.images),
+          files: normalizeFirebaseArray(m.files),
+          mentions: normalizeFirebaseArray(m.mentions),
+          poll: m.poll ? {
+            ...m.poll,
+            options: normalizeFirebaseArray(m.poll.options).map(o => ({
+              ...o,
+              votes: normalizeFirebaseArray(o.votes)
+            }))
+          } : null
+        }))
+      })),
+      tasks: deduplicateById(normalizeFirebaseArray(val.tasks)).map(tk => ({
+        ...tk,
+        assignees: normalizeFirebaseArray(tk.assignees),
+        todos: normalizeFirebaseArray(tk.todos),
+        messages: normalizeFirebaseArray(tk.messages).map(m => ({
+          ...m,
+          images: normalizeFirebaseArray(m.images),
+          files: normalizeFirebaseArray(m.files),
+          mentions: normalizeFirebaseArray(m.mentions),
+          poll: m.poll ? {
+            ...m.poll,
+            options: normalizeFirebaseArray(m.poll.options).map(o => ({
+              ...o,
+              votes: normalizeFirebaseArray(o.votes)
+            }))
+          } : null
+        }))
+      })),
+      notifications: deduplicateById(normalizeFirebaseArray(val.notifications))
+    };
+
+    const nextHash = JSON.stringify(incomingHub);
+    if (nextHash === chatHubLastHash) return;
+
+    chatHubLastHash = nextHash;
+    appState.chats = incomingHub.chats;
+    appState.tasks = incomingHub.tasks;
+    appState.notifications = incomingHub.notifications;
+    safeSaveLocalState();
+
+    updateChatIndicators();
+    if (chatDrawerOpen) {
+      renderChatTabsBar();
+      renderChatDrawerBody();
     }
-  }, 10000);
+    if (activeTab === "calendar") {
+      renderCalendarAndBlog();
+    }
+  });
+
+  // 2. Мгновенный онлайн-статус пользователей (presence + onDisconnect)
+  firebaseMyPresenceRef = db.ref(`presence/${currentUser.id}`);
+  firebaseConnectedRef = db.ref(".info/connected");
+  firebaseConnectedRef.on("value", (snap) => {
+    if (snap.val() === true && firebaseMyPresenceRef) {
+      firebaseMyPresenceRef.onDisconnect().remove();
+      firebaseMyPresenceRef.set({
+        id: currentUser.id,
+        name: currentUser.name || "",
+        ts: Date.now()
+      });
+    }
+  });
+
+  firebasePresenceRef = db.ref("presence");
+  firebasePresenceRef.on("value", (snap) => {
+    const data = snap.val() || {};
+    const nextSet = new Set(Object.keys(data));
+    if (currentUser && currentUser.id) nextSet.add(currentUser.id);
+    const prevKey = [...onlineUserIds].sort().join(",");
+    const nextKey = [...nextSet].sort().join(",");
+    if (prevKey !== nextKey) {
+      onlineUserIds = nextSet;
+      if (chatDrawerOpen) {
+        renderChatTabsBar();
+        renderChatDrawerBody();
+      }
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA");
+      if (!isTyping) renderAllViews();
+    }
+  });
 }
 
 function stopChatHubPolling() {
-  if (chatHubPollTimer) {
-    clearInterval(chatHubPollTimer);
-    chatHubPollTimer = null;
+  if (firebaseHubRef) {
+    firebaseHubRef.off();
+    firebaseHubRef = null;
+  }
+  if (firebasePresenceRef) {
+    firebasePresenceRef.off();
+    firebasePresenceRef = null;
+  }
+  if (firebaseConnectedRef) {
+    firebaseConnectedRef.off();
+    firebaseConnectedRef = null;
+  }
+  if (firebaseMyPresenceRef) {
+    firebaseMyPresenceRef.remove().catch(() => {});
+    firebaseMyPresenceRef = null;
   }
 }
