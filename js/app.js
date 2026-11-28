@@ -2231,6 +2231,10 @@ function renderStudentsSection() {
           <div class="custom-select" id="stFilterGroupWrap"></div>
           <div class="custom-select" id="stFilterGenderWrap"></div>
           <button type="button" id="stFilterResetBtn" class="btn-export sm hidden" onclick="resetStudentListFilters()">${t("Сбросить", "Tozalaş")}</button>
+          <button type="button" id="stExportCsvBtn" class="btn-export" style="height:40px;" onclick="exportFilteredStudentsToCsv()" title="${t("Скачать текущий отфильтрованный список в CSV для Excel", "Filtrlangan röyxatni Excel uçun CSV formatida yuklab oliş")}">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M8 11h8v7h-8z"/><path d="M8 15h8"/><path d="M11 11v7"/></svg>
+            <span>${t("Excel / CSV", "Excel / CSV")}</span>
+          </button>
         </div>
       </div>
       <div id="studentsAllTableContainer"></div>
@@ -2824,12 +2828,7 @@ function jumpToDiaryRecord(tabKey, recId) {
   }, 80);
 }
 
-function renderStudentsAllTable() {
-  const container = document.getElementById("studentsAllTableContainer");
-  const quickRegBtn = document.getElementById("stQuickRegisterBtn");
-  const resetBtn = document.getElementById("stFilterResetBtn");
-  if (!container) return;
-
+function getFilteredStudentsForTable() {
   let list = getRoleScopedStudents();
   const q = (studentListFilters.search || "").trim().toLowerCase();
 
@@ -2857,6 +2856,113 @@ function renderStudentsAllTable() {
       (s.hemisId || "").toLowerCase().includes(q)
     );
   }
+  return list;
+}
+
+function exportFilteredStudentsToCsv() {
+  const list = getFilteredStudentsForTable();
+  if (!list.length) {
+    showToast(t("Нет студентов для выгрузки", "Yuklab oliş uçun talabalar topilmadi"));
+    return;
+  }
+
+  const esc = (v) => {
+    const str = String(v === undefined || v === null ? "" : v).replace(/\r?\n/g, " ");
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  const housingLabel = (type) => {
+    if (type === "dorm") return t("Общежитие", "Yotoqxona");
+    if (type === "rent") return t("Съемная квартира", "Ijara xonadon");
+    if (type === "relatives") return t("У родственников", "Qarindoşinikida");
+    return t("Свой дом", "Öz uyi");
+  };
+
+  const getMonStatusText = (studentId) => {
+    const parts = [];
+    if ((appState.monitoring || []).some(m => m.studentId === studentId && m.status === "active")) {
+      parts.push(t("Учет у тютора", "Tyutor nazoratida"));
+    }
+    if ((appState.psychLogs || []).some(x => x.studentId === studentId && x.status !== "archived")) {
+      parts.push(t("Учет у психолога", "Psixolog nazoratida"));
+    }
+    if ((appState.preventiveLogs || []).some(x => x.studentId === studentId && x.status !== "archived")) {
+      parts.push(t("Учет у инспектора", "Inspektor nazoratida"));
+    }
+    return parts.join(", ");
+  };
+
+  const headers = [
+    "№",
+    t("Ф.И.О.", "F.I.Ş."),
+    t("Староста", "Sardor"),
+    t("Группа", "Guruh"),
+    t("Курс", "Kurs"),
+    t("Пол", "Jinsi"),
+    t("Форма обучения", "Ta’lim şakli"),
+    t("Телефон", "Telefon"),
+    t("Паспорт", "Pasport"),
+    t("ПИНФЛ", "JŞŞIR"),
+    "HEMIS ID",
+    t("Регион", "Hudud"),
+    t("Тип жилья", "Turar joy turi"),
+    t("Комната / Адрес", "Xona / Manzil"),
+    t("Учет в мониторинге", "Monitoring hisobi"),
+    t("Социальные категории", "Ijtimoiy toifalar"),
+    t("Волонтерство", "Volontyorlik"),
+    t("Трудоустройство", "Bandlik"),
+    t("Тютор", "Tyutor")
+  ];
+
+  const rows = list.map((s, idx) => {
+    const tutor = (appState.users || []).find(u => u.id === s.tutorId);
+    const addr = s.housingType === "dorm"
+      ? (s.room ? `${t("Комн.", "Xona")} ${s.room}` : "")
+      : (s.address || "");
+    const socStr = (s.social || []).map(c => getLabelFromDict(SOCIAL_CATEGORIES, c)).join(", ");
+    const volStr = getStudentVolunteers(s).map(v => getLabelFromDict(VOLUNTEER_DIRECTIONS, v)).join(", ");
+    const empStr = s.employed
+      ? `${t("Трудоустроен", "Işlaydi")}${s.empOrg ? ` (${s.empOrg})` : ""}`
+      : t("Не трудоустроен", "Işlamaydi");
+
+    return [
+      idx + 1,
+      s.name || "",
+      s.isLeader ? t("Да", "Ha") : "",
+      s.group || "",
+      s.course || "",
+      formatGenderShort(s.gender),
+      getLabelFromDict(STUDY_FORMS, s.studyForm || "contract"),
+      s.phone || "",
+      s.passport || "",
+      s.pinfl || "",
+      s.hemisId || "",
+      s.region || "",
+      housingLabel(s.housingType),
+      addr,
+      getMonStatusText(s.id),
+      socStr,
+      volStr,
+      empStr,
+      tutor ? tutor.name : ""
+    ].map(esc).join(";");
+  });
+
+  const csvContent = "\uFEFF" + [headers.map(esc).join(";"), ...rows].join("\r\n");
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const dateStr = new Date().toISOString().slice(0, 10);
+  triggerDownload(URL.createObjectURL(blob), `mytutors_students_${dateStr}.csv`);
+  showToast(`${t("Выгружено студентов", "Yuklab olingan talabalar")}: ${list.length}`);
+}
+
+function renderStudentsAllTable() {
+  const container = document.getElementById("studentsAllTableContainer");
+  const quickRegBtn = document.getElementById("stQuickRegisterBtn");
+  const resetBtn = document.getElementById("stFilterResetBtn");
+  if (!container) return;
+
+  const list = getFilteredStudentsForTable();
+  const q = (studentListFilters.search || "").trim().toLowerCase();
 
   // Показываем кнопку «Зарегистрировать студента» рядом с поиском, если введено имя и совпадений нет
   if (quickRegBtn) {
