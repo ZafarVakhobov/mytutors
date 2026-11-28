@@ -3532,16 +3532,132 @@ function renderStudentPhotoPreview() {
   }
 }
 
+function detectPortraitCenterFallback(img) {
+  try {
+    const sampleW = 96;
+    const sampleH = Math.max(1, Math.round((img.height / img.width) * sampleW));
+    const c = document.createElement("canvas");
+    c.width = sampleW;
+    c.height = sampleH;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0, sampleW, sampleH);
+    const data = ctx.getImageData(0, 0, sampleW, sampleH).data;
+
+    let sumX = 0, sumY = 0, sumW = 0, skinPixels = 0;
+    const totalPixels = sampleW * sampleH;
+
+    for (let y = 0; y < sampleH; y++) {
+      // Приоритет верхней части кадра, где обычно находится лицо
+      const verticalBias = y < sampleH * 0.72 ? 1.35 : 0.45;
+      for (let x = 0; x < sampleW; x++) {
+        const i = (y * sampleW + x) * 4;
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        const yVal = 0.299 * r + 0.587 * g + 0.114 * b;
+        const cb = 128 - 0.168736 * r - 0.331264 * g + 0.5 * b;
+        const cr = 128 + 0.5 * r - 0.418688 * g - 0.081312 * b;
+        if (yVal > 55 && cb >= 77 && cb <= 127 && cr >= 133 && cr <= 173) {
+          skinPixels++;
+          sumX += x * verticalBias;
+          sumY += y * verticalBias;
+          sumW += verticalBias;
+        }
+      }
+    }
+
+    const ratio = skinPixels / totalPixels;
+    if (sumW > 0 && ratio >= 0.015 && ratio <= 0.55) {
+      return {
+        cx: (sumX / sumW) * (img.width / sampleW),
+        cy: (sumY / sumW) * (img.height / sampleH)
+      };
+    }
+  } catch (_) {}
+  return null;
+}
+
+async function processStudentPhoto3x4(dataUrl, targetW = 360, targetH = 480) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = async () => {
+      try {
+        const imgW = img.naturalWidth || img.width;
+        const imgH = img.naturalHeight || img.height;
+        const targetRatio = targetW / targetH; // 0.75 (3:4)
+
+        let faceBox = null;
+        if (typeof window !== "undefined" && "FaceDetector" in window) {
+          try {
+            const detector = new window.FaceDetector({ fastMode: true, maxDetectedFaces: 3 });
+            const faces = await detector.detect(img);
+            if (faces && faces.length) {
+              faces.sort((a, b) => (b.boundingBox.width * b.boundingBox.height) - (a.boundingBox.width * a.boundingBox.height));
+              faceBox = faces[0].boundingBox;
+            }
+          } catch (_) {}
+        }
+
+        const maxCropW = Math.min(imgW, imgH * targetRatio);
+        const maxCropH = maxCropW / targetRatio;
+
+        let cropW = maxCropW;
+        let cropH = maxCropH;
+        let sx = (imgW - cropW) / 2;
+        let sy = (imgH - cropH) * 0.25;
+
+        if (faceBox && faceBox.width > 0 && faceBox.height > 0) {
+          // Умное кадрирование 3:4 вокруг обнаруженного лица (лицо в верхней трети, без растягивания)
+          cropH = Math.min(maxCropH, Math.max(faceBox.height * 2.5, maxCropH * 0.55));
+          cropW = cropH * targetRatio;
+          if (cropW > maxCropW) {
+            cropW = maxCropW;
+            cropH = cropW / targetRatio;
+          }
+          const faceCx = faceBox.x + faceBox.width / 2;
+          const faceCy = faceBox.y + faceBox.height / 2;
+          sx = faceCx - cropW / 2;
+          sy = faceCy - cropH * 0.39;
+        } else {
+          // Фолбэк: поиск портретного центра (лицо/кожа) или аккуратный кроп с приоритетом верхней части
+          const fallbackCenter = detectPortraitCenterFallback(img);
+          if (fallbackCenter) {
+            sx = fallbackCenter.cx - cropW / 2;
+            sy = fallbackCenter.cy - cropH * 0.40;
+          }
+        }
+
+        // Жестко удерживаем рамку кропа в пределах исходного фото (никаких искажений и пустых полей)
+        sx = Math.max(0, Math.min(imgW - cropW, sx));
+        sy = Math.max(0, Math.min(imgH - cropH, sy));
+
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, targetW, targetH);
+        ctx.drawImage(img, sx, sy, cropW, cropH, 0, 0, targetW, targetH);
+
+        resolve(canvas.toDataURL("image/jpeg", 0.92));
+      } catch (_) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+
 function handleStudentPhotoUpload(e) {
   const file = e.target.files && e.target.files[0];
   if (!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
-    compressAvatarDataUrl(reader.result, (compressed) => {
-      modalStudentState.photo = compressed;
-      renderStudentPhotoPreview();
-      showToast(t("Фото студента загружено", "Talaba rasmi yuklandi"));
-    });
+  reader.onload = async () => {
+    const processed = await processStudentPhoto3x4(reader.result, 360, 480);
+    modalStudentState.photo = processed;
+    renderStudentPhotoPreview();
+    showToast(t("Фото студента загружено (формат 3:4, 360×480)", "Talaba rasmi yuklandi (3:4 format, 360×480)"));
   };
   reader.readAsDataURL(file);
   e.target.value = "";
@@ -11632,12 +11748,14 @@ function prepareDocxPhotoBytes(photoDataUrl) {
     const img = new Image();
     img.onload = () => {
       try {
-        const targetW = 270;
-        const targetH = 360;
+        const targetW = 360;
+        const targetH = 480;
         const canvas = document.createElement("canvas");
         canvas.width = targetW;
         canvas.height = targetH;
         const ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         ctx.fillStyle = "#ffffff";
         ctx.fillRect(0, 0, targetW, targetH);
 
@@ -11655,7 +11773,7 @@ function prepareDocxPhotoBytes(photoDataUrl) {
           ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
         }
 
-        const jpgDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        const jpgDataUrl = canvas.toDataURL("image/jpeg", 0.92);
         const rawB64 = jpgDataUrl.split(",")[1];
         resolve({ bytes: base64ToUint8Array(rawB64), ext: "jpg", contentType: "image/jpeg" });
       } catch (e) {
