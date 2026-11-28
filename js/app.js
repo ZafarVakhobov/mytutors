@@ -2706,6 +2706,63 @@ function renderStudentListFilterControls(keepTutorOpen = false) {
   });
 }
 
+function renderStudentMonitoringBadgesHtml(studentId) {
+  const badges = [];
+  const activeMon = (appState.monitoring || []).find(m => m.studentId === studentId && m.status === "active");
+  if (activeMon) {
+    badges.push(`<button type="button" class="user-role-pill role-tutor clickable" onclick="jumpToDiaryRecord('monitoring', '${activeMon.id}')" title="${t("Перейти к записи мониторинга", "Monitoring qaydigа ötiş")}">${t("Учет у тютора", "Tyutor nazoratida")}</button>`);
+  }
+  const activePsych = (appState.psychLogs || []).find(x => x.studentId === studentId && x.status !== "archived");
+  if (activePsych) {
+    badges.push(`<button type="button" class="user-role-pill role-psychologist clickable" onclick="jumpToDiaryRecord('psych', '${activePsych.id}')" title="${t("Перейти к психологическим беседам", "Psixologik suhbatlarga ötiş")}">${t("Учет у психолога", "Psixolog nazoratida")}</button>`);
+  }
+  const activePrev = (appState.preventiveLogs || []).find(x => x.studentId === studentId && x.status !== "archived");
+  if (activePrev) {
+    badges.push(`<button type="button" class="user-role-pill role-inspector clickable" onclick="jumpToDiaryRecord('preventive', '${activePrev.id}')" title="${t("Перейти к профилактическим беседам", "Profilaktik suhbatlarga ötiş")}">${t("Учет у инспектора", "Inspektor nazoratida")}</button>`);
+  }
+  if (!badges.length) return '<span class="st-meta">—</span>';
+  return `<div class="st-mon-badges-stack">${badges.join("")}</div>`;
+}
+
+function jumpToDiaryRecord(tabKey, recId) {
+  if (!recId) return;
+  activeDiarySubtab = tabKey;
+
+  if (tabKey === "monitoring") {
+    activeMonitoringFilter = "active";
+    monListFilters = { search: "", tutors: [], groups: [], categories: [], dateFrom: "", dateTo: "" };
+    const fullList = (isTutorOnly()
+      ? (appState.monitoring || []).filter(m => m.tutorId === currentUser.id)
+      : (appState.monitoring || [])
+    ).filter(m => m.status === "active");
+    const idx = fullList.findIndex(m => m.id === recId);
+    if (idx !== -1) {
+      paginationState.monitoring = Math.floor(idx / (PAGE_LIMITS.monitoring || 10)) + 1;
+    } else {
+      paginationState.monitoring = 1;
+    }
+  } else if (tabKey === "psych") {
+    activePsychStatusFilter = "active";
+    psychListFilters = { search: "", tutors: [], groups: [], types: [], dateFrom: "", dateTo: "" };
+  } else if (tabKey === "preventive") {
+    activePreventiveStatusFilter = "active";
+    preventiveListFilters = { search: "", tutors: [], groups: [], types: [], dateFrom: "", dateTo: "" };
+  }
+
+  switchTab("diaries");
+
+  setTimeout(() => {
+    const card = document.querySelector(`.diary-card[data-diary-rec-id="${recId}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: "smooth", block: "center" });
+      card.classList.remove("diary-card-highlight");
+      void card.offsetWidth;
+      card.classList.add("diary-card-highlight");
+      setTimeout(() => card.classList.remove("diary-card-highlight"), 1900);
+    }
+  }, 80);
+}
+
 function renderStudentsAllTable() {
   const container = document.getElementById("studentsAllTableContainer");
   const quickRegBtn = document.getElementById("stQuickRegisterBtn");
@@ -2772,7 +2829,7 @@ function renderStudentsAllTable() {
               <th>${t("Группа / Курс", "Guruh / Kurs")}</th>
               <th>${t("Пол", "Jinsi")}</th>
               <th>${t("Жилье", "Turar joy")}</th>
-              <th>${t("Работа", "Iş joyi")}</th>
+              <th>${t("Учет в мониторинге", "Monitoring hisobi")}</th>
               <th>${t("Тютор", "Tyutor")}</th>
               <th>${t("Телефон", "Telefon")}</th>
               <th></th>
@@ -2799,18 +2856,17 @@ function renderStudentsAllTable() {
                   <td>
                     <div class="st-name-with-thumb">
                       ${renderStudentThumbHtml(s)}
-                      <strong>${s.name}</strong>
+                      <strong class="st-name-clickable" onclick="openStudentModal('${s.id}')">${s.name}</strong>
                       ${s.isLeader ? `<span class="st-leader-badge-icon" title="${t(`Староста группы ${s.group}`, `${s.group} guruhi sardori`)}">${LEADER_BADGE_SVG}</span>` : ""}
                     </div>
                   </td>
                   <td>${s.group} • ${s.course} ${t("курс", "kurs")}</td>
                   <td>${formatGenderShort(s.gender)}</td>
                   <td>${formatHousingBadge(s)}</td>
-                  <td>${empBadge}</td>
+                  <td>${renderStudentMonitoringBadgesHtml(s.id)}</td>
                   <td>${tutorCellHtml}</td>
                   <td>${formatPhoneTgLink(s.phone)}</td>
                   <td style="text-align:right; white-space:nowrap;">
-                    <button type="button" class="btn-link-orange mr-8" onclick="openStudentModal('${s.id}')">${t("Изменить", "Tahrirlaş")}</button>
                     ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
                       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
                     </button>` : ""}
@@ -5260,7 +5316,7 @@ function renderMonitoringCardsList() {
         const st = appState.students.find(s => s.id === rec.studentId);
         const tutor = appState.users.find(u => u.id === rec.tutorId);
         return `
-          <div class="diary-card">
+          <div class="diary-card" data-diary-rec-id="${rec.id}">
             <div class="st-card-top">
               <div>
                 <div class="st-name">${st ? st.name : rec.studentName}</div>
@@ -7370,7 +7426,7 @@ function renderSessionLogsList(kind) {
         const latestType = entries.length ? entries[entries.length - 1].type : cfg.dict[0].value;
 
         return `
-          <div class="diary-card">
+          <div class="diary-card" data-diary-rec-id="${rec.id}">
             <div class="st-card-top">
               <div>
                 <div class="st-name">${stName}</div>
