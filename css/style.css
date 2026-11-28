@@ -4481,3 +4481,85 @@ body.dark .diary-section-select .cs-trigger {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ==================== СТАРОСТА ГРУППЫ (КНОПКА, УВЕДОМЛЕНИЕ И БЕЙДЖ В СПИСКЕ) ==================== */
+.st-group-leader-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.st-group-leader-row .custom-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-leader-toggle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+}
+
+.st-leader-toggle-btn:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.st-leader-toggle-btn.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+}
+
+.st-leader-conflict-box {
+  margin-top: -6px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 107, 61, 0.09);
+  border: 1px solid rgba(255, 107, 61, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: popIn 0.15s ease;
+}
+
+.st-leader-conflict-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.st-leader-conflict-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.st-leader-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--blue);
+  vertical-align: middle;
+  flex-shrink: 0;
+  cursor: help;
+}
+
+.st-leader-badge-icon svg {
+  width: 18px;
+  height: 18px;
+}
