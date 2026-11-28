@@ -1061,6 +1061,8 @@ let activeTab = "dashboard";
 let activeStudentSubtab = "all";
 let activeHousingFilter = "all";
 let activeEmploymentFilter = "all";
+let activeSocialFilter = "all";
+let socialFilterSearchQuery = "";
 let activeVolunteerFilter = "all";
 let volFilterSearchQuery = "";
 let activeDiarySubtab = "monitoring";
@@ -1072,7 +1074,7 @@ let distSelectedGroup = "all";
 let blogActiveMode = "note";
 
 let dashFilters = { tutor: "all", course: "all", group: "all", gender: "all" };
-let studentListFilters = { search: "", tutors: [], course: "all", group: "all", gender: "all" };
+let studentListFilters = { search: "", leadersOnly: false, tutors: [], course: "all", group: "all", gender: "all" };
 let stFilterTutorSearch = "";
 let calYear = 2026;
 let calMonth = 10;
@@ -1462,10 +1464,10 @@ async function loadFromGoogleDrive() {
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
           todos: (incoming.todos || []).filter(td => td.userId === currentUser.id),
-          customTags: incoming.customTags || appState.customTags || [],
+          customTags: [...new Set([...(incoming.customTags || []), ...((json.sharedDicts && json.sharedDicts.customTags) || []), ...(appState.customTags || [])])],
           recentTags: incoming.recentTags || appState.recentTags || [],
-          customVolunteers: incoming.customVolunteers || appState.customVolunteers || [],
-          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || [],
+          customVolunteers: [...new Set([...(incoming.customVolunteers || []), ...((json.sharedDicts && json.sharedDicts.customVolunteers) || []), ...(appState.customVolunteers || [])])],
+          customSocialCategories: [...new Set([...(incoming.customSocialCategories || []), ...((json.sharedDicts && json.sharedDicts.customSocialCategories) || []), ...(appState.customSocialCategories || [])])],
           chats: appState.chats || [],
           tasks: appState.tasks || [],
           notifications: appState.notifications || []
@@ -1486,10 +1488,10 @@ async function loadFromGoogleDrive() {
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
           todos: (incoming.todos || []).filter(td => td.userId === currentUser.id),
-          customTags: incoming.customTags || appState.customTags || [],
+          customTags: [...new Set([...(incoming.customTags || []), ...((json.sharedDicts && json.sharedDicts.customTags) || []), ...(appState.customTags || [])])],
           recentTags: incoming.recentTags || appState.recentTags || [],
-          customVolunteers: incoming.customVolunteers || appState.customVolunteers || [],
-          customSocialCategories: incoming.customSocialCategories || appState.customSocialCategories || [],
+          customVolunteers: [...new Set([...(incoming.customVolunteers || []), ...((json.sharedDicts && json.sharedDicts.customVolunteers) || []), ...(appState.customVolunteers || [])])],
+          customSocialCategories: [...new Set([...(incoming.customSocialCategories || []), ...((json.sharedDicts && json.sharedDicts.customSocialCategories) || []), ...(appState.customSocialCategories || [])])],
           chats: appState.chats || [],
           tasks: appState.tasks || [],
           notifications: appState.notifications || []
@@ -2218,6 +2220,10 @@ function renderStudentsSection() {
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5l0 14"/><path d="M5 12l14 0"/></svg>
             <span>${t("Зарегистрировать студента", "Talabani röyxatdan ötkaziş")}</span>
           </button>
+          <button type="button" id="stLeadersOnlyBtn" class="st-leaders-filter-btn ${studentListFilters.leadersOnly ? 'active' : ''}" onclick="toggleStudentLeadersFilter()">
+            ${LEADER_BADGE_SVG}
+            <span>${t("Только старосты", "Faqat sardorlar")}</span>
+          </button>
         </div>
         <div class="st-all-filters">
           <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="stFilterTutorWrap"></div>
@@ -2334,16 +2340,61 @@ function renderStudentsSection() {
 
   if (activeStudentSubtab === "social") {
     const socList = students.filter(s => Array.isArray(s.social) && s.social.length > 0);
+    const allCats = getAllSocialCategories();
+    const first5Cats = allCats.slice(0, 5);
+    const extraCats = allCats.slice(5);
+
+    const isExtraActive = activeSocialFilter !== "all" && !first5Cats.some(c => c.value === activeSocialFilter);
+    const activeExtraObj = isExtraActive ? allCats.find(c => c.value === activeSocialFilter) : null;
+
+    let list = socList;
+    if (activeSocialFilter !== "all") {
+      list = socList.filter(s => (s.social || []).includes(activeSocialFilter));
+    }
+
+    const filterButtons = `
+      <div class="subtabs-pills mb-16">
+        <button type="button" class="subtab-btn ${activeSocialFilter === 'all' ? 'active' : ''}" onclick="setSocialFilter('all')">${t("Все", "Barçasi")} (${socList.length})</button>
+        ${first5Cats.map(c => {
+          const cnt = socList.filter(s => (s.social || []).includes(c.value)).length;
+          return `<button type="button" class="subtab-btn ${activeSocialFilter === c.value ? 'active' : ''}" onclick="setSocialFilter('${c.value.replace(/'/g, "\'")}')">${c.label} (${cnt})</button>`;
+        }).join("")}
+        ${activeExtraObj ? `<button type="button" class="subtab-btn active" onclick="setSocialFilter('${activeExtraObj.value.replace(/'/g, "\'")}')">${activeExtraObj.label} (${socList.filter(s => (s.social || []).includes(activeExtraObj.value)).length})</button>` : ""}
+        ${extraCats.length > 0 ? `
+          <div class="tg-all-tags-dropdown" id="socialOtherCatsFilterDropdown">
+            <button type="button" class="tg-all-tags-trigger" onclick="toggleSocialOtherCatsFilterDropdown(event)">
+              <span>${t("Другие категории", "Boşqa toifalar")}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6l6 -6"/></svg>
+            </button>
+            <div class="tg-all-tags-menu" onclick="event.stopPropagation()">
+              <input type="text" id="socialFilterSearchInput" class="tg-tag-search-input" placeholder="${t("Поиск категории...", "Toifa qidiriş...")}" oninput="renderSocialFilterSearchList()" />
+              <div id="socialFilterSearchList" class="tg-tag-search-list"></div>
+            </div>
+          </div>
+        ` : ""}
+      </div>
+    `;
+
     if (!socList.length) {
-      area.innerHTML = `<div class="empty-state">${t(
+      area.innerHTML = `${filterButtons}<div class="empty-state">${t(
         "Студенты социально уязвимых категорий пока не добавлены. Отметьте категории в карточке студента.",
         "Ijtimoiy himoyaga muhtoj toifadagi talabalar hali qöşilmagan. Talaba kartasida toifalarni belgilang."
       )}</div>`;
       return;
     }
+
+    if (!list.length) {
+      area.innerHTML = `${filterButtons}<div class="empty-state">${t(
+        "По выбранной категории студентов пока нет.",
+        "Tanlangan toifa böyiça talabalar hozirça yöq."
+      )}</div>`;
+      return;
+    }
+
     area.innerHTML = `
+      ${filterButtons}
       <div class="cards-grid-3">
-        ${socList.map(s => `
+        ${list.map(s => `
           <div class="student-card">
             <div>
               <div class="st-name">${s.name}</div>
@@ -2542,11 +2593,21 @@ function onStudentSearchInput(val) {
   renderStudentsAllTable();
 }
 
+function toggleStudentLeadersFilter() {
+  studentListFilters.leadersOnly = !studentListFilters.leadersOnly;
+  const btn = document.getElementById("stLeadersOnlyBtn");
+  if (btn) btn.classList.toggle("active", studentListFilters.leadersOnly);
+  paginationState.students = 1;
+  renderStudentsAllTable();
+}
+
 function resetStudentListFilters() {
-  studentListFilters = { search: "", tutors: [], course: "all", group: "all", gender: "all" };
+  studentListFilters = { search: "", leadersOnly: false, tutors: [], course: "all", group: "all", gender: "all" };
   stFilterTutorSearch = "";
   const inp = document.getElementById("stAllSearchInput");
   if (inp) inp.value = "";
+  const btn = document.getElementById("stLeadersOnlyBtn");
+  if (btn) btn.classList.remove("active");
   renderStudentListFilterControls();
   renderStudentsAllTable();
 }
@@ -2781,6 +2842,9 @@ function renderStudentsAllTable() {
   if (studentListFilters.group !== "all") {
     list = list.filter(s => s.group === studentListFilters.group);
   }
+  if (studentListFilters.leadersOnly) {
+    list = list.filter(s => s.isLeader === true);
+  }
   if (studentListFilters.gender !== "all") {
     list = list.filter(s => s.gender === studentListFilters.gender);
   }
@@ -2802,6 +2866,7 @@ function renderStudentsAllTable() {
   // Показываем кнопку «Сбросить», если активен любой фильтр
   const hasActiveFilter = Boolean(
     q ||
+    studentListFilters.leadersOnly ||
     studentListFilters.tutors.length > 0 ||
     (studentListFilters.course !== "all" && !(isTutorOnly() && currentUser && currentUser.course)) ||
     studentListFilters.group !== "all" ||
@@ -2880,6 +2945,82 @@ function renderStudentsAllTable() {
     </div>
     ${renderPaginationBar("students", window._lastStPg, "goToStudentsPage")}
   `;
+}
+
+
+function normalizeSimilarityText(str) {
+  return String(str || "")
+    .toLowerCase()
+    .replace(/['`‘’ʻʼ"«»\-_.,]/g, " ")
+    .replace(/ö/g, "o")
+    .replace(/ğ/g, "g")
+    .replace(/ş/g, "sh")
+    .replace(/ç/g, "ch")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isSimilarCategoryMatch(query, candidate) {
+  const q = normalizeSimilarityText(query);
+  const c = normalizeSimilarityText(candidate);
+  if (!q) return true;
+  if (c.includes(q) || q.includes(c)) return true;
+  const qWords = q.split(" ").filter(w => w.length >= 2);
+  const cWords = c.split(" ").filter(w => w.length >= 2);
+  return qWords.some(qw => cWords.some(cw => cw.startsWith(qw) || qw.startsWith(cw)));
+}
+
+function setSocialFilter(val) {
+  activeSocialFilter = val;
+  socialFilterSearchQuery = "";
+  renderStudentsSection();
+}
+
+function toggleSocialOtherCatsFilterDropdown(e) {
+  if (e) e.stopPropagation();
+  const dd = document.getElementById("socialOtherCatsFilterDropdown");
+  if (!dd) return;
+  const wasOpen = dd.classList.contains("open");
+  document.querySelectorAll(".tg-all-tags-dropdown.open").forEach(el => el.classList.remove("open"));
+  if (!wasOpen) {
+    dd.classList.add("open");
+    const inp = document.getElementById("socialFilterSearchInput");
+    if (inp) {
+      inp.value = socialFilterSearchQuery;
+      inp.focus();
+      renderSocialFilterSearchList();
+    }
+  }
+}
+
+function renderSocialFilterSearchList() {
+  const listEl = document.getElementById("socialFilterSearchList");
+  const inp = document.getElementById("socialFilterSearchInput");
+  if (!listEl) return;
+
+  socialFilterSearchQuery = inp ? inp.value : "";
+  const q = socialFilterSearchQuery.trim();
+  const students = getRoleScopedStudents();
+  const socList = students.filter(s => Array.isArray(s.social) && s.social.length > 0);
+  const extraCats = getAllSocialCategories().slice(5);
+  const filtered = q
+    ? extraCats.filter(c => isSimilarCategoryMatch(q, c.label) || isSimilarCategoryMatch(q, c.value))
+    : extraCats;
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="st-meta" style="padding:8px 10px;">${t("Категории не найдены", "Toifalar topilmadi")}</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(c => {
+    const cnt = socList.filter(s => (s.social || []).includes(c.value)).length;
+    return `
+      <div class="cs-option ${activeSocialFilter === c.value ? 'selected' : ''}" onclick="setSocialFilter('${c.value.replace(/'/g, "\'")}')">
+        <span>${c.label} (${cnt})</span>
+        ${activeSocialFilter === c.value ? '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12l5 5l10 -10"/></svg>' : ''}
+      </div>
+    `;
+  }).join("");
 }
 
 function setVolunteerFilter(val) {
@@ -9170,7 +9311,7 @@ function renderVolunteerOptionsList() {
   const selected = modalStudentState.volunteers || [];
 
   const matched = q
-    ? allDirs.filter(d => d.label.toLowerCase().includes(q) || d.value.toLowerCase().includes(q))
+    ? allDirs.filter(d => d.value !== "Не состоит" && (isSimilarCategoryMatch(q, d.label) || isSimilarCategoryMatch(q, d.value)))
     : allDirs;
 
   const exactExists = allDirs.some(d => d.label.toLowerCase() === q || d.value.toLowerCase() === q);
@@ -9329,7 +9470,7 @@ function updateCustomSocialAutocomplete() {
   const q = inp.value.trim().toLowerCase();
   const allCats = getAllSocialCategories();
   const matches = q
-    ? allCats.filter(c => c.label.toLowerCase().includes(q) || c.value.toLowerCase().includes(q))
+    ? allCats.filter(c => isSimilarCategoryMatch(q, c.label) || isSimilarCategoryMatch(q, c.value))
     : allCats.slice(0, 6);
 
   const exactExists = allCats.some(c => c.label.toLowerCase() === q || c.value.toLowerCase() === q);
