@@ -729,6 +729,28 @@ const DORM_CHECK_CATEGORIES = [
   { value: "Свободный текст", ru: "Свободный текст", oz: "Erkin matn" }
 ];
 
+const PSYCH_SESSION_TYPES = [
+  { value: "Адаптация и стресс", ru: "Адаптация и учебный стресс", oz: "Moslaşuv va öqiş stressi" },
+  { value: "Тревожность и выгорание", ru: "Тревожность и эмоциональное выгорание", oz: "Xavotir va emotsional çarqoq" },
+  { value: "Межличностные конфликты", ru: "Межличностные отношения и конфликты", oz: "Şaxslararo munosabatlar va nizolar" },
+  { value: "Семейные трудности", ru: "Семейные и личные трудности", oz: "Oilaviy va şaxsiy muammolar" },
+  { value: "Самооценка и мотивация", ru: "Самооценка и учебная мотивация", oz: "Öziga işonç va öqiş motivatsiyasi" },
+  { value: "Психодиагностика", ru: "Психодиагностика / тестирование", oz: "Psixodiagnostika / testlaş" },
+  { value: "Кризисная поддержка", ru: "Кризисная / экстренная поддержка", oz: "Inqirozli / şoşilinç yordam" },
+  { value: "Индивидуальная консультация", ru: "Индивидуальная консультация", oz: "Individual maslahat" }
+];
+
+const PREVENTIVE_SESSION_TYPES = [
+  { value: "Профилактика правонарушений", ru: "Профилактика правонарушений", oz: "Huquqbuzarliklar profilaktikasi" },
+  { value: "Внутренний распорядок и дресс-код", ru: "Внутренний распорядок и дресс-код", oz: "Içki tartib-qoida va kiyiniş madaniyati" },
+  { value: "Вредные привычки", ru: "Профилактика вредных привычек", oz: "Zararli odatlar profilaktikasi" },
+  { value: "Кибербезопасность", ru: "Кибербезопасность и цифровая гигиена", oz: "Kiberxavfsizlik va raqamli gigiyena" },
+  { value: "Предупреждение конфликтов", ru: "Предупреждение конфликтов и буллинга", oz: "Nizolar va bullingning oldini oliş" },
+  { value: "Посещаемость и дисциплина", ru: "Посещаемость и учебная дисциплина", oz: "Davomat va öquv intizomi" },
+  { value: "Безопасность проживания", ru: "Безопасность проживания (общежитие/аренда)", oz: "Yaşaş joyi xavfsizligi (yotoqxona/ijara)" },
+  { value: "Индивидуальная беседа", ru: "Индивидуальная профилактическая беседа", oz: "Individual profilaktik suhbat" }
+];
+
 const RELATIVE_TYPES = [
   { value: "Мать", ru: "Мать", oz: "Onasi" },
   { value: "Отец", ru: "Отец", oz: "Otasi" },
@@ -1085,6 +1107,8 @@ function sanitizeAppState(rawObj) {
     parentMeetings: deduplicateById(base.parentMeetings || []),
     dormLogs: deduplicateById(base.dormLogs || []),
     rentLogs: deduplicateById(base.rentLogs || []),
+    psychLogs: deduplicateById(base.psychLogs || []),
+    preventiveLogs: deduplicateById(base.preventiveLogs || []),
     schedule: deduplicateById(base.schedule || []),
     calendarEvents: deduplicateById(base.calendarEvents || []),
     blogPosts: deduplicateById(base.blogPosts || []),
@@ -1121,6 +1145,8 @@ function buildPayloadForCurrentUser() {
       parentMeetings: appState.parentMeetings.filter(m => m.tutorId === currentUser.id),
       dormLogs: appState.dormLogs.filter(d => d.tutorId === currentUser.id),
       rentLogs: appState.rentLogs.filter(r => r.tutorId === currentUser.id),
+      psychLogs: appState.psychLogs.filter(x => x.tutorId === currentUser.id || x.authorId === currentUser.id),
+      preventiveLogs: appState.preventiveLogs.filter(x => x.tutorId === currentUser.id || x.authorId === currentUser.id),
       schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === currentUser.id),
       calendarEvents: appState.calendarEvents.filter(ev => ev.userId === currentUser.id),
       blogPosts: appState.blogPosts.filter(b => b.userId === currentUser.id),
@@ -1204,6 +1230,8 @@ function syncSpecificTutorFolder(tutorId) {
     parentMeetings: appState.parentMeetings.filter(m => m.tutorId === tutorId),
     dormLogs: appState.dormLogs.filter(d => d.tutorId === tutorId),
     rentLogs: appState.rentLogs.filter(r => r.tutorId === tutorId),
+    psychLogs: appState.psychLogs.filter(x => x.tutorId === tutorId || x.authorId === tutorId),
+    preventiveLogs: appState.preventiveLogs.filter(x => x.tutorId === tutorId || x.authorId === tutorId),
     schedule: appState.schedule.filter(sc => !sc.tutorId || sc.tutorId === tutorId),
     calendarEvents: appState.calendarEvents.filter(ev => ev.userId === tutorId),
     blogPosts: appState.blogPosts.filter(b => b.userId === tutorId),
@@ -1428,6 +1456,8 @@ async function loadFromGoogleDrive() {
           parentMeetings: (incoming.parentMeetings || []).filter(m => m.tutorId === currentUser.id),
           dormLogs: (incoming.dormLogs || []).filter(d => d.tutorId === currentUser.id),
           rentLogs: (incoming.rentLogs || []).filter(r => r.tutorId === currentUser.id),
+          psychLogs: (incoming.psychLogs || []).filter(x => x.tutorId === currentUser.id || x.authorId === currentUser.id),
+          preventiveLogs: (incoming.preventiveLogs || []).filter(x => x.tutorId === currentUser.id || x.authorId === currentUser.id),
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
@@ -1450,6 +1480,8 @@ async function loadFromGoogleDrive() {
           parentMeetings: incoming.parentMeetings || [],
           dormLogs: incoming.dormLogs || [],
           rentLogs: incoming.rentLogs || [],
+          psychLogs: incoming.psychLogs || [],
+          preventiveLogs: incoming.preventiveLogs || [],
           schedule: incoming.schedule || [],
           calendarEvents: (incoming.calendarEvents || []).filter(ev => ev.userId === currentUser.id),
           blogPosts: (incoming.blogPosts || []).filter(b => b.userId === currentUser.id),
@@ -4719,15 +4751,67 @@ let monListFilters = { search: "", tutors: [], groups: [], categories: [], dateF
 let pmListFilters = { search: "", tutors: [], groups: [], dateFrom: "", dateTo: "" };
 let diaryMultiSearchMap = {};
 
+function renderDiarySectionSelect() {
+  const opts = [
+    { value: "monitoring", label: t("Мониторинг студентов", "Talabalar monitoringi") },
+    { value: "parents", label: t("Работа с родителями", "Ota-onalar bilan işlaş") },
+    { value: "dorm", label: t("Записи по общежитию", "Yotoqxona qaydlari") },
+    { value: "rent", label: t("Заметки по съемным квартирам", "Ijara xonadon qaydlari") },
+    { value: "psych", label: t("Психологические беседы", "Psixologik suhbatlar") },
+    { value: "preventive", label: t("Профилактические беседы", "Profilaktik suhbatlar") }
+  ];
+  renderCustomSelect("diarySectionSelectWrap", opts, activeDiarySubtab, (val) => {
+    setDiarySubtab(val);
+  });
+}
+
 function setDiarySubtab(sub) {
   activeDiarySubtab = sub;
-  document.getElementById("diaryTabMonitoring").classList.toggle("active", sub === "monitoring");
-  document.getElementById("diaryTabParents").classList.toggle("active", sub === "parents");
-  const dormBtn = document.getElementById("diaryTabDorm");
-  if (dormBtn) dormBtn.classList.toggle("active", sub === "dorm");
-  const rentBtn = document.getElementById("diaryTabRent");
-  if (rentBtn) rentBtn.classList.toggle("active", sub === "rent");
+  renderDiarySectionSelect();
   renderDiariesSection();
+}
+
+function renderClickableDiaryTutorPill(tabKey, tutorId) {
+  const tutor = appState.users.find(u => u.id === tutorId);
+  if (!tutor) return '<span class="st-meta">—</span>';
+  if (isTutorOnly()) return renderUserBadgeHtml(tutor);
+  const filterMap = {
+    monitoring: monListFilters,
+    parents: pmListFilters,
+    dorm: dormListFilters,
+    rent: rentListFilters,
+    psych: psychListFilters,
+    preventive: preventiveListFilters
+  };
+  const fObj = filterMap[tabKey];
+  const isActive = fObj && Array.isArray(fObj.tutors) && fObj.tutors.includes(tutor.id);
+  return renderUserBadgeHtml(tutor, {
+    clickable: true,
+    active: isActive,
+    onclick: `filterDiaryByTutorClick('${tabKey}', '${tutor.id}')`,
+    title: t("Фильтровать по этому тютору", "Uşbu tyutor böyiça filtrlaş")
+  });
+}
+
+function filterDiaryByTutorClick(tabKey, tutorId) {
+  if (!tutorId || isTutorOnly()) return;
+  const map = {
+    monitoring: { f: monListFilters, ctrl: renderMonListFilterControls, list: renderMonitoringCardsList },
+    parents: { f: pmListFilters, ctrl: renderPmListFilterControls, list: renderParentMeetingsCardsList },
+    dorm: { f: dormListFilters, ctrl: renderDormListFilterControls, list: renderDormLogsList },
+    rent: { f: rentListFilters, ctrl: renderRentListFilterControls, list: renderRentLogsList },
+    psych: { f: psychListFilters, ctrl: () => renderSessionListFilterControls('psych'), list: () => renderSessionLogsList('psych') },
+    preventive: { f: preventiveListFilters, ctrl: () => renderSessionListFilterControls('preventive'), list: () => renderSessionLogsList('preventive') }
+  };
+  const item = map[tabKey];
+  if (!item) return;
+  if (item.f.tutors.length === 1 && item.f.tutors[0] === tutorId) {
+    item.f.tutors = [];
+  } else {
+    item.f.tutors = [tutorId];
+  }
+  item.ctrl();
+  item.list();
 }
 
 function getDiaryMultiGroups(selectedTutorIds) {
@@ -4826,7 +4910,12 @@ function renderDiaryMultiSelect(containerId, placeholder, options, selectedArr, 
 }
 
 function renderDiariesSection() {
+  renderDiarySectionSelect();
   const area = document.getElementById("diariesContentArea");
+  if (activeDiarySubtab === "psych" || activeDiarySubtab === "preventive") {
+    renderSessionDiaryTab(activeDiarySubtab);
+    return;
+  }
   if (activeDiarySubtab === "monitoring") {
     let list = isTutorOnly()
       ? appState.monitoring.filter(m => m.tutorId === currentUser.id)
@@ -5078,7 +5167,7 @@ function renderMonitoringCardsList() {
             <div class="st-card-top">
               <div>
                 <div class="st-name">${st ? st.name : rec.studentName}</div>
-                <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${renderUserBadgeHtml(tutor)}</div>
+                <div class="st-meta">${st ? st.group : ""} • ${t("Тютор", "Tyutor")}: ${renderClickableDiaryTutorPill("monitoring", rec.tutorId)}</div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 <span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, rec.category)}</span>
@@ -5214,7 +5303,7 @@ function renderParentMeetingsCardsList() {
           <div class="st-card-top">
             <div>
               <div class="st-name">${m.studentName}</div>
-              <div class="st-meta">${m.date} • ${m.who}</div>
+              <div class="st-meta">${m.date} • ${m.who} • ${t("Тютор", "Tyutor")}: ${renderClickableDiaryTutorPill("parents", m.tutorId)}</div>
             </div>
             ${canDeleteData(m.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteParentMeeting('${m.id}', this)" title="${t("Удалить", "Öçiriş")}">
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
@@ -6350,7 +6439,7 @@ function renderDormLogsList() {
             <div class="st-card-top">
               <div>
                 <div class="st-name">${t("Комната №", "Xona №")} ${d.room}</div>
-                <div class="st-meta">${t("Записей в дневнике", "Kundalik qaydlari")}: ${entries.length}</div>
+                <div class="st-meta">${t("Тютор", "Tyutor")}: ${renderClickableDiaryTutorPill("dorm", d.tutorId)} • ${t("Записей в дневнике", "Kundalik qaydlari")}: ${entries.length}</div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 ${canDeleteData(d.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteDormLog('${d.id}', this)" title="${t("Удалить дневник комнаты", "Xona kundaligini öçiriş")}">
@@ -6879,7 +6968,7 @@ function renderRentLogsList() {
             <div class="st-card-top">
               <div>
                 <div class="st-name">${r.studentName} <span class="st-meta" style="font-weight:500;">(${r.studentGroup || ""})</span></div>
-                <div class="st-meta">${t("Тютор", "Tyutor")}: ${renderUserBadgeHtml(tutor)} • ${t("Записей", "Qaydlar")}: ${entries.length}</div>
+                <div class="st-meta">${t("Тютор", "Tyutor")}: ${renderClickableDiaryTutorPill("rent", r.tutorId)} • ${t("Записей", "Qaydlar")}: ${entries.length}</div>
               </div>
               <div style="display:flex; align-items:center; gap:8px;">
                 ${canDeleteData(r.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteRentLog('${r.id}', this)" title="${t("Удалить дневник", "Kundalikni öçiriş")}">
@@ -6927,6 +7016,773 @@ function renderRentLogsList() {
     </div>
   `;
 }
+
+
+// ==================== ПСИХОЛОГИЧЕСКИЕ И ПРОФИЛАКТИЧЕСКИЕ БЕСЕДЫ ====================
+let activePsychStatusFilter = "active";
+let activePreventiveStatusFilter = "active";
+let psychListFilters = { search: "", tutors: [], groups: [], types: [], dateFrom: "", dateTo: "" };
+let preventiveListFilters = { search: "", tutors: [], groups: [], types: [], dateFrom: "", dateTo: "" };
+
+let sessionModalState = {
+  kind: "psych", // "psych" | "preventive"
+  search: "",
+  tutor: "all",
+  course: "all",
+  group: "all",
+  studentId: "",
+  type: "",
+  collaborators: [],
+  collabSearch: ""
+};
+
+let sessionInlineCollabDraft = {}; // { [logId]: [{ type, id?, name }] }
+let sessionInlineCollabSearch = {}; // { [logId]: "" }
+
+function getSessionConfig(kind) {
+  const isPsych = kind === "psych";
+  return {
+    kind,
+    stateKey: isPsych ? "psychLogs" : "preventiveLogs",
+    dict: isPsych ? PSYCH_SESSION_TYPES : PREVENTIVE_SESSION_TYPES,
+    filters: isPsych ? psychListFilters : preventiveListFilters,
+    statusFilter: isPsych ? activePsychStatusFilter : activePreventiveStatusFilter,
+    setStatusFilter: (val) => {
+      if (isPsych) activePsychStatusFilter = val;
+      else activePreventiveStatusFilter = val;
+    },
+    title: isPsych ? t("Психологические беседы", "Psixologik suhbatlar") : t("Профилактические беседы", "Profilaktik suhbatlar"),
+    addBtn: isPsych ? t("Добавить запись", "Qayd qöşiş") : t("Добавить запись", "Qayd qöşiş"),
+    modalTitle: isPsych ? t("Новая психологическая беседа", "Yangi psixologik suhbat") : t("Новая профилактическая беседа", "Yangi profilaktik suhbat"),
+    typeLabel: isPsych ? t("Тип психологического исследования *", "Psixologik tadqiqot turi *") : t("Тип профилактической беседы *", "Profilaktik suhbat turi *"),
+    emptyText: isPsych ? t("Записей психологических бесед пока нет.", "Psixologik suhbat qaydlari hozirça yöq.") : t("Записей профилактических бесед пока нет.", "Profilaktik suhbat qaydlari hozirça yöq.")
+  };
+}
+
+function getStudentActiveMonitoringRecords(studentId) {
+  if (!studentId) return [];
+  return (appState.monitoring || []).filter(m => m.studentId === studentId && m.status === "active");
+}
+
+function renderStudentActiveMonitoringAlertHtml(studentId) {
+  const activeRecs = getStudentActiveMonitoringRecords(studentId);
+  if (!activeRecs.length) return "";
+  return `
+    <div class="session-active-mon-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 9v4"/><path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z"/><path d="M12 16h.01"/></svg>
+      <span>${t("Студент состоит на активном мониторинге", "Talaba faol monitoring hisobida turibdi")} (${activeRecs.length}):</span>
+    </div>
+    <div class="checkbox-chips">
+      ${activeRecs.map(r => `<span class="badge-pill rent">${getLabelFromDict(MONITORING_CATEGORIES, r.category)}</span>`).join("")}
+    </div>
+  `;
+}
+
+function renderSessionDiaryTab(kind) {
+  const cfg = getSessionConfig(kind);
+  const area = document.getElementById("diariesContentArea");
+  const rawList = appState[cfg.stateKey] || [];
+  const scoped = isTutorOnly()
+    ? rawList.filter(x => x.tutorId === currentUser.id || x.authorId === currentUser.id)
+    : rawList;
+
+  area.innerHTML = `
+    <div class="subtabs-row">
+      <div class="subtabs-pills">
+        <button type="button" class="subtab-btn ${cfg.statusFilter === 'active' ? 'active' : ''}" onclick="setSessionStatusFilter('${kind}', 'active')">${t("Активные наблюдения", "Faol kuzatuvlar")} (${scoped.filter(x => x.status !== 'archived').length})</button>
+        <button type="button" class="subtab-btn ${cfg.statusFilter === 'archived' ? 'active' : ''}" onclick="setSessionStatusFilter('${kind}', 'archived')">${t("Архив (положительный исход)", "Arxiv (ijobiy natija)")} (${scoped.filter(x => x.status === 'archived').length})</button>
+      </div>
+      <button type="button" class="btn-orange" onclick="openSessionDiaryModal('${kind}')">+ ${cfg.addBtn}</button>
+    </div>
+
+    <div class="diary-list-toolbar">
+      <div class="st-search-box diary-list-search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 10m-7 0a7 7 0 1 0 14 0a7 7 0 1 0 -14 0"/><path d="M21 21l-6 -6"/></svg>
+        <input type="text" id="sessionListSearchInput_${kind}" placeholder="${t("Поиск по студенту, группе, тексту...", "Talaba, guruh, matn böyiça qidiriş...")}" value="${(cfg.filters.search || "").replace(/"/g, '&quot;')}" oninput="onSessionListSearch('${kind}', this.value)" />
+      </div>
+      <div class="diary-list-filters">
+        <div class="custom-select ${isTutorOnly() ? 'hidden' : ''}" id="sessionListTutorFilterWrap_${kind}"></div>
+        <div class="custom-select" id="sessionListGroupFilterWrap_${kind}"></div>
+        <div class="custom-select" id="sessionListTypeFilterWrap_${kind}"></div>
+        <input type="date" id="sessionListDateFrom_${kind}" class="form-input diary-date-input" value="${cfg.filters.dateFrom || ''}" title="${t("Дата с", "Sana (dan)")}" onchange="onSessionListDateChange('${kind}', 'from', this.value)" />
+        <input type="date" id="sessionListDateTo_${kind}" class="form-input diary-date-input" value="${cfg.filters.dateTo || ''}" title="${t("Дата по", "Sana (gaça)")}" onchange="onSessionListDateChange('${kind}', 'to', this.value)" />
+        <button type="button" id="sessionListResetBtn_${kind}" class="btn-export sm hidden" onclick="resetSessionListFilters('${kind}')">${t("Сбросить", "Tozalaş")}</button>
+      </div>
+    </div>
+
+    <div id="sessionLogsCardsContainer_${kind}"></div>
+  `;
+
+  renderSessionListFilterControls(kind);
+  renderSessionLogsList(kind);
+}
+
+function setSessionStatusFilter(kind, status) {
+  const cfg = getSessionConfig(kind);
+  cfg.setStatusFilter(status);
+  renderSessionDiaryTab(kind);
+}
+
+function onSessionListSearch(kind, val) {
+  const cfg = getSessionConfig(kind);
+  cfg.filters.search = val || "";
+  renderSessionLogsList(kind);
+}
+
+function onSessionListDateChange(kind, which, val) {
+  const cfg = getSessionConfig(kind);
+  if (which === "from") cfg.filters.dateFrom = val || "";
+  else cfg.filters.dateTo = val || "";
+  renderSessionLogsList(kind);
+}
+
+function resetSessionListFilters(kind) {
+  const cfg = getSessionConfig(kind);
+  cfg.filters.search = "";
+  cfg.filters.tutors = [];
+  cfg.filters.groups = [];
+  cfg.filters.types = [];
+  cfg.filters.dateFrom = "";
+  cfg.filters.dateTo = "";
+  const s = document.getElementById(`sessionListSearchInput_${kind}`); if (s) s.value = "";
+  const df = document.getElementById(`sessionListDateFrom_${kind}`); if (df) df.value = "";
+  const dt = document.getElementById(`sessionListDateTo_${kind}`); if (dt) dt.value = "";
+  renderSessionListFilterControls(kind);
+  renderSessionLogsList(kind);
+}
+
+function renderSessionListFilterControls(kind, keepOpenId = null) {
+  const cfg = getSessionConfig(kind);
+  if (!isTutorOnly()) {
+    const tutorOpts = appState.users.filter(u => u.role === "tutor").map(tr => ({ value: tr.id, label: tr.name }));
+    const id = `sessionListTutorFilterWrap_${kind}`;
+    renderDiaryMultiSelect(id, t("Тюторы", "Tyutorlar"), tutorOpts, cfg.filters.tutors, (val) => {
+      cfg.filters.tutors = cfg.filters.tutors.includes(val)
+        ? cfg.filters.tutors.filter(x => x !== val)
+        : [...cfg.filters.tutors, val];
+      renderSessionListFilterControls(kind, id);
+      renderSessionLogsList(kind);
+    }, keepOpenId === id);
+  }
+
+  const availGroups = getDiaryMultiGroups(cfg.filters.tutors);
+  cfg.filters.groups = cfg.filters.groups.filter(g => availGroups.includes(g));
+  const gId = `sessionListGroupFilterWrap_${kind}`;
+  renderDiaryMultiSelect(gId, t("Группы", "Guruhlar"), availGroups.map(g => ({ value: g, label: g })), cfg.filters.groups, (val) => {
+    cfg.filters.groups = cfg.filters.groups.includes(val)
+      ? cfg.filters.groups.filter(x => x !== val)
+      : [...cfg.filters.groups, val];
+    renderSessionListFilterControls(kind, gId);
+    renderSessionLogsList(kind);
+  }, keepOpenId === gId);
+
+  const tId = `sessionListTypeFilterWrap_${kind}`;
+  const typeOpts = cfg.dict.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  renderDiaryMultiSelect(tId, t("Типы", "Turlar"), typeOpts, cfg.filters.types, (val) => {
+    cfg.filters.types = cfg.filters.types.includes(val)
+      ? cfg.filters.types.filter(x => x !== val)
+      : [...cfg.filters.types, val];
+    renderSessionListFilterControls(kind, tId);
+    renderSessionLogsList(kind);
+  }, keepOpenId === tId);
+}
+
+function renderSessionEntryParticipantsHtml(ent) {
+  let html = "";
+  if (ent.authorId) {
+    html += renderUserBadgeHtml(ent.authorId);
+  }
+  const collabs = Array.isArray(ent.collaborators) ? ent.collaborators : [];
+  collabs.forEach(c => {
+    if (!c) return;
+    if (c.type === "user" && c.id) {
+      if (c.id !== ent.authorId) {
+        html += renderUserBadgeHtml(c.id);
+      }
+    } else if (c.name) {
+      html += `<span class="collab-pill custom-static">${c.name}</span>`;
+    }
+  });
+  return html;
+}
+
+function renderSessionLogsList(kind) {
+  const cfg = getSessionConfig(kind);
+  const container = document.getElementById(`sessionLogsCardsContainer_${kind}`);
+  const resetBtn = document.getElementById(`sessionListResetBtn_${kind}`);
+  if (!container) return;
+
+  let list = appState[cfg.stateKey] || [];
+  if (isTutorOnly()) {
+    list = list.filter(x => x.tutorId === currentUser.id || x.authorId === currentUser.id);
+  }
+  list = list.filter(x => (cfg.statusFilter === "archived" ? x.status === "archived" : x.status !== "archived"));
+
+  if (!isTutorOnly() && cfg.filters.tutors.length > 0) {
+    list = list.filter(x => cfg.filters.tutors.includes(x.tutorId));
+  }
+  if (cfg.filters.groups.length > 0) {
+    list = list.filter(x => {
+      const st = appState.students.find(s => s.id === x.studentId);
+      const grp = st ? st.group : x.studentGroup;
+      return grp && cfg.filters.groups.includes(grp);
+    });
+  }
+  if (cfg.filters.types.length > 0) {
+    list = list.filter(x => (x.entries || []).some(ent => cfg.filters.types.includes(ent.type)));
+  }
+  if (cfg.filters.dateFrom || cfg.filters.dateTo) {
+    list = list.filter(x => (x.entries || []).some(ent => {
+      const d = ent.date || "";
+      if (cfg.filters.dateFrom && d < cfg.filters.dateFrom) return false;
+      if (cfg.filters.dateTo && d > cfg.filters.dateTo) return false;
+      return true;
+    }));
+  }
+  const q = (cfg.filters.search || "").trim().toLowerCase();
+  if (q) {
+    list = list.filter(x => {
+      const st = appState.students.find(s => s.id === x.studentId);
+      const stName = (st ? st.name : x.studentName || "").toLowerCase();
+      const stGroup = (st ? st.group : x.studentGroup || "").toLowerCase();
+      const entMatch = (x.entries || []).some(ent =>
+        (ent.text || "").toLowerCase().includes(q) ||
+        (ent.type || "").toLowerCase().includes(q)
+      );
+      return stName.includes(q) || stGroup.includes(q) || entMatch;
+    });
+  }
+
+  const hasFilter = Boolean(q || cfg.filters.tutors.length || cfg.filters.groups.length || cfg.filters.types.length || cfg.filters.dateFrom || cfg.filters.dateTo);
+  if (resetBtn) resetBtn.classList.toggle("hidden", !hasFilter);
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state">${cfg.emptyText}</div>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="diary-grid">
+      ${list.map(rec => {
+        const st = appState.students.find(s => s.id === rec.studentId);
+        const stName = st ? st.name : rec.studentName;
+        const stGroup = st ? st.group : (rec.studentGroup || "");
+        const tutorId = st ? st.tutorId : rec.tutorId;
+        const activeMonHtml = renderStudentActiveMonitoringAlertHtml(rec.studentId);
+        const entries = Array.isArray(rec.entries) ? rec.entries : [];
+        const latestType = entries.length ? entries[entries.length - 1].type : cfg.dict[0].value;
+
+        return `
+          <div class="diary-card">
+            <div class="st-card-top">
+              <div>
+                <div class="st-name">${stName}</div>
+                <div class="st-meta">${stGroup} • ${t("Тютор", "Tyutor")}: ${renderClickableDiaryTutorPill(kind, tutorId)}</div>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span class="badge-pill ${kind === 'psych' ? 'rel' : 'rent'}">${getLabelFromDict(cfg.dict, latestType)}</span>
+                ${canDeleteData(rec.authorId || rec.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteSessionDiaryRecord('${kind}', '${rec.id}', this)" title="${t("Удалить карточку", "Kartani öçiriş")}">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                </button>` : ""}
+              </div>
+            </div>
+
+            ${activeMonHtml ? `<div class="session-active-mon-alert mt-10">${activeMonHtml}</div>` : ""}
+
+            <div class="diary-entries">
+              ${entries.map(ent => `
+                <div class="diary-entry-item ${ent.outcome || ''}">
+                  <div class="diary-entry-date" style="display:flex; align-items:center; flex-wrap:wrap; gap:6px; margin-bottom:4px;">
+                    <span>${ent.date}${ent.time ? ` ${ent.time}` : ""}</span>
+                    ${ent.type ? `<span class="badge-pill" style="font-size:10px; padding:2px 8px;">${getLabelFromDict(cfg.dict, ent.type)}</span>` : ""}
+                    ${renderSessionEntryParticipantsHtml(ent)}
+                    ${ent.outcome === 'positive' ? `<span style="color:var(--emerald);">• ${t("Положительный исход (архив)", "Ijobiy natija (arxiv)")}</span>` : ""}
+                    ${ent.outcome === 'reopened' ? `<span style="color:var(--accent);">• ${t("Возвращено в активные", "Faol kuzatuvga qaytarildi")}</span>` : ""}
+                  </div>
+                  <div style="white-space:pre-line;">${ent.text}</div>
+                </div>
+              `).join("")}
+            </div>
+
+            ${rec.status !== "archived" ? `
+              <div class="mt-10" style="padding-top:10px; border-top:1px solid var(--border);">
+                <div class="session-inline-controls">
+                  <select id="sessionInlineType_${rec.id}" class="form-input" style="height:36px; padding:0 10px; font-size:12px;">
+                    ${cfg.dict.map(c => `<option value="${c.value}" ${c.value === latestType ? 'selected' : ''}>${currentLang === "oz" ? c.oz : c.ru}</option>`).join("")}
+                  </select>
+                  <div class="custom-select" id="sessionInlineCollabWrap_${rec.id}"></div>
+                </div>
+                <textarea id="sessionInlineNote_${rec.id}" class="form-textarea" rows="2" style="min-height:72px;" placeholder="${t("Продолжить запись беседы...", "Suhbat qaydini davom ettiriş...")}"></textarea>
+                <div class="st-card-actions">
+                  <label style="display:flex; align-items:center; gap:6px; font-size:12px; color:var(--emerald); font-weight:600; cursor:pointer;">
+                    <input type="checkbox" id="sessionInlinePos_${rec.id}" /> ${t("Положительный исход (в архив)", "Ijobiy natija (arxivga)")}
+                  </label>
+                  <button type="button" class="btn-dark" onclick="addSessionInlineEntry('${kind}', '${rec.id}')">${t("Добавить запись", "Qayd qöşiş")}</button>
+                </div>
+              </div>
+            ` : `
+              <div class="st-card-actions">
+                <span class="st-meta">${t("Завершено с положительным исходом", "Ijobiy natija bilan yakunlangan")}</span>
+                <button type="button" class="btn-orange sm" onclick="reopenSessionDiaryRecord('${kind}', '${rec.id}')">${t("Вернуть в активные", "Faol kuzatuvga qaytariş")}</button>
+              </div>
+            `}
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+
+  list.filter(r => r.status !== "archived").forEach(rec => {
+    renderSessionInlineCollabSelect(rec.id, false);
+  });
+}
+
+function renderSessionInlineCollabSelect(recId, keepOpen = false) {
+  const wrap = document.getElementById(`sessionInlineCollabWrap_${recId}`);
+  if (!wrap) return;
+  const arr = sessionInlineCollabDraft[recId] || [];
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+  const label = !arr.length
+    ? t("Совместно с (партнеры)...", "Hamkorlar...")
+    : (arr.length <= 2 ? arr.map(c => c.name).join(", ") : `${arr[0].name} (+${arr.length - 1})`);
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('sessionInlineCollabWrap_${recId}'); setTimeout(() => { const i = document.getElementById('sessionInlineCollabSearch_${recId}'); if(i) i.focus(); }, 30);">
+      <span>${label}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" onclick="event.stopPropagation()">
+      <input type="text" id="sessionInlineCollabSearch_${recId}" class="tg-tag-search-input" placeholder="${t("Поиск сотрудника или введите...", "Xodimni qidiriş yoki kiritiş...")}" value="${(sessionInlineCollabSearch[recId] || "").replace(/"/g, '&quot;')}" oninput="onSessionInlineCollabSearch('${recId}', this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault(); addSessionInlineCustomCollab('${recId}', this.value);}" />
+      <div id="sessionInlineCollabList_${recId}" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  if (wasOpen) wrap.classList.add("open");
+  renderSessionInlineCollabOptions(recId);
+}
+
+function onSessionInlineCollabSearch(recId, val) {
+  sessionInlineCollabSearch[recId] = val || "";
+  renderSessionInlineCollabOptions(recId);
+}
+
+function renderSessionInlineCollabOptions(recId) {
+  const listEl = document.getElementById(`sessionInlineCollabList_${recId}`);
+  if (!listEl) return;
+  const arr = sessionInlineCollabDraft[recId] || [];
+  const q = (sessionInlineCollabSearch[recId] || "").trim().toLowerCase();
+  const users = (appState.users || []).filter(u => u.id !== currentUser.id);
+  const matched = q ? users.filter(u => (u.name || "").toLowerCase().includes(q)) : users;
+  const exactMatch = users.some(u => (u.name || "").toLowerCase() === q);
+  const customSelected = arr.filter(c => c.type === "custom");
+
+  let html = "";
+  if (customSelected.length && !q) {
+    html += customSelected.map(c => `
+      <label class="social-check-option">
+        <input type="checkbox" checked onchange="removeSessionInlineCustomCollab('${recId}', '${c.name.replace(/'/g, "\'")}')" />
+        <span>${c.name}</span>
+      </label>
+    `).join("");
+  }
+  html += matched.map(u => {
+    const checked = arr.some(c => c.type === "user" && c.id === u.id);
+    return `
+      <label class="social-check-option">
+        <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleSessionInlineCollabUser('${recId}', '${u.id}')" />
+        <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+      </label>
+    `;
+  }).join("");
+
+  const cleanQ = (sessionInlineCollabSearch[recId] || "").trim();
+  if (cleanQ && !exactMatch) {
+    html += `
+      <div class="tag-ac-item create-new" onclick="addSessionInlineCustomCollab('${recId}', '${cleanQ.replace(/'/g, "\'")}')">
+        <span>+ ${t("Добавить", "Qöşiş")}: <strong>${cleanQ}</strong></span>
+      </div>
+    `;
+  }
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function toggleSessionInlineCollabUser(recId, uid) {
+  const user = appState.users.find(u => u.id === uid);
+  if (!user) return;
+  const arr = sessionInlineCollabDraft[recId] || [];
+  if (arr.some(c => c.type === "user" && c.id === uid)) {
+    sessionInlineCollabDraft[recId] = arr.filter(c => !(c.type === "user" && c.id === uid));
+  } else {
+    sessionInlineCollabDraft[recId] = [...arr, { type: "user", id: user.id, name: user.name }];
+  }
+  renderSessionInlineCollabSelect(recId, true);
+}
+
+function addSessionInlineCustomCollab(recId, rawName) {
+  const clean = convertUzbekLatinText(String(rawName || "").trim());
+  if (!clean) return;
+  const arr = sessionInlineCollabDraft[recId] || [];
+  if (!arr.some(c => c.type === "custom" && c.name.toLowerCase() === clean.toLowerCase())) {
+    sessionInlineCollabDraft[recId] = [...arr, { type: "custom", name: clean }];
+  }
+  sessionInlineCollabSearch[recId] = "";
+  renderSessionInlineCollabSelect(recId, true);
+}
+
+function removeSessionInlineCustomCollab(recId, name) {
+  sessionInlineCollabDraft[recId] = (sessionInlineCollabDraft[recId] || []).filter(c => !(c.type === "custom" && c.name === name));
+  renderSessionInlineCollabSelect(recId, true);
+}
+
+// --- Модальное окно создания психологической / профилактической беседы ---
+function openSessionDiaryModal(kind) {
+  const students = getRoleScopedStudents();
+  if (!students.length) {
+    showToast(t("Сначала добавьте студентов в базу", "Avval bazaga talabalarni qöşing"));
+    return;
+  }
+  const cfg = getSessionConfig(kind);
+  sessionModalState = {
+    kind,
+    search: "",
+    tutor: "all",
+    course: "all",
+    group: "all",
+    studentId: students[0].id,
+    type: cfg.dict[0].value,
+    collaborators: [],
+    collabSearch: ""
+  };
+
+  document.getElementById("sessionModalTitle").textContent = cfg.modalTitle;
+  document.getElementById("sessionTypeLabel").textContent = cfg.typeLabel;
+  document.getElementById("sessionDateLabel").textContent = t("Дата беседы", "Suhbat sanasi");
+  document.getElementById("sessionCollabLabel").textContent = t("Совместно с (партнеры)", "Hamkorlikda (iştirokçilar)");
+  document.getElementById("sessionNotesLabel").textContent = t("Запись беседы *", "Suhbat qaydi *");
+  document.getElementById("sessionDateInput").value = new Date().toISOString().slice(0, 10);
+  document.getElementById("sessionNotesInput").value = "";
+  const sInp = document.getElementById("sessionStudentSearchInput");
+  if (sInp) sInp.value = "";
+
+  renderSessionStudentFiltersAndList();
+
+  const typeOpts = cfg.dict.map(c => ({ value: c.value, label: currentLang === "oz" ? c.oz : c.ru }));
+  const onTypeChange = (v) => {
+    sessionModalState.type = v;
+    renderCustomSelect("sessionTypeSelectWrap", typeOpts, v, onTypeChange);
+  };
+  renderCustomSelect("sessionTypeSelectWrap", typeOpts, sessionModalState.type, onTypeChange);
+
+  renderSessionModalCollabSelect(false);
+  document.getElementById("sessionDiaryModal").classList.remove("hidden");
+}
+
+function onSessionStudentFilterChange() {
+  const inp = document.getElementById("sessionStudentSearchInput");
+  sessionModalState.search = inp ? inp.value : "";
+  renderSessionStudentOptions();
+}
+
+function renderSessionStudentFiltersAndList() {
+  const wrap = document.getElementById("sessionStudentFiltersWrap");
+  const tutorWrap = document.getElementById("sessionFilterTutorWrap");
+  if (wrap) wrap.classList.toggle("tutor-only", isTutorOnly());
+  if (tutorWrap) tutorWrap.classList.toggle("hidden", isTutorOnly());
+
+  if (!isTutorOnly()) {
+    const tutors = appState.users.filter(u => u.role === "tutor");
+    const tutorOpts = [{ value: "all", label: t("Все тюторы", "Barça tyutorlar") }]
+      .concat(tutors.map(tr => ({ value: tr.id, label: tr.name })));
+    renderCustomSelect("sessionFilterTutorWrap", tutorOpts, sessionModalState.tutor, (val) => {
+      sessionModalState.tutor = val;
+      sessionModalState.group = "all";
+      renderSessionStudentFiltersAndList();
+    });
+  }
+
+  const courseOpts = [
+    { value: "all", label: t("Все курсы", "Barça kurslar") },
+    { value: "1", label: `1 ${t("курс", "kurs")}` },
+    { value: "2", label: `2 ${t("курс", "kurs")}` },
+    { value: "3", label: `3 ${t("курс", "kurs")}` },
+    { value: "4", label: `4 ${t("курс", "kurs")}` }
+  ];
+  renderCustomSelect("sessionFilterCourseWrap", courseOpts, sessionModalState.course, (val) => {
+    sessionModalState.course = val;
+    renderSessionStudentOptions();
+  });
+
+  const groups = getGroupsForDiaryFilter(sessionModalState.tutor);
+  if (sessionModalState.group !== "all" && !groups.includes(sessionModalState.group)) {
+    sessionModalState.group = "all";
+  }
+  const groupOpts = [{ value: "all", label: t("Все группы", "Barça guruhlar") }]
+    .concat(groups.map(g => ({ value: g, label: g })));
+  renderCustomSelect("sessionFilterGroupWrap", groupOpts, sessionModalState.group, (val) => {
+    sessionModalState.group = val;
+    renderSessionStudentOptions();
+  });
+
+  renderSessionStudentOptions();
+}
+
+function renderSessionStudentOptions() {
+  let list = getFilteredStudentsForDiary(sessionModalState);
+  if (sessionModalState.course !== "all") {
+    list = list.filter(s => String(s.course) === String(sessionModalState.course));
+  }
+  if (!list.some(s => s.id === sessionModalState.studentId)) {
+    sessionModalState.studentId = list[0] ? list[0].id : "";
+  }
+  const stOpts = list.length
+    ? list.map(s => ({ value: s.id, label: `${s.name} (${s.group})` }))
+    : [{ value: "", label: t("Студенты не найдены", "Talabalar topilmadi") }];
+
+  const onStChange = (v) => {
+    sessionModalState.studentId = v;
+    renderCustomSelect("sessionStudentSelectWrap", stOpts, v, onStChange);
+    updateSessionActiveMonBox();
+  };
+  renderCustomSelect("sessionStudentSelectWrap", stOpts, sessionModalState.studentId, onStChange);
+  updateSessionActiveMonBox();
+}
+
+function updateSessionActiveMonBox() {
+  const box = document.getElementById("sessionActiveMonBox");
+  if (!box) return;
+  const html = renderStudentActiveMonitoringAlertHtml(sessionModalState.studentId);
+  if (!html) {
+    box.innerHTML = "";
+    box.classList.add("hidden");
+  } else {
+    box.innerHTML = html;
+    box.classList.remove("hidden");
+  }
+}
+
+function renderSessionModalCollabSelect(keepOpen = false) {
+  const wrap = document.getElementById("sessionCollabSelectWrap");
+  if (!wrap) return;
+  const arr = sessionModalState.collaborators || [];
+  const wasOpen = keepOpen || wrap.classList.contains("open");
+  const label = !arr.length
+    ? t("Выберите партнеров или введите...", "Hamkorlarni tanlang yoki kiriting...")
+    : (arr.length <= 2 ? arr.map(c => c.name).join(", ") : `${arr[0].name}, ${arr[1].name} (+${arr.length - 2})`);
+
+  wrap.innerHTML = `
+    <div class="cs-trigger" onclick="toggleCustomSelect('sessionCollabSelectWrap'); setTimeout(() => { const i = document.getElementById('sessionModalCollabSearch'); if(i) i.focus(); }, 30);">
+      <span>${label}</span>
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6l6 -6"/></svg>
+    </div>
+    <div class="cs-menu" style="max-height:none; overflow:visible; width:100%; max-width:none; padding:8px;" onclick="event.stopPropagation()">
+      <input type="text" id="sessionModalCollabSearch" class="tg-tag-search-input" placeholder="${t("Поиск сотрудника или введите...", "Xodimni qidiriş yoki kiritiş...")}" value="${(sessionModalState.collabSearch || "").replace(/"/g, '&quot;')}" oninput="renderSessionModalCollabOptions()" onkeydown="if(event.key==='Enter'){event.preventDefault(); addSessionModalCustomCollab(this.value);}" />
+      <div id="sessionModalCollabList" class="tg-tag-search-list"></div>
+    </div>
+  `;
+  if (wasOpen) wrap.classList.add("open");
+  renderSessionModalCollabOptions();
+}
+
+function renderSessionModalCollabOptions() {
+  const listEl = document.getElementById("sessionModalCollabList");
+  const inp = document.getElementById("sessionModalCollabSearch");
+  if (!listEl) return;
+  sessionModalState.collabSearch = inp ? inp.value : "";
+  const q = sessionModalState.collabSearch.trim().toLowerCase();
+  const users = (appState.users || []).filter(u => u.id !== currentUser.id);
+  const matched = q ? users.filter(u => (u.name || "").toLowerCase().includes(q)) : users;
+  const exactMatch = users.some(u => (u.name || "").toLowerCase() === q);
+  const customSelected = (sessionModalState.collaborators || []).filter(c => c.type === "custom");
+
+  let html = "";
+  if (customSelected.length && !q) {
+    html += customSelected.map(c => `
+      <label class="social-check-option">
+        <input type="checkbox" checked onchange="removeSessionModalCustomCollab('${c.name.replace(/'/g, "\'")}')" />
+        <span>${c.name}</span>
+      </label>
+    `).join("");
+  }
+  html += matched.map(u => {
+    const checked = sessionModalState.collaborators.some(c => c.type === "user" && c.id === u.id);
+    return `
+      <label class="social-check-option">
+        <input type="checkbox" ${checked ? "checked" : ""} onchange="toggleSessionModalCollabUser('${u.id}')" />
+        <span>${u.name} <span class="st-meta">(${localizeRoleTitle(u.role, u.roleTitle)})</span></span>
+      </label>
+    `;
+  }).join("");
+
+  const cleanQ = sessionModalState.collabSearch.trim();
+  if (cleanQ && !exactMatch) {
+    html += `
+      <div class="tag-ac-item create-new" onclick="addSessionModalCustomCollab('${cleanQ.replace(/'/g, "\'")}')">
+        <span>+ ${t("Добавить участника", "Iştirokçi qöşiş")}: <strong>${cleanQ}</strong></span>
+      </div>
+    `;
+  }
+  listEl.innerHTML = html || `<div class="st-meta" style="padding:8px 10px;">${t("Ничего не найдено", "Heç narsa topilmadi")}</div>`;
+}
+
+function toggleSessionModalCollabUser(uid) {
+  const user = appState.users.find(u => u.id === uid);
+  if (!user) return;
+  if (sessionModalState.collaborators.some(c => c.type === "user" && c.id === uid)) {
+    sessionModalState.collaborators = sessionModalState.collaborators.filter(c => !(c.type === "user" && c.id === uid));
+  } else {
+    sessionModalState.collaborators.push({ type: "user", id: user.id, name: user.name });
+  }
+  renderSessionModalCollabSelect(true);
+}
+
+function addSessionModalCustomCollab(rawName) {
+  const clean = convertUzbekLatinText(String(rawName || "").trim());
+  if (!clean) return;
+  if (!sessionModalState.collaborators.some(c => c.type === "custom" && c.name.toLowerCase() === clean.toLowerCase())) {
+    sessionModalState.collaborators.push({ type: "custom", name: clean });
+  }
+  sessionModalState.collabSearch = "";
+  renderSessionModalCollabSelect(true);
+}
+
+function removeSessionModalCustomCollab(name) {
+  sessionModalState.collaborators = sessionModalState.collaborators.filter(c => !(c.type === "custom" && c.name === name));
+  renderSessionModalCollabSelect(true);
+}
+
+function saveSessionDiaryRecord() {
+  const cfg = getSessionConfig(sessionModalState.kind);
+  const st = appState.students.find(s => s.id === sessionModalState.studentId);
+  const text = document.getElementById("sessionNotesInput").value.trim();
+  if (!st || !text) {
+    showToast(t("Выберите студента и введите текст беседы", "Talabani tanlang va suhbat matnini kiriting"));
+    return;
+  }
+
+  const entryDate = document.getElementById("sessionDateInput").value || new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const newEntry = {
+    date: entryDate,
+    time: nowTime,
+    authorId: currentUser.id,
+    type: sessionModalState.type || cfg.dict[0].value,
+    collaborators: [...(sessionModalState.collaborators || [])],
+    outcome: "normal",
+    text
+  };
+
+  const list = appState[cfg.stateKey];
+  const existing = list.find(x => x.studentId === st.id);
+  if (existing) {
+    existing.status = "active";
+    if (!Array.isArray(existing.entries)) existing.entries = [];
+    existing.entries.push(newEntry);
+    saveState();
+    syncSpecificTutorFolder(existing.tutorId);
+  } else {
+    const rec = {
+      id: `${cfg.kind}_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
+      studentId: st.id,
+      studentName: st.name,
+      studentGroup: st.group,
+      tutorId: st.tutorId || currentUser.id,
+      authorId: currentUser.id,
+      status: "active",
+      entries: [newEntry]
+    };
+    list.unshift(rec);
+    saveState();
+    syncSpecificTutorFolder(rec.tutorId);
+  }
+
+  closeModal("sessionDiaryModal");
+  cfg.setStatusFilter("active");
+  renderSessionDiaryTab(cfg.kind);
+  showToast(t("Запись беседы сохранена", "Suhbat qaydi saqlandi"));
+}
+
+function addSessionInlineEntry(kind, recId) {
+  const cfg = getSessionConfig(kind);
+  const rec = (appState[cfg.stateKey] || []).find(x => x.id === recId);
+  if (!rec) return;
+  const noteEl = document.getElementById(`sessionInlineNote_${recId}`);
+  const typeEl = document.getElementById(`sessionInlineType_${recId}`);
+  const posEl = document.getElementById(`sessionInlinePos_${recId}`);
+  const text = noteEl ? noteEl.value.trim() : "";
+  if (!text) {
+    showToast(t("Введите текст записи", "Qayd matnini kiriting"));
+    return;
+  }
+
+  const isPositive = Boolean(posEl && posEl.checked);
+  const nowDate = new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+  if (!Array.isArray(rec.entries)) rec.entries = [];
+  rec.entries.push({
+    date: nowDate,
+    time: nowTime,
+    authorId: currentUser.id,
+    type: typeEl ? typeEl.value : cfg.dict[0].value,
+    collaborators: [...(sessionInlineCollabDraft[recId] || [])],
+    outcome: isPositive ? "positive" : "normal",
+    text
+  });
+
+  sessionInlineCollabDraft[recId] = [];
+  sessionInlineCollabSearch[recId] = "";
+
+  if (isPositive) {
+    rec.status = "archived";
+    showToast(t("Положительный исход зафиксирован. Карточка перенесена в архив.", "Ijobiy natija qayd etildi. Karta arxivga ötkazildi."));
+  } else {
+    showToast(t("Запись добавлена", "Qayd qöşildi"));
+  }
+
+  saveState();
+  syncSpecificTutorFolder(rec.tutorId);
+  renderSessionDiaryTab(kind);
+}
+
+function reopenSessionDiaryRecord(kind, recId) {
+  const cfg = getSessionConfig(kind);
+  const rec = (appState[cfg.stateKey] || []).find(x => x.id === recId);
+  if (!rec) return;
+  rec.status = "active";
+  const nowDate = new Date().toISOString().slice(0, 10);
+  const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  rec.entries.push({
+    date: nowDate,
+    time: nowTime,
+    authorId: currentUser.id,
+    type: rec.entries.length ? rec.entries[rec.entries.length - 1].type : cfg.dict[0].value,
+    collaborators: [],
+    outcome: "reopened",
+    text: t("Наблюдение возобновлено и возвращено из архива.", "Kuzatuv arxivdan qaytarildi va davom ettirildi.")
+  });
+  saveState();
+  syncSpecificTutorFolder(rec.tutorId);
+  cfg.setStatusFilter("active");
+  renderSessionDiaryTab(kind);
+  showToast(t("Карточка возвращена в активные наблюдения", "Karta faol kuzatuvlarga qaytarildi"));
+}
+
+function deleteSessionDiaryRecord(kind, recId, btnEl) {
+  const cfg = getSessionConfig(kind);
+  const target = (appState[cfg.stateKey] || []).find(x => x.id === recId);
+  if (!target || !canDeleteData(target.authorId || target.tutorId)) {
+    showToast(t("Недостаточно прав для удаления", "Öçiriş uçun ruxsat yetarli emas"));
+    return;
+  }
+  askConfirmDelete(btnEl, () => {
+    const ownerTutorId = target.tutorId;
+    appState[cfg.stateKey] = (appState[cfg.stateKey] || []).filter(x => x.id !== recId);
+    saveState();
+    if (ownerTutorId) syncSpecificTutorFolder(ownerTutorId);
+    renderSessionDiaryTab(kind);
+    showToast(t("Карточка удалена", "Karta öçirildi"));
+  });
+}
+
 
 // ==================== 5. ПРОФИЛЬ И АВТО-CV (ВКЛЮЧАЯ АВАТАР В ВЕРХНЕМ МЕНЮ) ====================
 function loadProfileForm() {
