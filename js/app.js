@@ -3038,9 +3038,14 @@ function renderStudentsAllTable() {
                   <td>${tutorCellHtml}</td>
                   <td>${formatPhoneTgLink(s.phone)}</td>
                   <td style="text-align:right; white-space:nowrap;">
-                    ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
-                    </button>` : ""}
+                    <div class="st-row-actions">
+                      <button type="button" class="btn-doc-icon" onclick="exportStudentCardDocx('${s.id}')" title="${t("Скачать карточку студента (DOCX)", "Talaba kartoçkasini yuklab oliş (DOCX)")}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z"/><path d="M12 17v-6"/><path d="M9.5 14.5l2.5 2.5l2.5 -2.5"/></svg>
+                      </button>
+                      ${canDeleteData(s.tutorId) ? `<button type="button" class="btn-del-icon" data-del-trigger="1" onclick="deleteStudent('${s.id}', this)" title="${t("Удалить", "Öçiriş")}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7l16 0"/><path d="M10 11l0 6"/><path d="M14 11l0 6"/><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12"/><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3"/></svg>
+                      </button>` : ""}
+                    </div>
                   </td>
                 </tr>
               `;
@@ -11516,4 +11521,565 @@ function stopChatHubPolling() {
     firebaseMyPresenceRef.remove().catch(() => {});
     firebaseMyPresenceRef = null;
   }
+}
+
+
+// ==================== ГЕНЕРАТОР КАРТОЧКИ СТУДЕНТА В ФОРМАТЕ DOCX (RU / ÖZ) ====================
+const DEFAULT_DOCX_SILHOUETTE_B64 = "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";
+
+const DOCX_CRC32_TABLE = (() => {
+  const table = new Uint32Array(256);
+  for (let i = 0; i < 256; i++) {
+    let c = i;
+    for (let k = 0; k < 8; k++) {
+      c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+    }
+    table[i] = c >>> 0;
+  }
+  return table;
+})();
+
+function docxCrc32(bytes) {
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < bytes.length; i++) {
+    crc = DOCX_CRC32_TABLE[(crc ^ bytes[i]) & 0xFF] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+
+function buildDocxZipBlob(entries) {
+  const enc = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  entries.forEach(entry => {
+    const nameBytes = enc.encode(entry.name);
+    const dataBytes = entry.data instanceof Uint8Array ? entry.data : enc.encode(String(entry.data));
+    const crc = docxCrc32(dataBytes);
+    const size = dataBytes.length;
+
+    const lh = new Uint8Array(30 + nameBytes.length);
+    const lhv = new DataView(lh.buffer);
+    lhv.setUint32(0, 0x04034b50, true);
+    lhv.setUint16(4, 20, true);
+    lhv.setUint16(6, 0x0800, true);
+    lhv.setUint16(8, 0, true);
+    lhv.setUint16(10, 0, true);
+    lhv.setUint16(12, 0, true);
+    lhv.setUint32(14, crc, true);
+    lhv.setUint32(18, size, true);
+    lhv.setUint32(22, size, true);
+    lhv.setUint16(26, nameBytes.length, true);
+    lhv.setUint16(28, 0, true);
+    lh.set(nameBytes, 30);
+
+    localParts.push(lh, dataBytes);
+
+    const ch = new Uint8Array(46 + nameBytes.length);
+    const chv = new DataView(ch.buffer);
+    chv.setUint32(0, 0x02014b50, true);
+    chv.setUint16(4, 20, true);
+    chv.setUint16(6, 20, true);
+    chv.setUint16(8, 0x0800, true);
+    chv.setUint16(10, 0, true);
+    chv.setUint16(12, 0, true);
+    chv.setUint16(14, 0, true);
+    chv.setUint32(16, crc, true);
+    chv.setUint32(20, size, true);
+    chv.setUint32(24, size, true);
+    chv.setUint16(28, nameBytes.length, true);
+    chv.setUint16(30, 0, true);
+    chv.setUint16(32, 0, true);
+    chv.setUint16(34, 0, true);
+    chv.setUint16(36, 0, true);
+    chv.setUint32(38, 0, true);
+    chv.setUint32(42, offset, true);
+    ch.set(nameBytes, 46);
+
+    centralParts.push(ch);
+    offset += lh.length + dataBytes.length;
+  });
+
+  const centralSize = centralParts.reduce((sum, p) => sum + p.length, 0);
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(4, 0, true);
+  ev.setUint16(6, 0, true);
+  ev.setUint16(8, entries.length, true);
+  ev.setUint16(10, entries.length, true);
+  ev.setUint32(12, centralSize, true);
+  ev.setUint32(16, offset, true);
+  ev.setUint16(20, 0, true);
+
+  return new Blob([...localParts, ...centralParts, eocd], {
+    type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+  });
+}
+
+function base64ToUint8Array(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+function prepareDocxPhotoBytes(photoDataUrl) {
+  return new Promise((resolve) => {
+    const src = photoDataUrl || `data:image/png;base64,${DEFAULT_DOCX_SILHOUETTE_B64}`;
+    const isSilhouette = !photoDataUrl;
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const targetW = 270;
+        const targetH = 360;
+        const canvas = document.createElement("canvas");
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, targetW, targetH);
+
+        if (isSilhouette) {
+          const side = Math.min(targetW, targetH) - 16;
+          const dx = Math.round((targetW - side) / 2);
+          const dy = Math.round((targetH - side) / 2);
+          ctx.drawImage(img, dx, dy, side, side);
+        } else {
+          const scale = Math.max(targetW / img.width, targetH / img.height);
+          const sw = targetW / scale;
+          const sh = targetH / scale;
+          const sx = (img.width - sw) / 2;
+          const sy = (img.height - sh) / 2;
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
+        }
+
+        const jpgDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+        const rawB64 = jpgDataUrl.split(",")[1];
+        resolve({ bytes: base64ToUint8Array(rawB64), ext: "jpg", contentType: "image/jpeg" });
+      } catch (e) {
+        resolve({ bytes: base64ToUint8Array(DEFAULT_DOCX_SILHOUETTE_B64), ext: "png", contentType: "image/png" });
+      }
+    };
+    img.onerror = () => {
+      resolve({ bytes: base64ToUint8Array(DEFAULT_DOCX_SILHOUETTE_B64), ext: "png", contentType: "image/png" });
+    };
+    img.src = src;
+  });
+}
+
+function docxXmlEsc(str) {
+  return String(str === undefined || str === null ? "" : str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function docxRun(text, opts = {}) {
+  const sz = opts.sz || 24; // 12pt default (half-points)
+  const bold = opts.bold ? "<w:b/><w:bCs/>" : "";
+  const italic = opts.italic ? "<w:i/><w:iCs/>" : "";
+  const color = opts.color ? `<w:color w:val="${opts.color}"/>` : "";
+  return `<w:r><w:rPr><w:rFonts w:ascii="Times New Roman" w:hAnsi="Times New Roman" w:cs="Times New Roman"/>${bold}${italic}${color}<w:sz w:val="${sz}"/><w:szCs w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${docxXmlEsc(text)}</w:t></w:r>`;
+}
+
+function docxPara(runsXml, opts = {}) {
+  const align = opts.align ? `<w:jc w:val="${opts.align}"/>` : "";
+  const before = opts.before !== undefined ? opts.before : 0;
+  const after = opts.after !== undefined ? opts.after : 80;
+  const line = opts.line || 260;
+  const indent = opts.left ? `<w:ind w:left="${opts.left}"/>` : "";
+  const borderBottom = opts.borderBottom ? `<w:pBdr><w:bottom w:val="single" w:sz="6" w:space="4" w:color="CBD5E1"/></w:pBdr>` : "";
+  return `<w:p><w:pPr>${align}${borderBottom}<w:spacing w:before="${before}" w:after="${after}" w:line="${line}" w:lineRule="auto"/>${indent}</w:pPr>${runsXml}</w:p>`;
+}
+
+function formatDateDDMMYYYY(d = new Date()) {
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+function formatIsoToDDMMYYYY(iso) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : (iso || "—");
+}
+
+async function exportStudentCardDocx(studentId) {
+  const s = (appState.students || []).find(x => x.id === studentId);
+  if (!s) return;
+
+  const isOz = currentLang === "oz";
+  const L = (ru, oz) => (isOz ? oz : ru);
+  const todayStr = formatDateDDMMYYYY(new Date());
+  const hemisNum = (s.hemisId && String(s.hemisId).trim()) ? String(s.hemisId).trim() : L("б/н", "raqamsiz");
+  const tutor = (appState.users || []).find(u => u.id === s.tutorId);
+
+  const photoObj = await prepareDocxPhotoBytes(s.photo || "");
+
+  // 1. Заголовок карточки
+  const docTitle = isOz
+    ? `TALABA KARTOÇKASI №${hemisNum} (${todayStr} holatiga köra)`
+    : `КАРТОЧКА СТУДЕНТА №${hemisNum} (по состоянию на ${todayStr})`;
+
+  // 2. Таблица шапки (Фото 3x4 слева + 7 строк справа)
+  const fioValue = `${s.name || "—"}` + (s.isLeader ? ` (${L("Староста группы", "Guruh sardori")})` : "");
+  const courseGroupValue = `${s.course || "—"} ${L("курс", "kurs")}, ${s.group || "—"}`;
+  const tutorValue = tutor ? tutor.name : "—";
+  const regionValue = s.region || "—";
+  const passportPinflValue = `${s.passport || "—"} / ${s.pinfl || "—"}`;
+  const studyFormValue = getLabelFromDict(STUDY_FORMS, s.studyForm || "contract");
+  const phoneValue = s.phone || "—";
+
+  const infoRows = [
+    [L("Ф.И.О.:", "F.I.Ş.:"), fioValue],
+    [L("Курс и группа:", "Kurs va guruh:"), courseGroupValue],
+    [L("Тютор:", "Tyutor:"), tutorValue],
+    [L("Регион:", "Hudud (kelib çiqişi):"), regionValue],
+    [L("Паспорт и ПИНФЛ:", "Pasport va JŞŞIR:"), passportPinflValue],
+    [L("Форма обучения:", "Ta’lim şakli:"), studyFormValue],
+    [L("Номер телефона:", "Telefon raqami:"), phoneValue]
+  ];
+
+  const photoDrawingXml = `<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="1080000" cy="1440000"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:docPr id="1" name="StudentPhoto"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:nvPicPr><pic:cNvPr id="0" name="image1.${photoObj.ext}"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="1080000" cy="1440000"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>`;
+
+  const tableRowsXml = infoRows.map((pair, idx) => {
+    const leftCell = idx === 0
+      ? `<w:tc><w:tcPr><w:tcW w:w="2100" w:type="dxa"/><w:vMerge w:val="restart"/><w:vAlign w:val="top"/></w:tcPr><w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr>${photoDrawingXml}</w:p></w:tc>`
+      : `<w:tc><w:tcPr><w:tcW w:w="2100" w:type="dxa"/><w:vMerge/></w:tcPr><w:p><w:pPr><w:spacing w:before="0" w:after="0"/></w:pPr></w:p></w:tc>`;
+
+    const rightCell = `<w:tc><w:tcPr><w:tcW w:w="7255" w:type="dxa"/><w:tcMar><w:left w:w="140" w:type="dxa"/><w:top w:w="40" w:type="dxa"/><w:bottom w:w="40" w:type="dxa"/></w:tcMar><w:vAlign w:val="center"/></w:tcPr>${docxPara(docxRun(pair[0] + " ", { bold: true, sz: 24 }) + docxRun(pair[1], { sz: 24 }), { before: 20, after: 40, line: 240 })}</w:tc>`;
+
+    return `<w:tr>${leftCell}${rightCell}</w:tr>`;
+  }).join("");
+
+  const topTableXml = `<w:tbl><w:tblPr><w:tblW w:w="9355" w:type="dxa"/><w:tblBorders><w:top w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:left w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:bottom w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:right w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:insideH w:val="none" w:sz="0" w:space="0" w:color="auto"/><w:insideV w:val="none" w:sz="0" w:space="0" w:color="auto"/></w:tblBorders></w:tblPr><w:tblGrid><w:gridCol w:w="2100"/><w:gridCol w:w="7255"/></w:tblGrid>${tableRowsXml}</w:tbl>`;
+
+  const bodyParts = [];
+  bodyParts.push(docxPara(docxRun(docTitle, { bold: true, sz: 28, color: "14171F" }), { align: "center", before: 0, after: 180, borderBottom: true }));
+  bodyParts.push(topTableXml);
+
+  const addSectionHeader = (title) => {
+    bodyParts.push(docxPara(docxRun(title, { bold: true, sz: 26, color: "14171F" }), { before: 180, after: 60 }));
+  };
+
+  const addInlineSection = (label, valueText) => {
+    bodyParts.push(docxPara(
+      docxRun(label + " ", { bold: true, sz: 26, color: "14171F" }) + docxRun(valueText, { sz: 24 }),
+      { before: 140, after: 60 }
+    ));
+  };
+
+  // 3. Данные о родителях
+  addSectionHeader(L("Данные о родителях и родственниках:", "Ota-onalar va qarindoşlar haqida ma’lumot:"));
+  const validFamily = (Array.isArray(s.family) ? s.family : []).filter(m =>
+    m && ((m.name && m.name.trim()) || (m.phone && m.phone.trim()) || (m.work && m.work.trim()))
+  );
+  if (validFamily.length) {
+    validFamily.forEach(mem => {
+      const relLabel = mem.relation === "Другое..."
+        ? (mem.customRelation || L("Родственник", "Qarindoşi"))
+        : getLabelFromDict(RELATIVE_TYPES, mem.relation);
+      const details = [
+        mem.name ? mem.name.trim() : "—",
+        mem.phone ? `${L("тел.", "tel.")}: ${mem.phone.trim()}` : "",
+        mem.work ? `${L("место работы", "iş joyi")}: ${mem.work.trim()}` : ""
+      ].filter(Boolean).join(", ");
+      bodyParts.push(docxPara(
+        docxRun(`• ${relLabel}: `, { bold: true, sz: 24 }) + docxRun(details, { sz: 24 }),
+        { left: 260, before: 20, after: 40 }
+      ));
+    });
+  } else {
+    bodyParts.push(docxPara(docxRun(L("Данные не указаны.", "Ma’lumotlar kiritilmagan."), { italic: true, sz: 24, color: "6B7280" }), { left: 260, after: 60 }));
+  }
+
+  // 4. Социальный реестр
+  const socListText = (Array.isArray(s.social) && s.social.length)
+    ? s.social.map(c => getLabelFromDict(SOCIAL_CATEGORIES, c)).join(", ")
+    : L("Не состоит.", "Röyxatda turmaydi.");
+  addInlineSection(L("Социальный реестр:", "Ijtimoiy reestr:"), socListText);
+
+  // 5. Волонтерство
+  const vols = getStudentVolunteers(s);
+  const volListText = vols.length
+    ? vols.map(v => getLabelFromDict(VOLUNTEER_DIRECTIONS, v)).join(", ")
+    : L("Не состоит.", "A’zo emas.");
+  addInlineSection(L("Волонтерство:", "Volontyorlik:"), volListText);
+
+  // 6. Информация о жилье
+  addSectionHeader(L("Информация о жилье:", "Turar joy ma’lumotlari:"));
+  if (s.housingType === "dorm") {
+    bodyParts.push(docxPara(
+      docxRun(`${L("Общежитие, комната №", "Yotoqxona, xona №")} ${s.room || "—"}`, { bold: true, sz: 24 }),
+      { left: 260, after: 40 }
+    ));
+    const mates = s.room
+      ? (appState.students || []).filter(other => other.id !== s.id && other.housingType === "dorm" && String(other.room || "").trim() === String(s.room).trim())
+      : [];
+    const matesStr = mates.length
+      ? mates.map(m => `${m.name} (${m.group})`).join(", ")
+      : L("другие студенты в базе не зарегистрированы", "bazada boşqa talabalar qayd etilmagan");
+    bodyParts.push(docxPara(
+      docxRun(`${L("Соседи по комнате:", "Xonadoşlar:")} `, { bold: true, sz: 24 }) + docxRun(matesStr, { sz: 24 }),
+      { left: 260, after: 60 }
+    ));
+  } else if (s.housingType === "rent") {
+    bodyParts.push(docxPara(
+      docxRun(`${L("Съемная квартира.", "Ijara xonadon.")} `, { bold: true, sz: 24 }) +
+      docxRun(`${L("Адрес", "Manzil")}: ${s.address || "—"}. ${L("Владелец", "Uy egasi")}: ${s.landlord || "—"}.`, { sz: 24 }),
+      { left: 260, after: 60 }
+    ));
+  } else if (s.housingType === "relatives") {
+    bodyParts.push(docxPara(
+      docxRun(`${L("Проживание у родственников.", "Qarindoşinikida yaşaydi.")} `, { bold: true, sz: 24 }) +
+      docxRun(`${L("Адрес", "Manzil")}: ${s.address || "—"}. ${L("Родственник", "Qarindoşi")}: ${s.relativeHost || "—"}.`, { sz: 24 }),
+      { left: 260, after: 60 }
+    ));
+  } else {
+    bodyParts.push(docxPara(
+      docxRun(`${L("Собственный дом.", "Öz uyi.")} `, { bold: true, sz: 24 }) +
+      docxRun(`${L("Адрес", "Manzil")}: ${s.address || L("Постоянное место жительства", "Doimiy yaşaş joyi")}.`, { sz: 24 }),
+      { left: 260, after: 60 }
+    ));
+  }
+
+  // 7. Информация о трудоустройстве
+  if (s.employed) {
+    const empParts = [
+      L("Трудоустроен(а)", "Iş bilan band"),
+      s.empOrg ? `${L("организация", "taşkilot")}: ${s.empOrg}` : "",
+      s.empPosition ? `${L("должность", "lavozimi")}: ${s.empPosition}` : "",
+      s.empAddress ? `${L("адрес", "manzili")}: ${s.empAddress}` : "",
+      s.empBossName ? `${L("руководитель", "rahbari")}: ${s.empBossName}${s.empBossPhone ? ` (${s.empBossPhone})` : ""}` : "",
+      (s.empTimeFrom || s.empTimeTo) ? `${L("график", "iş vaqti")}: ${s.empTimeFrom || "—"}–${s.empTimeTo || "—"}` : "",
+      s.empSalary ? `${L("зарплата", "oylik maoşi")}: ${formatSalaryUZS(s.empSalary)}` : ""
+    ].filter(Boolean).join("; ") + ".";
+    addInlineSection(L("Информация о трудоустройстве:", "Bandlik / iş joyi haqida ma’lumot:"), empParts);
+  } else {
+    addInlineSection(L("Информация о трудоустройстве:", "Bandlik / iş joyi haqida ma’lumot:"), L("Не трудоустроен(а).", "Iş bilan band emas."));
+  }
+
+  // 8. Семейное положение
+  const maritalOpts = getMaritalStatusOptions(s.gender);
+  const maritalObj = maritalOpts.find(o => o.value === (s.maritalStatus || "single")) || maritalOpts[0];
+  let maritalText = maritalObj ? maritalObj.label : "—";
+  if (s.maritalStatus === "married") {
+    const spDetails = [
+      s.spouseName ? `${L("супруг(а)", "turmuş örtoği")}: ${s.spouseName}` : "",
+      s.spouseBirth ? `${L("дата рождения", "tuğilgan sanasi")}: ${formatIsoToDDMMYYYY(s.spouseBirth)}` : "",
+      (s.childrenCount !== undefined && s.childrenCount !== "") ? `${L("детей", "farzandlar soni")}: ${s.childrenCount}` : ""
+    ].filter(Boolean).join(", ");
+    if (spDetails) maritalText += ` (${spDetails})`;
+  }
+  addInlineSection(L("Семейное положение:", "Oilaviy holati:"), maritalText + ".");
+
+  // 9. Записи из мониторинга и дневников (все записи по студенту)
+  addSectionHeader(L("Записи из мониторинга и дневников:", "Monitoring va kundalik qaydlari:"));
+
+  const getUserNameById = (uid) => {
+    const u = (appState.users || []).find(x => x.id === uid);
+    return u ? `${u.name} (${localizeRoleTitle(u.role, u.roleTitle)})` : "";
+  };
+
+  const formatConductors = (authorId, collaborators) => {
+    const names = [];
+    const main = getUserNameById(authorId);
+    if (main) names.push(main);
+    (Array.isArray(collaborators) ? collaborators : []).forEach(c => {
+      if (!c) return;
+      if (c.type === "user" && c.id && c.id !== authorId) {
+        const nm = getUserNameById(c.id);
+        if (nm) names.push(nm);
+      } else if (c.name) {
+        names.push(c.name);
+      }
+    });
+    return names.length ? names.join(", ") : "—";
+  };
+
+  let totalDiaryBlocks = 0;
+
+  // 9.1 Мониторинг студентов (тютор)
+  const monRecs = (appState.monitoring || []).filter(m => m.studentId === s.id);
+  if (monRecs.length) {
+    totalDiaryBlocks++;
+    bodyParts.push(docxPara(docxRun(L("1. Индивидуальный мониторинг (тютор):", "1. Individual monitoring (tyutor):"), { bold: true, sz: 24, color: "2563EB" }), { before: 80, after: 40 }));
+    monRecs.forEach(rec => {
+      const stLabel = rec.status === "archived" ? L("Архив / снят с учета", "Arxiv / hisobdan çiqarilgan") : L("Активный учет", "Faol hisobda");
+      const catLabel = getLabelFromDict(MONITORING_CATEGORIES, rec.category);
+      const extraMeta = [
+        rec.debtAmount ? `${L("долг", "qarz")}: ${formatSalaryUZS(rec.debtAmount)}` : "",
+        rec.partnerName ? `${L("вторая половинка", "ikkinçi yarmi")}: ${rec.partnerName} (${rec.partnerGroup || ""})` : ""
+      ].filter(Boolean).join("; ");
+      bodyParts.push(docxPara(
+        docxRun(`[${stLabel}] ${catLabel}`, { bold: true, sz: 24 }) + (extraMeta ? docxRun(` — ${extraMeta}`, { sz: 24 }) : ""),
+        { left: 200, before: 20, after: 30 }
+      ));
+      const conductedBy = getUserNameById(rec.tutorId) || tutorValue;
+      (rec.entries || []).forEach(ent => {
+        const tag = ent.type === "positive"
+          ? ` [${L("Положительный результат", "Ijobiy natija")}]`
+          : (ent.type === "reopened" ? ` [${L("Повторный учет", "Qayta hisob")}]` : "");
+        bodyParts.push(docxPara(
+          docxRun(`• ${formatIsoToDDMMYYYY(ent.date)}`, { bold: true, sz: 22 }) +
+          docxRun(` (${conductedBy})${tag}: `, { italic: true, sz: 22, color: "4B5563" }) +
+          docxRun(ent.text || "", { sz: 22 }),
+          { left: 380, before: 10, after: 30 }
+        ));
+      });
+    });
+  }
+
+  // 9.2 Психологические беседы
+  const psychRecs = (appState.psychLogs || []).filter(x => x.studentId === s.id);
+  if (psychRecs.length) {
+    totalDiaryBlocks++;
+    bodyParts.push(docxPara(docxRun(L("Психологические беседы:", "Psixologik suhbatlar:"), { bold: true, sz: 24, color: "059669" }), { before: 80, after: 40 }));
+    psychRecs.forEach(rec => {
+      (rec.entries || []).forEach(ent => {
+        const typeLabel = getLabelFromDict(PSYCH_SESSION_TYPES, ent.type);
+        const conductors = formatConductors(ent.authorId || rec.authorId, ent.collaborators);
+        const outcomeTag = ent.outcome === "positive" ? ` [${L("Положительный исход", "Ijobiy natija")}]` : "";
+        bodyParts.push(docxPara(
+          docxRun(`• ${formatIsoToDDMMYYYY(ent.date)}${ent.time ? " " + ent.time : ""} — ${typeLabel}`, { bold: true, sz: 22 }) +
+          docxRun(` (${conductors})${outcomeTag}: `, { italic: true, sz: 22, color: "4B5563" }) +
+          docxRun(ent.text || "", { sz: 22 }),
+          { left: 260, before: 10, after: 30 }
+        ));
+      });
+    });
+  }
+
+  // 9.3 Профилактические беседы
+  const prevRecs = (appState.preventiveLogs || []).filter(x => x.studentId === s.id);
+  if (prevRecs.length) {
+    totalDiaryBlocks++;
+    bodyParts.push(docxPara(docxRun(L("Профилактические беседы:", "Profilaktik suhbatlar:"), { bold: true, sz: 24, color: "B45309" }), { before: 80, after: 40 }));
+    prevRecs.forEach(rec => {
+      (rec.entries || []).forEach(ent => {
+        const typeLabel = getLabelFromDict(PREVENTIVE_SESSION_TYPES, ent.type);
+        const conductors = formatConductors(ent.authorId || rec.authorId, ent.collaborators);
+        const outcomeTag = ent.outcome === "positive" ? ` [${L("Положительный исход", "Ijobiy natija")}]` : "";
+        bodyParts.push(docxPara(
+          docxRun(`• ${formatIsoToDDMMYYYY(ent.date)}${ent.time ? " " + ent.time : ""} — ${typeLabel}`, { bold: true, sz: 22 }) +
+          docxRun(` (${conductors})${outcomeTag}: `, { italic: true, sz: 22, color: "4B5563" }) +
+          docxRun(ent.text || "", { sz: 22 }),
+          { left: 260, before: 10, after: 30 }
+        ));
+      });
+    });
+  }
+
+  // 9.4 Работа с родителями
+  const pmRecs = (appState.parentMeetings || []).filter(pm => pm.studentId === s.id);
+  if (pmRecs.length) {
+    totalDiaryBlocks++;
+    bodyParts.push(docxPara(docxRun(L("Работа с родителями:", "Ota-onalar bilan işlaş:"), { bold: true, sz: 24, color: "7C3AED" }), { before: 80, after: 40 }));
+    pmRecs.forEach(pm => {
+      const conductedBy = getUserNameById(pm.tutorId) || tutorValue;
+      bodyParts.push(docxPara(
+        docxRun(`• ${formatIsoToDDMMYYYY(pm.date)}`, { bold: true, sz: 22 }) +
+        docxRun(` (${conductedBy}; ${pm.who || "—"}): `, { italic: true, sz: 22, color: "4B5563" }) +
+        docxRun(pm.notes || "", { sz: 22 }),
+        { left: 260, before: 10, after: 30 }
+      ));
+    });
+  }
+
+  // 9.5 Записи по общежитию
+  const dormRecs = (appState.dormLogs || []).filter(d =>
+    (Array.isArray(d.residents) && d.residents.some(r => r.id === s.id)) ||
+    (s.housingType === "dorm" && s.room && String(d.room || "").trim() === String(s.room).trim())
+  );
+  if (dormRecs.length) {
+    totalDiaryBlocks++;
+    bodyParts.push(docxPara(docxRun(L("Записи по общежитию:", "Yotoqxona qaydlari:"), { bold: true, sz: 24, color: "14171F" }), { before: 80, after: 40 }));
+    dormRecs.forEach(d => {
+      getDormLogEntries(d).forEach(ent => {
+        const catLabel = getLabelFromDict(DORM_CHECK_CATEGORIES, ent.category);
+        const conductors = formatConductors(ent.authorId || d.tutorId, ent.collaborators);
+        bodyParts.push(docxPara(
+          docxRun(`• ${formatIsoToDDMMYYYY(ent.date)}${ent.time ? " " + ent.time : ""} (${L("Комн. №", "Xona №")}${d.room}, ${catLabel})`, { bold: true, sz: 22 }) +
+          docxRun(` [${conductors}]: `, { italic: true, sz: 22, color: "4B5563" }) +
+          docxRun(ent.notes || "", { sz: 22 }),
+          { left: 260, before: 10, after: 30 }
+        ));
+      });
+    });
+  }
+
+  // 9.6 Заметки по съемной квартире
+  const rentRecs = (appState.rentLogs || []).filter(r => r.studentId === s.id);
+  if (rentRecs.length) {
+    totalDiaryBlocks++;
+    bodyParts.push(docxPara(docxRun(L("Заметки по съемной квартире:", "Ijara xonadon qaydlari:"), { bold: true, sz: 24, color: "14171F" }), { before: 80, after: 40 }));
+    rentRecs.forEach(r => {
+      getRentLogEntries(r).forEach(ent => {
+        const catLabel = getLabelFromDict(DORM_CHECK_CATEGORIES, ent.category);
+        const conductors = formatConductors(ent.authorId || r.tutorId, ent.collaborators);
+        bodyParts.push(docxPara(
+          docxRun(`• ${formatIsoToDDMMYYYY(ent.date)}${ent.time ? " " + ent.time : ""} (${catLabel})`, { bold: true, sz: 22 }) +
+          docxRun(` [${conductors}]: `, { italic: true, sz: 22, color: "4B5563" }) +
+          docxRun(ent.notes || "", { sz: 22 }),
+          { left: 260, before: 10, after: 30 }
+        ));
+      });
+    });
+  }
+
+  if (totalDiaryBlocks === 0) {
+    bodyParts.push(docxPara(
+      docxRun(L("Записи в системе мониторинга и дневниках отсутствуют.", "Monitoring tizimi va kundaliklarda qaydlar mavjud emas."), { italic: true, sz: 24, color: "6B7280" }),
+      { left: 260, after: 60 }
+    ));
+  }
+
+  // Сборка OOXML документа (A4, поля как в шаблоне: верх 2см, низ 2см, лево 3см, право 1.5см)
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing">
+  <w:body>
+    ${bodyParts.join("")}
+    <w:sectPr>
+      <w:pgSz w:w="11906" w:h="16838"/>
+      <w:pgMar w:top="1134" w:right="850" w:bottom="1134" w:left="1701" w:header="708" w:footer="708" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+  const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="${photoObj.ext}" ContentType="${photoObj.contentType}"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
+
+  const rootRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+  const docRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.${photoObj.ext}"/>
+</Relationships>`;
+
+  const blob = buildDocxZipBlob([
+    { name: "[Content_Types].xml", data: contentTypesXml },
+    { name: "_rels/.rels", data: rootRelsXml },
+    { name: "word/_rels/document.xml.rels", data: docRelsXml },
+    { name: `word/media/image1.${photoObj.ext}`, data: photoObj.bytes },
+    { name: "word/document.xml", data: documentXml }
+  ]);
+
+  const safeName = (s.name || "student").replace(/[\\/:*?"<>|]/g, "_").trim();
+  const prefix = isOz ? "Talaba_kartockasi" : "Kartochka_studenta";
+  const url = URL.createObjectURL(blob);
+  triggerDownload(url, `${prefix}_${safeName}_${todayStr}.docx`);
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  showToast(L("Карточка студента (DOCX) сформирована", "Talaba kartoçkasi (DOCX) tayyorlandi"));
 }
