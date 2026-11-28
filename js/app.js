@@ -2800,6 +2800,7 @@ function renderStudentsAllTable() {
                     <div class="st-name-with-thumb">
                       ${renderStudentThumbHtml(s)}
                       <strong>${s.name}</strong>
+                      ${s.isLeader ? `<span class="st-leader-badge-icon" title="${t(`Староста группы ${s.group}`, `${s.group} guruhi sardori`)}">${LEADER_BADGE_SVG}</span>` : ""}
                     </div>
                   </td>
                   <td>${s.group} • ${s.course} ${t("курс", "kurs")}</td>
@@ -2892,8 +2893,11 @@ function formatHousingBadge(s) {
 }
 
 // ==================== МОДАЛКА КАРТОЧКИ СТУДЕНТА ====================
+const LEADER_BADGE_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-rosette-discount-check"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12.01 2.011a3.2 3.2 0 0 1 2.113 .797l.154 .145l.698 .698a1.2 1.2 0 0 0 .71 .341l.135 .008h1a3.2 3.2 0 0 1 3.195 3.018l.005 .182v1c0 .27 .092 .533 .258 .743l.09 .1l.697 .698a3.2 3.2 0 0 1 .147 4.382l-.145 .154l-.698 .698a1.2 1.2 0 0 0 -.341 .71l-.008 .135v1a3.2 3.2 0 0 1 -3.018 3.195l-.182 .005h-1a1.2 1.2 0 0 0 -.743 .258l-.1 .09l-.698 .697a3.2 3.2 0 0 1 -4.382 .147l-.154 -.145l-.698 -.698a1.2 1.2 0 0 0 -.71 -.341l-.135 -.008h-1a3.2 3.2 0 0 1 -3.195 -3.018l-.005 -.182v-1a1.2 1.2 0 0 0 -.258 -.743l-.09 -.1l-.697 -.698a3.2 3.2 0 0 1 -.147 -4.382l.145 -.154l.698 -.698a1.2 1.2 0 0 0 .341 -.71l.008 -.135v-1l.005 -.182a3.2 3.2 0 0 1 3.013 -3.013l.182 -.005h1a1.2 1.2 0 0 0 .743 -.258l.1 -.09l.698 -.697a3.2 3.2 0 0 1 2.269 -.944zm3.697 7.282a1 1 0 0 0 -1.414 0l-3.293 3.292l-1.293 -1.292l-.094 -.083a1 1 0 0 0 -1.32 1.497l2 2l.094 .083a1 1 0 0 0 1.32 -.083l4 -4l.083 -.094a1 1 0 0 0 -.083 -1.32z"/></svg>`;
+
 let modalStudentState = {
   group: "",
+  isLeader: false,
   course: "1",
   gender: "М",
   tutorId: "",
@@ -2906,6 +2910,86 @@ let modalStudentState = {
   maritalStatus: "single",
   photo: ""
 };
+
+function updateStudentLeaderBtnUI() {
+  const btn = document.getElementById("stLeaderToggleBtn");
+  if (!btn) return;
+  const isL = Boolean(modalStudentState.isLeader);
+  btn.classList.toggle("active", isL);
+  const tip = isL
+    ? t("Староста выбранной группы (нажмите, чтобы снять)", "Tanlangan guruh sardori (bekor qiliş uçun bosing)")
+    : t("Отметить как старосту группы", "Guruh sardori sifatida belgilash");
+  if (btn.hasAttribute("data-smart-title")) {
+    btn.setAttribute("data-smart-title", tip);
+  } else {
+    btn.setAttribute("title", tip);
+  }
+}
+
+function dismissLeaderConflict() {
+  const box = document.getElementById("stLeaderConflictBox");
+  if (box) {
+    box.innerHTML = "";
+    box.classList.add("hidden");
+  }
+}
+
+function toggleStudentLeaderBtn() {
+  if (modalStudentState.isLeader) {
+    modalStudentState.isLeader = false;
+    dismissLeaderConflict();
+    updateStudentLeaderBtnUI();
+    return;
+  }
+
+  const group = (modalStudentState.group || "").trim();
+  if (!group) {
+    showToast(t("Сначала выберите группу", "Avval guruhni tanlang"));
+    return;
+  }
+
+  const editId = document.getElementById("editStudentId") ? document.getElementById("editStudentId").value : "";
+  const existingLeader = (appState.students || []).find(s =>
+    s.isLeader === true &&
+    String(s.group || "").trim() === group &&
+    s.id !== editId
+  );
+
+  if (existingLeader) {
+    const box = document.getElementById("stLeaderConflictBox");
+    if (box) {
+      box.innerHTML = `
+        <div class="st-leader-conflict-text">
+          ${t(`В группе ${group} уже есть староста: ${existingLeader.name}`, `${group} guruhida sardor allaqaçon bor: ${existingLeader.name}`)}
+        </div>
+        <div class="st-leader-conflict-actions">
+          <button type="button" class="btn-orange sm" onclick="revokeExistingGroupLeader('${existingLeader.id}')">${t("Отозвать эту роль", "Bu rolni bekor qiliş")}</button>
+          <button type="button" class="btn-export sm" onclick="dismissLeaderConflict()">${t("Ок", "Ok")}</button>
+        </div>
+      `;
+      box.classList.remove("hidden");
+    }
+    return;
+  }
+
+  modalStudentState.isLeader = true;
+  dismissLeaderConflict();
+  updateStudentLeaderBtnUI();
+}
+
+function revokeExistingGroupLeader(existingStudentId) {
+  const existing = (appState.students || []).find(s => s.id === existingStudentId);
+  if (existing) {
+    existing.isLeader = false;
+    saveState();
+    syncSpecificTutorFolder(existing.tutorId);
+  }
+  modalStudentState.isLeader = true;
+  dismissLeaderConflict();
+  updateStudentLeaderBtnUI();
+  renderAllViews();
+  showToast(t("Роль старосты передана текущему студенту", "Guruh sardori roli joriy talabaga ötkazildi"));
+}
 
 function getGroupsForTutor(tutorId) {
   const tutor = appState.users.find(u => u.id === tutorId);
@@ -2941,6 +3025,15 @@ function renderStudentGroupSelect(tutorId, preferredGroup = "") {
 
   const onGroupChange = (v) => {
     modalStudentState.group = v;
+    dismissLeaderConflict();
+    if (modalStudentState.isLeader) {
+      const editId = document.getElementById("editStudentId") ? document.getElementById("editStudentId").value : "";
+      const conflict = (appState.students || []).find(s => s.isLeader === true && String(s.group || "").trim() === String(v || "").trim() && s.id !== editId);
+      if (conflict) {
+        modalStudentState.isLeader = false;
+        updateStudentLeaderBtnUI();
+      }
+    }
     renderCustomSelect("stGroupSelectWrap", groupOpts, v, onGroupChange);
   };
   renderCustomSelect("stGroupSelectWrap", groupOpts, modalStudentState.group, onGroupChange);
@@ -2969,6 +3062,7 @@ function openStudentModal(studentId = null, prefillName = "") {
 
   modalStudentState = {
     group: st ? (st.group || "") : "",
+    isLeader: Boolean(st && st.isLeader),
     course: initialCourse,
     gender: st ? st.gender : "М",
     tutorId: defaultTutorId,
@@ -2981,6 +3075,8 @@ function openStudentModal(studentId = null, prefillName = "") {
     photo: st && st.photo ? st.photo : ""
   };
   renderStudentPhotoPreview();
+  dismissLeaderConflict();
+  updateStudentLeaderBtnUI();
 
   renderStudentGroupSelect(modalStudentState.tutorId, modalStudentState.group);
 
@@ -3334,6 +3430,7 @@ function saveStudent() {
     id: editId || `st_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
     name,
     group,
+    isLeader: Boolean(modalStudentState.isLeader),
     course: modalStudentState.course,
     gender: modalStudentState.gender,
     studyForm: modalStudentState.studyForm || "contract",
