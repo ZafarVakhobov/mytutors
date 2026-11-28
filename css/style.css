@@ -708,7 +708,7 @@ body.dark .pill-sm.active { background: var(--accent); }
 /* Кастомные выпадающие списки */
 .custom-select {
   position: relative;
- 
+  min-width: 155px;
 }
 
 .custom-select.compact { min-width: 135px; }
@@ -4379,4 +4379,105 @@ body.dark .mobile-nav-item.active {
   background: rgba(255, 107, 61, 0.1);
   border-color: var(--accent);
   color: var(--accent);
+}
+
+
+/* ==================== ВЫПАДАЮЩИЙ СПИСОК РАЗДЕЛОВ ДНЕВНИКОВ И БЕСЕДЫ (ПСИХ. / ПРОФ.) ==================== */
+.diary-section-select {
+  min-width: 265px;
+}
+
+.diary-section-select .cs-trigger {
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: #14171f;
+  color: #ffffff;
+  border-color: #14171f;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+body.dark .diary-section-select .cs-trigger {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.diary-section-select .cs-trigger:hover {
+  opacity: 0.94;
+}
+
+.diary-section-select .cs-menu {
+  left: auto;
+  right: 0;
+  min-width: 270px;
+  max-height: none;
+}
+
+.diary-st-filters.cols-4 {
+  grid-template-columns: 1.25fr 1fr 0.75fr 0.9fr;
+}
+
+.diary-st-filters.cols-4.tutor-only {
+  grid-template-columns: 1.4fr 0.8fr 1fr;
+}
+
+.session-active-mon-alert {
+  padding: 10px 13px;
+  border-radius: 12px;
+  background: rgba(255, 107, 61, 0.08);
+  border: 1px solid rgba(255, 107, 61, 0.28);
+  font-size: 12px;
+}
+
+.session-active-mon-title {
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-inline-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.session-inline-controls .custom-select {
+  min-width: 0;
+}
+
+.session-inline-controls .cs-trigger {
+  height: 36px;
+  font-size: 12px;
+  padding: 0 10px;
+}
+
+.session-inline-controls .cs-menu {
+  max-height: none;
+  overflow: visible;
+  width: 100%;
+  min-width: 220px;
+  padding: 8px;
+}
+
+@media (max-width: 720px) {
+  .diary-section-select {
+    width: 100%;
+    min-width: 0;
+  }
+  .diary-section-select .cs-menu {
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
+  .diary-st-filters.cols-4,
+  .diary-st-filters.cols-4.tutor-only,
+  .session-inline-controls {
+    grid-template-columns: 1fr;
+  }
 }
