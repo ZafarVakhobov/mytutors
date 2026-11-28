@@ -4643,3 +4643,30 @@ body.dark .diary-section-select .cs-trigger {
 .st-leaders-filter-btn.active svg {
   color: #ffffff;
 }
+
+
+/* ==================== КНОПКА СКАЧИВАНИЯ DOCX КАРТОЧКИ СТУДЕНТА ==================== */
+.st-row-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.btn-doc-icon {
+  background: rgba(37, 99, 235, 0.1);
+  color: var(--blue);
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.btn-doc-icon:hover {
+  background: rgba(37, 99, 235, 0.2);
+}
